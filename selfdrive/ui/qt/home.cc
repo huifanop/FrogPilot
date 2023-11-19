@@ -1,17 +1,24 @@
 #include "selfdrive/ui/qt/home.h"
-
+///////////////////////////////////////////
+#include <QDateTime>
+///////////////////////////////////////////
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QStackedWidget>
 #include <QVBoxLayout>
-
+///////////////////////////////////////////
+#include "common/params.h"
+///////////////////////////////////////////
 #include "selfdrive/ui/qt/offroad/experimental_mode.h"
 #include "selfdrive/ui/qt/util.h"
 #include "selfdrive/ui/qt/widgets/prime.h"
-
-#ifdef ENABLE_MAPS
-#include "selfdrive/ui/qt/maps/map_settings.h"
-#endif
+///////////////////////////////////////////
+// #ifdef ENABLE_MAPS
+// #include "selfdrive/ui/qt/maps/map_settings.h"
+// #else
+#include "selfdrive/ui/qt/widgets/drive_stats.h"
+// #endif
+///////////////////////////////////////////
 
 // HomeWindow: the container for the offroad and onroad UIs
 
@@ -118,7 +125,7 @@ OffroadHome::OffroadHome(QWidget* parent) : QFrame(parent) {
   header_layout->setContentsMargins(0, 0, 0, 0);
   header_layout->setSpacing(16);
 
-  update_notif = new QPushButton(tr("UPDATE"));
+  update_notif = new QPushButton(tr("更新"));
   update_notif->setVisible(false);
   update_notif->setStyleSheet("background-color: #364DEF;");
   QObject::connect(update_notif, &QPushButton::clicked, [=]() { center_layout->setCurrentIndex(1); });
@@ -150,12 +157,15 @@ OffroadHome::OffroadHome(QWidget* parent) : QFrame(parent) {
 
     // left: MapSettings/PrimeAdWidget
     QStackedWidget *left_widget = new QStackedWidget(this);
-#ifdef ENABLE_MAPS
-    left_widget->addWidget(new MapSettings);
-#else
-    left_widget->addWidget(new QWidget);
-#endif
-    left_widget->addWidget(new PrimeAdWidget);
+//////////////////////////////////////////////////////////////////////////////////////
+//#ifdef ENABLE_MAPS
+//    left_widget->addWidget(new MapSettings);
+//#else
+    //left_widget->addWidget(new QWidget);
+    left_widget->addWidget(new DriveStats);
+// #endif
+    //left_widget->addWidget(new PrimeAdWidget);
+//////////////////////////////////////////////////////////////////////////////////////
     left_widget->setStyleSheet("border-radius: 10px;");
 
     left_widget->setCurrentIndex(uiState()->hasPrime() ? 0 : 1);
@@ -235,7 +245,9 @@ void OffroadHome::hideEvent(QHideEvent *event) {
 }
 
 void OffroadHome::refresh() {
-  date->setText(QLocale(uiState()->language.mid(5)).toString(QDateTime::currentDateTime(), "dddd, MMMM d"));
+//////////////////////////////////////////////////////////////////////////////////////
+  date->setText(QLocale(uiState()->language.mid(5)).toString(QDateTime::currentDateTime(), "yyyy, MMMM dd, dddd, hh:mm:ss"));
+//////////////////////////////////////////////////////////////////////////////////////
   version->setText(getBrand() + " v" + getVersion().left(14).trimmed() + " - " + modelName);
 
   bool updateAvailable = update_widget->refresh();
@@ -255,6 +267,6 @@ void OffroadHome::refresh() {
   update_notif->setVisible(updateAvailable);
   alert_notif->setVisible(alerts);
   if (alerts) {
-    alert_notif->setText(QString::number(alerts) + (alerts > 1 ? tr(" ALERTS") : tr(" ALERT")));
+    alert_notif->setText(QString::number(alerts) + (alerts > 1 ? tr(" 提醒") : tr(" 提醒")));
   }
 }

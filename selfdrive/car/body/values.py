@@ -19,8 +19,13 @@ class CarControllerParams:
   STEER_THRESHOLD = 1.0
 
   def __init__(self, CP):
-    pass
+#######################################################
+    self.params = Params()
+    self.params_memory = Params("/dev/shm/params")
 
+  # def __init__(self, CP):
+  #   pass
+#######################################################
 
 class CAR(StrEnum):
   BODY = "COMMA BODY"

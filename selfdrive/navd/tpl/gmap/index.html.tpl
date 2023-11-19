@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>openpilot Navigation</title>
+    <title>HFOP Navigation</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <link rel="stylesheet" type="text/css" href="./style.css" />
     <!-- UIkit CSS -->
@@ -19,13 +19,13 @@
     <div class="uk-grid-match uk-grid-small uk-text-center" uk-grid>
       <div class="uk-width-1-3@m">
         <select id="save_type" class="uk-select" name="type">
-          <option value="recent">Recent</option>
-          <option value="home">Home</option>
-          <option value="work">Work</option>
+          <option value="recent">最近</option>
+          <option value="home">家</option>
+          <option value="work">公司</option>
         </select>
       </div>
       <div class="uk-width-expand@m">
-        <input class="uk-input" type="text" id="pac-input" name="keyword" placeholder="Set a destination" onfocus='this.value=""'/>
+        <input class="uk-input" type="text" id="pac-input" name="keyword" placeholder="尋找地點" onfocus='this.value=""'/>
       </div>
     </div>
     <div id="map"></div>

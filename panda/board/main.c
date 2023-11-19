@@ -227,7 +227,9 @@ void tick_handler(void) {
           print(" seconds. Safety is set to SILENT mode.\n");
 
           if (controls_allowed_countdown > 0U) {
-            siren_countdown = 5U;
+            /////////關機警報////////////
+            siren_countdown = 0U;
+            ////////////////////////////
             controls_allowed_countdown = 0U;
           }
 

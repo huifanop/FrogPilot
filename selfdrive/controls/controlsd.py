@@ -29,7 +29,13 @@ from openpilot.selfdrive.controls.lib.events import Events, ET
 from openpilot.selfdrive.controls.lib.alertmanager import AlertManager, set_offroad_alert
 from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
 from openpilot.system.hardware import HARDWARE
-
+###################################################################################################
+mem_params = Params("/dev/shm/params")
+params = Params()
+mem_params.put_bool("KeyResume", False)
+mem_params.put_bool("KeyCancel", False)
+params.put_int("RoadtypeProfile", 0)
+###################################################################################################
 SOFT_DISABLE_TIME = 3  # seconds
 LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
 LANE_DEPARTURE_THRESHOLD = 0.1
@@ -271,7 +277,11 @@ class Controls:
       (CS.brakePressed and (not self.CS_prev.brakePressed or not CS.standstill)) or \
       (CS.regenBraking and (not self.CS_prev.regenBraking or not CS.standstill)):
       self.events.add(EventName.pedalPressed)
-
+      ################################################
+      mem_params.put_bool("KeyResume", False)
+      self.params_memory.put_int('SpeedPrev',0)
+      self.params_memory.put_bool('KeyChanged', True)
+      ################################################
     if CS.brakePressed and CS.standstill:
       self.events.add(EventName.preEnableStandstill)
 
@@ -280,7 +290,16 @@ class Controls:
 
     if not self.CP.notCar:
       self.events.add_from_msg(self.sm['driverMonitoringState'].events)
-
+###################自動啟動ACC並帶入最高速限##########################################
+    if not self.params.get_bool('IsEngaged'):
+      if not CS.standstill and self.params.get_bool("AutoACC", True):
+          self.params_memory.put_bool('KeyResume', True)
+          if self.params_memory.get_int('DetectSpeedLimit') != 0:
+              self.params_memory.put_bool('SpeedLimitChanged', True)
+          else:
+              self.params_memory.put_int('KeySetSpeed', 40)
+              self.params_memory.put_bool('KeyChanged', True)
+####################################################################################
     # Add car events, ignore if CAN isn't valid
     if CS.canValid:
       self.events.add_from_msg(CS.events)
@@ -326,7 +345,10 @@ class Controls:
       direction = self.sm['lateralPlan'].laneChangeDirection
       if (CS.leftBlindspot and direction == LaneChangeDirection.left) or \
          (CS.rightBlindspot and direction == LaneChangeDirection.right):
-        self.events.add(EventName.laneChangeBlocked)
+        ##########################################################
+        if self.params.get_bool("Laneblindspotdetection") == 1:
+          self.events.add(EventName.laneChangeBlocked)
+        ##########################################################
       else:
         if direction == LaneChangeDirection.left:
           self.events.add(EventName.preLaneChangeLeft)
@@ -334,7 +356,10 @@ class Controls:
           self.events.add(EventName.preLaneChangeRight)
     elif self.sm['lateralPlan'].laneChangeState in (LaneChangeState.laneChangeStarting,
                                                     LaneChangeState.laneChangeFinishing):
-      self.events.add(EventName.laneChange)
+      ##########################################################
+      if self.params.get_bool("ChangeLaneReminder") == 1 :
+        self.events.add(EventName.laneChange)
+      ##########################################################
 
     # Handle turning
     if not CS.standstill:
@@ -385,6 +410,55 @@ class Controls:
       self.events.add(EventName.canBusMissing)
     elif not CS.canValid:
       self.events.add(EventName.canError)
+    ##############################################################
+    if (self.sm['longitudinalPlan'].trafficState == 3):
+      if self.params.get_bool("CarAwayReminder") == 1 :
+        self.events.add(EventName.carAwayed)      
+      if self.params_memory.get_int('DetectSpeedLimit') !=0 :
+        self.params_memory.put_bool('SpeedLimitChanged', True)
+      else:
+        if params.get_int("RoadtypeProfile") == 1:
+          mem_params.put_int('KeySetSpeed', 60)
+          mem_params.put_bool('KeyChanged', True)
+          mem_params.put_int('SpeedPrev',0)
+        elif params.get_int("RoadtypeProfile") == 2:
+          mem_params.put_int('KeySetSpeed', 90)
+          mem_params.put_bool('KeyChanged', True)
+          mem_params.put_int('SpeedPrev',0)
+        elif params.get_int("RoadtypeProfile") == 3:
+          mem_params.put_int('KeySetSpeed', 120)
+          mem_params.put_bool('KeyChanged', True)
+          mem_params.put_int('SpeedPrev',0)
+
+    if self.sm['longitudinalPlan'].carapproch:
+      if self.params.get_bool("CarApproachingReminder") == 1 :
+        self.events.add(EventName.carApproaching)
+      if self.params_memory.get_int('SpeedPrev') == 0 and self.params_memory.get_int('KeySetSpeed') >= 40:
+        self.params_memory.put_int('SpeedPrev',self.params_memory.get_int('KeySetSpeed'))
+        if params.get_int("RoadtypeProfile") == 1:
+          mem_params.put_int('KeySetSpeed', 30)
+          mem_params.put_bool('KeyChanged', True)
+        elif params.get_int("RoadtypeProfile") == 2:
+          mem_params.put_int('KeySetSpeed', 50)
+          mem_params.put_bool('KeyChanged', True)
+        elif params.get_int("RoadtypeProfile") == 3:
+          mem_params.put_int('KeySetSpeed', 60)
+          mem_params.put_bool('KeyChanged', True)
+# Restore previous speed when car is no longer approaching
+    if self.sm['longitudinalPlan'].carnotapproch and self.params_memory.get_int('SpeedPrev') != 0:
+      self.params_memory.put_int('KeySetSpeed', self.params_memory.get_int('SpeedPrev'))
+      self.params_memory.put_int('SpeedPrev',0)
+      self.params_memory.put_bool('KeyChanged', True)
+
+    if self.sm['longitudinalPlan'].speedover:
+      self.events.add(EventName.speedOver)  
+    if self.sm['longitudinalPlan'].dspeedlimitu:
+       self.events.add(EventName.detectSpeedLimitu)
+       self.slchanged = False
+    if self.sm['longitudinalPlan'].dspeedlimitd and not self.slchanged:
+       self.events.add(EventName.detectSpeedLimitd)
+       self.slchanged = True
+    #############################################################################
 
     # generic catch-all. ideally, a more specific event should be added above instead
     can_rcv_timeout = self.can_rcv_timeout_counter >= 5
@@ -458,9 +532,19 @@ class Controls:
 
       if self.sm['modelV2'].frameDropPerc > 20:
         self.events.add(EventName.modeldLagging)
-
-    if self.sm['longitudinalPlan'].greenLight:
-      self.events.add(EventName.greenLight)
+############綠燈帶入提醒與時速控制####################################
+    if self.sm['longitudinalPlan'].trafficState == 2:
+        if self.params.get_bool("GreenLightReminder") == 1:
+            self.events.add(EventName.greenLight)
+        if self.params_memory.get_int('DetectSpeedLimit') != 0:
+            self.params_memory.put_bool('SpeedLimitChanged', True)
+        else:
+            current_setspeed = mem_params.get_int('KeySetSpeed')
+            if current_setspeed < 60:
+                mem_params.put_int('KeySetSpeed', 60)
+                mem_params.put_bool('KeyChanged', True)
+                mem_params.put_int('SpeedPrev', 0)
+###################################################################
 
   def data_sample(self):
     """Receive data from sockets and update carState"""

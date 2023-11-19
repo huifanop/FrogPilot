@@ -91,6 +91,9 @@ class LongitudinalPlanner:
     self.j_desired_trajectory = np.zeros(CONTROL_N)
     self.solverExecutionTime = 0.0
     self.params = Params()
+    ##############################
+    self.params_memory = Params("/dev/shm/params")
+    #############################
     self.param_read_counter = 0
     self.read_param()
     self.personality = log.LongitudinalPersonality.standard
@@ -180,7 +183,37 @@ class LongitudinalPlanner:
 
     carcontrol, carstate, modeldata, radarstate = sm['carControl'], sm['carState'], sm['modelV2'], sm['radarState']
     have_lead = ConditionalExperimentalMode.detect_lead(radarstate)
+    ###############################################################
+    lead = ConditionalExperimentalMode.detect_lead(radarstate)
+    lead_distance = radarstate.leadOne.dRel
+    speed_difference = radarstate.leadOne.vRel * 3.6
+    # speedlimit = sm['navInstruction'].speedLimit*3.6
+    # speedlimit = SpeedLimitController.desired_speed_limit * 3.6
+    speedlimit = int(self.params_memory.get_int('DetectSpeedLimit')*1.1)
+    standstill = carstate.standstill
+    v_ego_kph = v_ego * 3.6
+    if v_ego_kph >=40 and speedlimit >= 40 :
+      # if 5 <= (v_ego_kph - speedlimit) <= 9:
+      #   self.speedover = True
+      if (v_ego_kph - speedlimit) >= 1:
+        self.speedover = True
+        if self.params_memory.get_int('DetectSpeedLimit') !=0 :
+          if self.params_memory.get_int('DetectSpeedLimit') <40:
+            self.params_memory.put_int('DetectSpeedLimit',40)
+          self.params_memory.put_bool('SpeedLimitChanged', True)
+      else:
+        self.speedover = False
+    elif v_ego_kph <40 :
+      self.speedover = False
 
+    # if lead:
+    #     if v_ego_kph >=30 and speed_difference <=-20 and lead_distance <=40:
+    #       self.acarapproch = True
+    #       self.bcarapproch = False
+    #     else:
+    #       self.acarapproch = False
+    #       self.bcarapproch = True
+    #################################################################
     # Conditional Experimental Mode
     if self.conditional_experimental_mode and sm['controlsState'].enabled:
       ConditionalExperimentalMode.update(carstate, modeldata, radarstate, v_ego, v_lead, self.v_offset)
@@ -226,7 +259,26 @@ class LongitudinalPlanner:
           v_cruise = round(desired_speed_limit)
       else:
         v_cruise = self.overridden_speed
-
+        #################################################################
+      # detect_sl = int(sm['navInstruction'].speedLimit * 3.6)
+      detect_sl = SpeedLimitController.desired_speed_limit * 3.6
+      # detect_sl = int(self.mem_params.get_int('DetectSpeedLimit')*1.1)
+      if detect_sl != self.detect_speed_prev and v_ego*3.6 > 5:    
+        if detect_sl > 0:
+          self.params_memory.put_int('DetectSpeedLimit', detect_sl)
+          self.params_memory.put_bool('SpeedLimitChanged', True)
+          self.slchangedu = True
+          self.slchangedd = False        
+          self.detect_speed_prev = detect_sl
+        else:
+          self.detect_speed_prev = 0
+          self.slchangedd = True
+          self.slchangedu = False
+      else:
+        self.params_memory.put_bool('SpeedLimitChanged', False)
+        self.slchangedu = False
+        self.slchangedd = False 
+      #################################################################
     # Pfeiferj's Vision Turn Controller
     if self.vision_turn_controller and prev_accel_constraint and v_ego > 5:
       # Set the curve sensitivity
@@ -283,7 +335,11 @@ class LongitudinalPlanner:
     plan_send = messaging.new_message('longitudinalPlan')
 
     plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState'])
-
+    # fan####################################################
+    vegokph = sm['carState'].vEgo*3.6
+    vrelkph = sm['radarState'].leadOne.vRel*3.6
+    t_standstill = sm['carState'].standstill
+    #####################################################
     longitudinalPlan = plan_send.longitudinalPlan
     longitudinalPlan.modelMonoTime = sm.logMonoTime['modelV2']
     longitudinalPlan.processingDelay = (plan_send.logMonoTime / 1e9) - sm.logMonoTime['modelV2']
@@ -313,7 +369,25 @@ class LongitudinalPlanner:
     longitudinalPlan.desiredFollowDistance = self.mpc.safe_obstacle_distance - self.mpc.stopped_equivalence_factor
     longitudinalPlan.safeObstacleDistanceStock = self.mpc.safe_obstacle_distance_stock
     longitudinalPlan.stoppedEquivalenceFactorStock = self.mpc.stopped_equivalence_factor_stock
-
+    #######################################################
+    longitudinalPlan.carapproch = self.acarapproch 
+    longitudinalPlan.carnotapproch = self.bcarapproch 
+    longitudinalPlan.dspeedlimitu = self.slchangedu
+    longitudinalPlan.dspeedlimitd = self.slchangedd
+    longitudinalPlan.speedover = self.speedover 
+    csstate = sm['controlsState'].enabled
+    have_lead = ConditionalExperimentalMode.detect_lead(sm['radarState'])
+    ltfs = 0    
+    if self.trafficState == 1 or self.acarapproch or t_standstill:
+      ltfs = 1
+    if self.green_light:
+      ltfs = 2
+    if vegokph < 1 and vrelkph > 5 and have_lead and not self.trafficState == 1 and have_lead:
+      ltfs = 3
+    if not csstate:
+      ltfs = 0    
+    longitudinalPlan.trafficState = ltfs
+    ########################################################
     pm.send('longitudinalPlan', plan_send)
     
   def update_frogpilot_params(self):
@@ -342,3 +416,16 @@ class LongitudinalPlanner:
     if self.vision_turn_controller:
       self.curve_sensitivity = self.params.get_int("CurveSensitivity") / 100
       self.turn_aggressiveness = self.params.get_int("TurnAggressiveness") / 100
+    # fan#####################################
+    self.trafficState = 0
+    self.acarapproch = False
+    self.bcarapproch = True
+    self.detect_speed_prev = 0
+    self.slchangedu = False
+    self.slchangedd = False
+    self.lead_emer_count = 0
+    self.lead_emeroff_count = 0
+    self.detect_drel_count =0
+    self.previous_lead_distance = 0
+    self.speedover = False
+    #########################################

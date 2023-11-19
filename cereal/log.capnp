@@ -1032,7 +1032,14 @@ struct LongitudinalPlan @0xe00b5b3eba12876c {
   slcSpeedLimitOffset @46 :Float32;
   stoppedEquivalenceFactorStock @47 :Float32;
   vtscOffset @48 :Float32;
-
+  #########################
+  trafficState @49 : Int32;
+  carapproch @50 :Bool;
+  carnotapproch @51 :Bool;
+  dspeedlimitu @52 :Bool;
+  dspeedlimitd @53 :Bool;
+  speedover @54 :Bool;
+  #############################
   enum LongitudinalPlanSource {
     cruise @0;
     lead0 @1;

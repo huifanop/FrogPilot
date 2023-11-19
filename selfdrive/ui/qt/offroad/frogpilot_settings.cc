@@ -13,21 +13,25 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
   mainLayout->addWidget(whiteHorizontalLine());
 
   static const std::vector<std::tuple<QString, QString, QString, QString>> toggles = {
-    {"AdjustablePersonalities", "Adjustable Personalities", "Switch personalities using the 'Distance' button on the steering wheel (GM/Lexus/Toyota Only) or via the onroad UI for other makes.\n\n1 bar = Aggressive\n2 bars = Standard\n3 bars = Relaxed", "../assets/offroad/icon_distance.png"},
-    {"AlwaysOnLateral", "Always on Lateral / No disengage on Brake Pedal", "Keep openpilot lateral control when using either the brake or gas pedals. openpilot is only disengaged by deactivating the 'Cruise Control' button.", "../assets/offroad/icon_always_on_lateral.png"},
-    {"ConditionalExperimental", "Conditional Experimental Mode", "Automatically activate 'Experimental Mode' based on specified conditions.", "../assets/offroad/icon_conditional.png"},
-    {"CustomPersonalities", "Custom Driving Personalities", "Customize the driving personality profiles to your liking.", "../assets/offroad/icon_custom.png"},
-    {"DeviceShutdown", "Device Shutdown Timer", "Set the timer for when the device turns off after being offroad to reduce energy waste and prevent battery drain.", "../assets/offroad/icon_time.png"},
-    {"ExperimentalModeViaPress", "Experimental Mode Via Steering Wheel / Screen", "Enable or disable Experimental Mode by double-clicking the 'Lane Departure'/LKAS button on the steering wheel (Toyota/Lexus Only) or double tapping the screen for other makes.\n\nOverrides 'Conditional Experimental Mode'. ", "../assets/img_experimental_white.svg"},
-    {"FireTheBabysitter", "Fire the Babysitter", "Disable some of openpilot's 'Babysitter Protocols'.", "../assets/offroad/icon_babysitter.png"},
-    {"LateralTune", "Lateral Tuning", "Change the way openpilot steers.", "../assets/offroad/icon_lateral_tune.png"},
-    {"LongitudinalTune", "Longitudinal Tuning", "Change the way openpilot accelerates and brakes.", "../assets/offroad/icon_longitudinal_tune.png"},
-    {"Model", "Model Selector (Requires Reboot)", "Select your preferred openpilot model.\n\nFV = Farmville(Default)\nNLP = New Lemon Pie", "../assets/offroad/icon_calibration.png"},
-    {"NudgelessLaneChange", "Nudgeless Lane Change", "Switch lanes without having to nudge the steering wheel.", "../assets/offroad/icon_lane.png"},
-    {"PauseLateralOnSignal", "Pause Lateral On Turn Signal", "Pauses lateral control when a turn signal is active.", "../assets/offroad/icon_pause_lane.png"},
-    {"SpeedLimitController", "Speed Limit Controller", "Use Open Street Maps, Navigate On openpilot, and your car's dashboard (Toyota only) to set the vehicle's speed to the current speed limit.", "../assets/offroad/icon_speed_limit.png"},
-    {"TurnDesires", "Turn Desires", "Use turn desires when below the minimum lane change speed for more precise turns.", "../assets/navigation/direction_continue_right.png"},
-    {"VisionTurnControl", "Vision Turn Speed Control", "Automatically adjusts the vehicle's speed in accordance of the curvature of the road for smoother turning.", "../assets/offroad/icon_vtc.png"}
+    {"AdjustablePersonalities", "駕駛模式", "透過畫面切換駕駛模式.\n\n1 格 = 積極\n2 格 = 標準\n3 格 = 輕鬆", "../assets/offroad/icon_distance.png"},
+    {"AlwaysOnLateral", "全時置中模式", "使用剎車或油門踏板時仍保持橫向控制。只有停用“定速”後才能解除.", "../assets/offroad/icon_always_on_lateral.png"},
+    {"ConditionalExperimental", "條件式的實驗模式", "根據特定條件自動啟動實驗模式.", "../assets/offroad/icon_conditional.png"},
+    {"CustomPersonalities", "設定駕駛模式", "根據您的喜好設定駕駛模式細項設定.", "../assets/offroad/icon_custom.png"},
+    {"DeviceShutdown", "設備自動關機設定", "設置設備在熄火後自動關閉的時間，以減少能源浪費並防止電池耗盡.", "../assets/offroad/icon_time.png"},
+    {"ExperimentalModeViaPress", "利用畫面或方向盤開啟實驗模式", "通過雙擊方向盤上的“車道偏離”/LKAS 按鈕(Toyota/Lexus Only)以啟用或禁用實驗模式，或雙擊營幕覆蓋“條件實驗模式”'. ", "../assets/img_experimental_white.svg"},
+    {"FireTheBabysitter", "關閉監控", "禁用 openpilot 的一些‘保姆協議’", "../assets/offroad/icon_babysitter.png"},
+    {"LateralTune", "橫向調整", "改變 openpilot 的駕駛方式.", "../assets/offroad/icon_lateral_tune.png"},
+    {"LongitudinalTune", "縱向調整", "改變 openpilot 加速和煞車方式.", "../assets/offroad/icon_longitudinal_tune.png"},
+    {"Model", "模型選擇 (需要重啟)", "選擇你想使用的OP模型.\n\nFV = Farmville(Default)\nNLP = New Lemon Pie", "../assets/offroad/icon_calibration.png"},
+    {"NudgelessLaneChange", "自動變換車道", "不需輕推方向盤即可變換車道.", "../assets/offroad/icon_lane.png"},
+    {"PauseLateralOnSignal", "打方向燈時暫停橫向控制", "打方向燈時暫停橫向控制.", "../assets/offroad/icon_pause_lane.png"},
+    {"SpeedLimitController", "限速控制器", "使用 Open Street Maps、Navigate On openpilot 和汽車儀表板將車輛速度設定為當前速度限制.", "../assets/offroad/icon_speed_limit.png"},
+    {"TurnDesires", "意圖轉彎", "打開此選項在低於最低自動換道時速40KMH以下時打方向燈時獲得更精準的轉彎.", "../assets/navigation/direction_continue_right.png"},
+    {"VisionTurnControl", "視覺轉向速度控制", "根據路面曲率自動調整車速，轉彎更順暢.", "../assets/offroad/icon_vtc.png"},
+/////////////////////////////////////////////////////////////////////////////////////////////
+    {"Roadtype", "道路種類及語音", "啟用道路種類設定可依特定條件改變最高時速設定，特定條件如：綠燈.前車遠離.變換車道.前車減速時會有中文語音提醒，不同模型偵測結果會有差異.", "../assets/offroad/icon_vtc.png"},
+    {"AutoACC", "自動啟動ACC", "啟用後當踩下油門後會自動啟動ACC，靜止狀態下重複踩兩次煞車後停止ACC.", "../assets/offroad/icon_lane.png"}
+/////////////////////////////////////////////////////////////////////////////////////////////
   };
 
   for (const auto &[key, label, desc, icon] : toggles) {
@@ -37,21 +41,21 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
       mainLayout->addWidget(horizontalLine());
     } else if (key == "AlwaysOnLateral") {
       createSubControl(key, label, desc, icon, {}, {
-        {"AlwaysOnLateralMain", "Enable AOL On Cruise Main", "Enables Always On Lateral by simply turning on cruise control as opposed to requiring openpilot to be enabled first."}
+        {"AlwaysOnLateralMain", "開啟定速啟用全時", "只需開啟定速即可啟用全時功能，而不需要先啟用 openpilot"}
       });
     } else if (key == "ConditionalExperimental") {
       createSubControl(key, label, desc, icon, {
         createDualParamControl(new CESpeed(), new CESpeedLead()),
       });
       createSubButtonControl(key, {
-        {"CECurves", "Curves"},
-        {"CECurvesLead", "Curves With Lead"},
-        {"CENavigation", "Navigation Based"}
+        {"CECurves", "過彎"},
+        {"CECurvesLead", "有前車過彎"},
+        {"CENavigation", "導航因素"}
       }, mainLayout);
       createSubButtonControl(key, {
-        {"CESlowerLead", "Slower Lead Ahead"},
-        {"CEStopLights", "Stop Lights and Stop Signs"},
-        {"CESignal", "Turn Signal < " + QString(isMetric ? "90kph" : "55mph")}
+        {"CESlowerLead", "低速前車"},
+        {"CEStopLights", "停止標誌"},
+        {"CESignal", "方向燈 < " + QString(isMetric ? "90kph" : "55mph")}
       }, mainLayout);
     } else if (key == "CustomPersonalities") {
       createSubControl(key, label, desc, icon, {
@@ -64,26 +68,26 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
       mainLayout->addWidget(horizontalLine());
     } else if (key == "FireTheBabysitter") {
       createSubControl(key, label, desc, icon, {}, {
-        {"NoLogging", "Disable Logging", "Prevent all data tracking by comma to go completely incognitio or to even just reduce thermals.\n\nWARNING: This will prevent any drives from being recorded and they WILL NOT be recoverable!"}
+        {"NoLogging", "關閉紀錄", "防止任何資料被COMMA追蹤或降低機器溫度\n\n注意這將清除所有紀錄而且不能回復!"}
       });
       createSubButtonControl(key, {
-        {"MuteDM", "Mute DM"},
-        {"MuteDoor", "Mute Door Open"},
-        {"MuteOverheated", "Mute Overheat"},
-        {"MuteSeatbelt", "Mute Seatbelt"}
+        {"MuteDM", "駕駛監控"},
+        {"MuteDoor", "車門"},
+        {"MuteOverheated", "系統過熱"},
+        {"MuteSeatbelt", "安全帶"}
       }, mainLayout);
     } else if (key == "LateralTune") {
       createSubControl(key, label, desc, icon, {}, {
-        {"AverageCurvature", "Average Desired Curvature", "Use Pfeiferj's distance based curvature adjustment for smoother handling of curves."},
-        {"NNFF", "NNFF - Neural Network Feedforward", "Use Twilsonco's Neural Network Feedforward torque system for more precise lateral control."}
+        {"AverageCurvature", "平均期望曲率", "使用 Pfeiferj 的以距離為基準的曲率調整方法來更平滑地處理轉彎"},
+        {"NNFF", "NNFF - 神經網路前饋", "使用Twilsonco's的神經網路前饋扭矩控制系統來獲得更精準的橫向控制"}
       });
     } else if (key == "LongitudinalTune") {
       createSubControl(key, label, desc, icon, {
         new AccelerationProfile(),
         new StoppingDistance(),
       }, {
-        {"AggressiveAcceleration", "Aggressive Acceleration With Lead", "Accelerate more aggressively behind a lead when starting from a stop."},
-        {"SmoothBraking", "Smoother Braking Behind Lead", "More natural braking behavior when coming up to a slower vehicle."}
+        {"AggressiveAcceleration", "積極加速跟車", "當有前車可跟隨時起步更加積極的加速"},
+        {"SmoothBraking", "平穩煞車的跟車", "當接近速度較慢的車輛時，煞車行為更加自然"}
       });
     } else if (key == "Model") {
       mainLayout->addWidget(new Model());
@@ -93,8 +97,8 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
         new LaneChangeTime(),
       });
       createSubButtonControl(key, {
-        {"LaneDetection", "Lane Detection"},
-        {"OneLaneChange", "One Lane Change Per Signal"},
+        {"LaneDetection", "車道檢測"},
+        {"OneLaneChange", "每次只變換一個車道"}
       }, mainLayout);
     } else if (key == "SpeedLimitController") {
       std::vector<QWidget*> widgets;
@@ -114,6 +118,19 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
         new CurveSensitivity(),
         new TurnAggressiveness(),
       });
+      // hfop///////////////////////////////////
+    } else if (key == "Roadtype") {
+      createSubControl(key, label, desc, icon, {
+        new RoadtypeProfile(),
+      });
+      createSubButtonControl(key, {
+        {"GreenLightReminder", "綠燈語音"},
+        {"CarAwayReminder", "前車遠離語音"},
+        {"CarApproachingReminder", "前車急煞語音"},
+        {"Laneblindspotdetection", "換車道盲點語音"},
+        {"ChangeLaneReminder", "變換車道語音"}
+      }, mainLayout);
+      ///////////////////////////////////////////
     } else {
       mainLayout->addWidget(control);
       if (key != std::get<0>(toggles.back())) mainLayout->addWidget(horizontalLine());
@@ -129,7 +146,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel
   forceFingerprintLayout->setSpacing(25);
   forceFingerprintLayout->setContentsMargins(0, 0, 0, 0);
 
-  QLabel *forceFingerprintLabel = new QLabel(tr("Force Fingerprint"));
+  QLabel *forceFingerprintLabel = new QLabel(tr("指定車型"));
   forceFingerprintLayout->addWidget(forceFingerprintLabel);
 
   forceFingerprintLayout->addStretch(1);
@@ -138,7 +155,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel
   QLabel *carModelLabel = new QLabel(currentCarModel);
   forceFingerprintLayout->addWidget(carModelLabel);
 
-  ButtonControl *forceFingerprintButton = new ButtonControl(tr(""), tr("SET"));
+  ButtonControl *forceFingerprintButton = new ButtonControl(tr(""), tr("選擇"));
   forceFingerprintLayout->addWidget(forceFingerprintButton);
 
   connect(forceFingerprintButton, &ButtonControl::clicked, this, [=]() {
@@ -146,7 +163,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel
     std::string carModels = params.get("CarModels");
 
     QStringList cars = QString::fromStdString(carModels).split(',');
-    QString selection = MultiOptionDialog::getSelection(tr("Select Your Car"), cars, currentCarModel, this);
+    QString selection = MultiOptionDialog::getSelection(tr("選擇您的車型"), cars, currentCarModel, this);
 
     if (!selection.isEmpty()) {
       params.put("CarModel", selection.toStdString());
@@ -219,22 +236,22 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel
 FrogPilotVisualsPanel::FrogPilotVisualsPanel(QWidget *parent) : FrogPilotPanel(parent) {
   mainLayout = new QVBoxLayout(this);
 
-  QLabel *const descriptionLabel = new QLabel("Click on the toggle names to see a detailed toggle description", this);
+  QLabel *const descriptionLabel = new QLabel("點選設定標題顯示詳細說明", this);
   mainLayout->addWidget(descriptionLabel);
   mainLayout->addSpacing(25);
   mainLayout->addWidget(whiteHorizontalLine());
 
   static const std::vector<std::tuple<QString, QString, QString, QString>> toggles = {
-    {"CustomTheme", "Custom Theme", "Enable the ability to use custom themes.", "../assets/frog.png"},
-    {"Compass", "Compass", "Add a compass to the onroad UI that indicates your current driving direction.", "../assets/offroad/icon_compass.png"},
-    {"CustomUI", "Custom UI", "Customize the UI to your liking.", "../assets/offroad/icon_road.png"},
-    {"DriverCamera", "Driver Camera On Reverse", "Displays the driver camera when in reverse.", "../assets/img_driver_face_static.png"},
-    {"GreenLightAlert", "Green Light Alert", "Displays an alert when a light turns from red to green.", "../assets/offroad/icon_green_light.png"},
-    {"RotatingWheel", "Rotating Steering Wheel", "The steering wheel in top right corner of the onroad UI rotates alongside your physical steering wheel.", "../assets/offroad/icon_rotate.png"},
-    {"ScreenBrightness", "Screen Brightness", "Choose a custom screen brightness level or use the default 'Auto' brightness setting.", "../assets/offroad/icon_light.png"},
-    {"SilentMode", "Silent Mode", "Disables all openpilot sounds for a completely silent experience.", "../assets/offroad/icon_mute.png"},
-    {"WheelIcon", "Steering Wheel Icon", "Replace the stock openpilot steering wheel icon with a custom icon.\n\nWant to submit your own steering wheel? Message me on Discord\n@FrogsGoMoo!", "../assets/offroad/icon_openpilot.png"},
-    {"WideCameraOff", "Wide Camera Disabled (Cosmetic Only)", "Disable the wide camera view. This toggle is purely cosmetic and will not affect openpilot's use of the wide camera.", "../assets/offroad/icon_camera.png"}
+    {"CustomTheme", "自訂外觀主題", "啟動後使用自訂外觀，關閉則為官方外觀.", "../assets/frog.png"},
+    {"Compass", "指南針", "畫面中添加指南針，顯示您的行駛方位.", "../assets/offroad/icon_compass.png"},
+    {"CustomUI", "自定義道路畫面", "定義自己喜歡的道路介面.", "../assets/offroad/icon_road.png"},
+    {"DriverCamera", "倒車顯示駕駛鏡頭", "倒車時顯示駕駛畫面.", "../assets/img_driver_face_static.png"},
+    {"GreenLightAlert", "綠燈提醒", "交通號誌從紅燈轉為綠燈時產生提示.", "../assets/offroad/icon_green_light.png"},
+    {"RotatingWheel", "旋轉方向盤", "畫面右上角的方向盤與方向盤同步旋轉.", "../assets/offroad/icon_rotate.png"},
+    {"ScreenBrightness", "螢幕亮度", "自行設定螢幕亮度或使用預設自動亮度設置.", "../assets/offroad/icon_light.png"},
+    {"SilentMode", "靜音模式", "關閉所有聲音保持完全靜音的運作.", "../assets/offroad/icon_mute.png"},
+    {"WheelIcon", "方向盤圖示", "用自定義圖示替換 openpilot 方向盤圖標!", "../assets/offroad/icon_openpilot.png"},
+    {"WideCameraOff", "不顯示廣角鏡頭影像", "螢幕不顯示廣角鏡頭畫面。此設定不影響 openpilot 對廣角鏡頭的使用.", "../assets/offroad/icon_camera.png"}
   };
 
   for (const auto &[key, label, desc, icon] : toggles) {
@@ -245,17 +262,17 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(QWidget *parent) : FrogPilotPanel(p
         createDualParamControl(new PathWidth(), new PathEdgeWidth())
       });
       createSubButtonControl(key, {
-        {"AccelerationPath", "Acceleration Path"},
-        {"AdjacentPath", "Adjacent Paths"},
-        {"BlindSpotPath", "Blind Spot Path"},
+        {"AccelerationPath", "加速路徑"},
+        {"AdjacentPath", "相鄰路徑"},
+        {"BlindSpotPath", "盲點路徑"},
       }, mainLayout);
       createSubButtonControl(key, {
-        {"ShowFPS", "FPS Counter"},
-        {"LeadInfo", "Lead Info and Logics"},
-        {"RoadNameUI", "Road Name"},
+        {"ShowFPS", "顯示 FPS"},
+        {"LeadInfo", "前車資訊"},
+        {"RoadNameUI", "道路名稱"},
       }, mainLayout);
       createSubButtonControl(key, {
-        {"UnlimitedLength", "'Unlimited' Road UI Length"},
+        {"UnlimitedLength", "“無限”道路畫面長度"},
       }, mainLayout);
     } else if (key == "CustomTheme") {
       createSubControl(key, label, desc, icon, {
@@ -349,10 +366,10 @@ ParamControl *FrogPilotPanel::createParamControl(const QString &key, const QStri
     }
 
     static const QMap<QString, QString> parameterWarnings = {
-      {"AggressiveAcceleration", "This will make openpilot driving more aggressively behind lead vehicles!"},
-      {"AlwaysOnLateralMain", "This is very experimental and isn't guaranteed to work. If you run into any issues please report it in the FrogPilot Discord!"},
-      {"SmoothBraking", "This will modify openpilot's braking behavior!"},
-      {"TSS2Tune", "This will modify openpilot's acceleration and braking behavior!"}
+      {"AggressiveAcceleration", "這將使 openpilot 駕駛更加積極!"},
+      {"AlwaysOnLateralMain", "這是非常實驗性的，不能保證有效。!"},
+      {"SmoothBraking", "這會修改openpilot 煞車模式!"},
+      {"TSS2Tune", "這會修改openpilot 油門與煞車模式!"}
     };
     if (parameterWarnings.contains(key) && params.getBool(key.toStdString())) {
       ConfirmationDialog::toggleAlert("WARNING: " + parameterWarnings[key], "I understand the risks.", parent);
@@ -510,88 +527,99 @@ void FrogPilotPanel::setParams() {
 
   const std::map<std::string, std::string> default_values {
     {"AccelerationPath", "1"},
-    {"AccelerationProfile", "3"},
+    {"AccelerationProfile", "1"},
     {"AdjacentPath", "1"},
-    {"AdjustablePersonalities", "1"},
+    {"AdjustablePersonalities", "3"},
     {"AggressiveAcceleration", "1"},
     {"AggressiveFollow", FrogsGoMoo ? "10" : "12"},
     {"AggressiveJerk", FrogsGoMoo ? "6" : "5"},
     {"AlwaysOnLateral", "1"},
-    {"AlwaysOnLateralMain", FrogsGoMoo ? "1" : "0"},
-    {"AverageCurvature", FrogsGoMoo ? "1" : "0"},
+    {"AlwaysOnLateralMain", FrogsGoMoo ? "1" : "1"},
+    {"AverageCurvature", FrogsGoMoo ? "1" : "1"},
     {"BlindSpotPath", "1"},
     {"CECurves", "1"},
-    {"CECurvesLead", "0"},
+    {"CECurvesLead", "1"},
     {"CENavigation", "1"},
     {"CESignal", "1"},
-    {"CESlowerLead", "0"},
+    {"CESlowerLead", "1"},
     {"CESpeed", "0"},
     {"CESpeedLead", "0"},
     {"CEStopLights", "1"},
-    {"Compass", "1"},
+    {"Compass", "0"},
     {"ConditionalExperimental", "1"},
     {"CurveSensitivity", FrogsGoMoo ? "125" : "100"},
-    {"CustomColors", "1"},
-    {"CustomIcons", "1"},
+    {"CustomColors", "0"},
+    {"CustomIcons", "0"},
     {"CustomPersonalities", "1"},
-    {"CustomSignals", "1"},
-    {"CustomSounds", "1"},
-    {"CustomTheme", "1"},
+    {"CustomSignals", "0"},
+    {"CustomSounds", "0"},
+    {"CustomTheme", "0"},
     {"CustomUI", "1"},
-    {"DeviceShutdown", "9"},
+    {"DeviceShutdown", "1"},
     {"DriverCamera", "0"},
     {"EVTable", "0"},
     {"ExperimentalModeViaPress", "1"},
-    {"FireTheBabysitter", FrogsGoMoo ? "1" : "0"},
-    {"GreenLightAlert", "0"},
-    {"LaneChangeTime", "0"},
+    {"FireTheBabysitter", FrogsGoMoo ? "1" : "1"},
+    {"GreenLightAlert", "1"},
+    {"LaneChangeTime", "1"},
     {"LaneDetection", "1"},
     {"LaneLinesWidth", "4"},
     {"LateralTune", "1"},
     {"LeadInfo", "1"},
-    {"LockDoors", "0"},
+    {"LockDoors", "1"},
     {"LongitudinalTune", "1"},
     {"LowerVolt", "0"},
     {"Model", "0"},
     {"MuteDM", "1"},
-    {"MuteDoor", "1"},
-    {"MuteOverheated", "1"},
-    {"MuteSeatbelt", "1"},
-    {"NNFF", FrogsGoMoo ? "1" : "0"},
+    {"MuteDoor", "0"},
+    {"MuteOverheated", "0"},
+    {"MuteSeatbelt", "0"},
+    {"NNFF", FrogsGoMoo ? "1" : "1"},
     {"NudgelessLaneChange", "1"},
     {"NumericalTemp", "1"},
-    {"Offset1", "5"},
-    {"Offset2", FrogsGoMoo ? "7" : "5"},
-    {"Offset3", "10"},
-    {"Offset4", FrogsGoMoo ? "20" : "10"},
+    {"Offset1", "0"},
+    {"Offset2", FrogsGoMoo ? "7" : "0"},
+    {"Offset3", "0"},
+    {"Offset4", FrogsGoMoo ? "20" : "0"},
     {"OneLaneChange", "1"},
     {"PathEdgeWidth", "20"},
-    {"PathWidth", "61"},
+    {"PathWidth", "20"},
     {"PauseLateralOnSignal", "0"},
     {"RelaxedFollow", "30"},
     {"RelaxedJerk", "50"},
     {"RoadEdgesWidth", "2"},
     {"RoadNameUI", "1"},
-    {"RotatingWheel", "1"},
-    {"SLCFallback", "2"},
+    {"RotatingWheel", "0"},
+    {"SLCFallback", "0"},
     {"SLCPriority", "1"},
     {"SNGHack", "0"},
-    {"ScreenBrightness", "101"},
-    {"ShowFPS", FrogsGoMoo ? "1" : "0"},
+    {"ScreenBrightness", "50"},
+    {"ShowFPS", FrogsGoMoo ? "1" : "1"},
     {"Sidebar", "1"},
     {"SilentMode", "0"},
     {"SmoothBraking", "1"},
     {"SpeedLimitController", "1"},
     {"StandardFollow", "15"},
     {"StandardJerk", "10"},
-    {"StoppingDistance", FrogsGoMoo ? "6" : "3"},
+    {"StoppingDistance", FrogsGoMoo ? "6" : "1"},
     {"TSS2Tune", "1"},
     {"TurnAggressiveness", FrogsGoMoo ? "85" : "100"},
     {"TurnDesires", "1"},
     {"UnlimitedLength", "1"},
     {"VisionTurnControl", "1"},
-    {"WheelIcon", "1"},
-    {"WideCameraOff", "1"}
+    {"WheelIcon", "0"},
+    {"WideCameraOff", "1"},
+    //Fan///////////////////
+    {"AutoACC", "0"},
+    {"CarApproachingReminder", "1"},
+    {"CarAwayReminder", "1"},
+    {"ChangeLaneReminder", "1"},
+    {"Chinesevoicealert", "1"},
+    {"GreenLightReminder", "1"},    
+    {"Laneblindspotdetection", "1"},
+    {"Roadtype", "1"},
+    {"RoadtypeProfile", "1"}
+    ////////////////////////
   };
 
   bool rebootRequired = false;

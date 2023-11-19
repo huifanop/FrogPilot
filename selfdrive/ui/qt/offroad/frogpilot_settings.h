@@ -222,87 +222,87 @@ private: \
   int newValue(int v) { newValueFunc; } \
 };
 
-ParamController(AccelerationProfile, "AccelerationProfile", "   Acceleration Profile", "Change the rate at which openpilot accelerates with either a sporty or more eco friendly profile.", "../assets/offroad/icon_blank.png",
+ParamController(AccelerationProfile, "AccelerationProfile", "加速模式", "通過運動型或更節能的配置更改 openpilot 的加速速度.", "../assets/offroad/icon_blank.png",
   const int profile = params.getInt("AccelerationProfile");
-  return profile == 1 ? "Eco" : profile == 2 ? "Normal" : "Sport";,
+  return profile == 1 ? "節能" : profile == 2 ? "正常" : "運動";,
   return std::clamp(v, 1, 3);
 )
 
-ParamController(AdjustablePersonalities, "AdjustablePersonalities", "Adjustable Personalities", "Switch personalities using the 'Distance' button on the steering wheel (GM/Lexus/Toyota Only) or via the onroad UI for other makes.\n\n1 bar = Aggressive\n2 bars = Standard\n3 bars = Relaxed", "../assets/offroad/icon_distance.png",
+ParamController(AdjustablePersonalities, "AdjustablePersonalities", "跟車控制", "使用方向盤上的「距離」按鈕或透過其他品牌的道路使用者介面切換個性。.\n\n1 格 = 接近\n2 格 = 標準\n3 格 = 遠離", "../assets/offroad/icon_distance.png",
   const int selection = params.getInt("AdjustablePersonalities");
   return selection == 0 ? "None" : selection == 1 ? "Wheel" : selection == 2 ? "UI" : "Wheel + UI";,
   return v >= 0 ? v % 4 : 3;
 )
 
-ParamController(AggressiveJerk, "AggressiveJerk", "Jerk Value", "Set the jerk value for the 'Aggressive Personality'.\n\nValue represents the responsiveness of the brake/gas pedals.\n\nHigher value = Less responsive/more 'relaxed'\n\nStock has a value of 0.5.", "../assets/offroad/icon_blank.png",
+ParamController(AggressiveJerk, "AggressiveJerk", "Jerk 值", "設定積極模式中的Jerk 值\n\n數值代表剎車/油門踏板的反應能力.\n\n更高的數值代表更少的力道/更“放鬆”\n\n預設值為0.5.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("AggressiveJerk") / 10.0);,
   return std::clamp(v, 1, 50);
 )
 
-ParamController(AggressiveFollow, "AggressiveFollow", "Time", "Set the following distance for the 'Aggressive Personality'.\n\nValue represents the time (in seconds) to follow the lead vehicle.\n\nStock has a value of 1.25.", "../assets/aggressive.png",
+ParamController(AggressiveFollow, "AggressiveFollow", "時間", "設定積極模式跟車距離\n\n數值反應與前車跟隨距離的秒數設定\n\n預設值為 1.25.", "../assets/aggressive.png",
   return QString::number(params.getInt("AggressiveFollow") / 10.0) + " sec";,
   return std::clamp(v, 10, 50);
 )
 
-ParamController(CESpeed, "CESpeed", "Below", "Switch to 'Experimental Mode' below this speed when there is no lead vehicle.", "../assets/offroad/icon_blank.png",
+ParamController(CESpeed, "CESpeed", "時速設定", "當沒有前方車輛且低於此速度時切換到“實驗模式”.", "../assets/offroad/icon_blank.png",
   const int speed = params.getInt("CESpeed");
-  return speed == 0 ? "Off" : QString::number(speed) + (isMetric ? " kph" : " mph");,
+  return speed == 0 ? "關閉" : QString::number(speed) + (isMetric ? " kph" : " mph");,
   return std::clamp(v, 0, isMetric ? 150 : 99);
 )
 
-ParamController(CESpeedLead, "CESpeedLead", "With Lead", "Switch to 'Experimental Mode' below this speed when there is a lead vehicle.", "../assets/offroad/icon_blank.png",
+ParamController(CESpeedLead, "CESpeedLead", "有前車", "當有前車且低於此速度時切換至實驗模式.", "../assets/offroad/icon_blank.png",
   const int speedLead = params.getInt("CESpeedLead");
-  return speedLead == 0 ? "Off" : QString::number(speedLead) + (isMetric ? " kph" : " mph");,
+  return speedLead == 0 ? "關閉" : QString::number(speedLead) + (isMetric ? " kph" : " mph");,
   return std::clamp(v, 0, isMetric ? 150 : 99);
 )
 
-ParamController(CurveSensitivity, "CurveSensitivity", "   Curve Detection Sensitivity", "Changes how sensitive the car is to curves in the road. Higher values make the car react to curves earlier, while lower values might result in smoother but later reactions.", "../assets/offroad/icon_blank.png",
+ParamController(CurveSensitivity, "CurveSensitivity", "曲線檢測靈敏度", "改變汽車對道路彎道的敏感度。 較高的值使汽車對彎道的反應更早，而較低的值可能會導致更平滑但反應更晚.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("CurveSensitivity")) + "%";,
   return std::clamp(v, 1, 200);
 )
 
-ParamController(CustomColors, "CustomColors", "Colors ", "Replace the stock openpilot colors with a custom color scheme.\n\nWant to submit your own color scheme? Post it in the 'feature-request' channel on the FrogPilot Discord!", "../assets/offroad/icon_blank.png",
+ParamController(CustomColors, "CustomColors", "顏色 ", "使用自訂配色方案替換庫存 openpilot 顏色.", "../assets/offroad/icon_blank.png",
   const int colors = params.getInt("CustomColors");
   return colors == 0 ? "Stock" : colors == 1 ? "Frog" : colors == 2 ? "Tesla" : "Stalin";,
   return v >= 0 ? v % 4 : 3;
 )
 
-ParamController(CustomIcons, "CustomIcons", "Icons", "Replace the stock openpilot icons with a custom icon pack.\n\nWant to submit your own icon pack? Post it in the 'feature-request' channel on the FrogPilot Discord!", "../assets/offroad/icon_blank.png",
+ParamController(CustomIcons, "CustomIcons", "圖示", "用自訂圖標包替換庫存 openpilot 圖標.", "../assets/offroad/icon_blank.png",
   const int icons = params.getInt("CustomIcons");
   return icons == 0 ? "Stock" : icons == 1 ? "Frog" : icons == 2 ? "Tesla" : "Stalin";,
   return v >= 0 ? v % 4 : 3;
 )
 
-ParamController(CustomSignals, "CustomSignals", "Signals", "Enable a custom turn signal animation.\n\nWant to submit your own turn signal animation? Post it in the 'feature-request' channel on the FrogPilot Discord!", "../assets/offroad/icon_blank.png",
+ParamController(CustomSignals, "CustomSignals", "訊號", "啟用自訂方向燈動畫.", "../assets/offroad/icon_blank.png",
   const int turnSignals = params.getInt("CustomSignals");
   return turnSignals == 0 ? "Stock" : turnSignals == 1 ? "Frog" : "Stalin";,
   return v >= 0 ? v % 4 : 3;
 )
 
-ParamController(CustomSounds, "CustomSounds", "Sounds", "Replace the stock openpilot sounds with a custom sound pack.\n\nWant to submit your own custom sound pack? Post it in the 'feature-request' channel on the FrogPilot Discord!", "../assets/offroad/icon_blank.png",
+ParamController(CustomSounds, "CustomSounds", "聲音", "用自訂聲音包替換庫存 openpilot 聲音.", "../assets/offroad/icon_blank.png",
   const int sounds = params.getInt("CustomSounds");
   return sounds == 0 ? "Stock" : sounds == 1 ? "Frog" : sounds == 2 ? "Tesla" : "Stalin";,
   return v >= 0 ? v % 4 : 3;
 )
 
-ParamController(DeviceShutdown, "DeviceShutdown", "Device Shutdown Timer", "Set the timer for when the device turns off after being offroad to reduce energy waste and prevent battery drain.", "../assets/offroad/icon_time.png",
+ParamController(DeviceShutdown, "DeviceShutdown", "設備自動關機設定", "設置設備在熄火後自動關閉的計時器，以減少能源浪費並防止電池耗盡.", "../assets/offroad/icon_time.png",
   const int time = params.getInt("DeviceShutdown");
-  return time == 0 ? "Instant" : (time > 0 && time <= 3) ? QString::number(time * 15) + " mins" : QString::number(time - 3) + (time == 4 ? " hour" : " hours");,
+  return time == 0 ? "立刻" : (time > 0 && time <= 3) ? QString::number(time * 15) + " mins" : QString::number(time - 3) + (time == 4 ? " hour" : " hours");,
   return std::clamp(v, 0, 33);
 )
 
-ParamController(LaneChangeTime, "LaneChangeTime", "   Lane Change Timer", "Set a time delay before openpilot conducts a nudgeless lane change.", "../assets/offroad/icon_blank.png",
+ParamController(LaneChangeTime, "LaneChangeTime", "自動變換車道延遲", "設定自動變換車道延遲時間.", "../assets/offroad/icon_blank.png",
   const int delay = params.getInt("LaneChangeTime");
-  return delay == 0 ? "Instant" : QString::number(static_cast<double>(delay) / 2.0) + " sec";,
+  return delay == 0 ? "立刻" : QString::number(static_cast<double>(delay) / 2.0) + " sec";,
   return std::clamp(v, 0, 10);
 )
 
-ParamController(LaneLinesWidth, "LaneLinesWidth", "Lanes", "Customize the lane line width.\n\nDefault matches the MUTCD average of 4 inches.", "../assets/offroad/icon_blank.png",
+ParamController(LaneLinesWidth, "LaneLinesWidth", "車道寬", "自定義車道線寬度。默認匹配 MUTCD 平均值 4 英寸.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("LaneLinesWidth")) + (isMetric ? " cm" : " in");,
   return std::clamp(v, 0, isMetric ? 60 : 24);
 )
 
-ParamController(Model, "Model", "Model Selector (Requires Reboot)", "Select your preferred openpilot model.\n\nFV = Farmville(Default)\nNLP = New Lemon Pie", "../assets/offroad/icon_calibration.png",
+ParamController(Model, "Model", "模型選擇 (須重啟)", "選擇您喜歡的 openpilot 模型.\n\nFV = Farmville(Default)\nNLP = New Lemon Pie", "../assets/offroad/icon_calibration.png",
   const int model = params.getInt("Model");
   return model == 0 ? "FV" : "NLP";,
   return v >= 0 ? v % 2 : 1;
@@ -348,89 +348,95 @@ ParamController(Offset4Metric, "Offset4", "105-159", "Set the speed limit offset
   return std::clamp(v, 0, 99);
 )
 
-ParamController(PathEdgeWidth, "PathEdgeWidth", "Path Edges", "Customize the path edge width that displays current driving statuses.\n\nDefault is 20% of the total path.\n\nBlue = Navigation\nLight Blue = Always On Lateral\nGreen = Default with 'FrogPilot Colors'\nLight Green = Default with stock colors\nOrange = Experimental Mode Active\nYellow = Conditional Overriden", "../assets/offroad/icon_blank.png",
+ParamController(PathEdgeWidth, "PathEdgeWidth", "路徑邊寬", "自定義顯示當前駕駛狀態的路徑邊緣寬度。預設為總路徑的 20%。\n\n藍色 =導航\n\n淺藍色 =全時置中\n綠色 = 默認使用“FrogPilot 顏色”\n淺綠色 = 預設使用原始顏色\n橙色 = 實驗模式啟動 \n黃色 = 條件模式", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("PathEdgeWidth")) + "%";,
   return std::clamp(v, 0, 100);
 )
 
-ParamController(PathWidth, "PathWidth", "Path ", "Customize the path width.\n\nDefault matches the width of a 2019 Lexus ES 350.", "../assets/offroad/icon_blank.png",
+ParamController(PathWidth, "PathWidth", "路徑寬", "自定義路徑寬度。\n\n預設為 skoda kodiaq 的寬度.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("PathWidth") / 10.0) + (isMetric ? " m" : " ft");,
   return std::clamp(v, 0, isMetric ? 30 : 100);
 )
 
-ParamController(RelaxedJerk, "RelaxedJerk", "Jerk Value", "Set the jerk value for the 'Relaxed Personality'.\n\nValue represents the responsiveness of the brake/gas pedals.\n\nHigher value = Less responsive/more 'relaxed'\n\nStock has a value of 1.0.", "../assets/offroad/icon_blank.png",
+ParamController(RelaxedJerk, "RelaxedJerk", "Jerk 值", "設置“輕鬆模式”的Jerk值。\n\n數值代表剎車/油門踏板的反應能力.\n\n更高的數值代表更少的力道/更“放鬆”\n\n預設值為1.0.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("RelaxedJerk") / 10.0);,
   return std::clamp(v, 1, 50);
 )
 
-ParamController(RelaxedFollow, "RelaxedFollow", "Time", "Set the following distance for the 'Relaxed Personality'.\n\nValue represents the time (in seconds) to follow the lead vehicle.\n\nStock has a value of 1.75.", "../assets/relaxed.png",
+ParamController(RelaxedFollow, "RelaxedFollow", "時間", "設定輕鬆模式跟車距離。\n\n數值反應與前車跟隨距離的秒數設定\n\n預設值為 1.75.", "../assets/relaxed.png",
   return QString::number(params.getInt("RelaxedFollow") / 10.0) + " sec";,
   return std::clamp(v, 10, 50);
 )
 
-ParamController(RoadEdgesWidth, "RoadEdgesWidth", "Road Edges", "Customize the road edges width.\n\nDefault is 1/2 of the MUTCD average lane line width of 4 inches.", "../assets/offroad/icon_blank.png",
+ParamController(RoadEdgesWidth, "RoadEdgesWidth", "道路邊寬", "自定義道路邊緣寬度。\n\n預設值為 MUTCD 平均車道線寬度 4 英寸.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("RoadEdgesWidth")) + (isMetric ? " cm" : " in");,
   return std::clamp(v, 0, isMetric ? 60 : 24);
 )
 
-ParamController(ScreenBrightness, "ScreenBrightness", "Screen Brightness", "Set a custom screen brightness level or use the default 'Auto' brightness setting.", "../assets/offroad/icon_light.png",
+ParamController(ScreenBrightness, "ScreenBrightness", "螢幕亮度", "設定螢幕亮度或使用預設的“自動”亮度設定.", "../assets/offroad/icon_light.png",
   const int brightness = params.getInt("ScreenBrightness");
-  return brightness == 101 ? "Auto" : brightness == 0 ? "Off" : QString::number(brightness) + "%";,
+  return brightness == 101 ? "自動" : brightness == 0 ? "Off" : QString::number(brightness) + "%";,
   return std::clamp(v, 0, 101);
 )
 
-ParamController(SLCFallback, "SLCFallback", "SLC Fallback", "Set your preferred fallback method for when there's no speed limit found in either Navigation, OSM, or the car's dashboard.", "../assets/offroad/icon_blank.png",
+ParamController(SLCFallback, "SLCFallback", "SLC 備援方式", "當導航、OSM 或汽車儀表板中沒有速度限制時，設定您的首選後備方法.", "../assets/offroad/icon_blank.png",
   const int fallback = params.getInt("SLCFallback");
-  return fallback == 0 ? "None" : fallback == 1 ? "Experimental Mode" : "Previous Speed Limit";,
+  return fallback == 0 ? "無" : fallback == 1 ? "實驗模式" : "之前的限速";,
   return v >= 0 ? v % 3 : 2;
 )
 
-ParamController(SLCPriority, "SLCPriority", "SLC Priority", "Set your preferred priority order when deciding what speed limit to use for Speed Limit Controller.", "../assets/offroad/icon_blank.png",
+ParamController(SLCPriority, "SLCPriority", "SLC 優先選項", "在決定限速控制器所使用的限速時設定您的首選優先順序.", "../assets/offroad/icon_blank.png",
   const int priority = params.getInt("SLCPriority");
-  return priority == 0 ? "Navigation, Dash, OSM" : 
-         priority == 1 ? "Navigation, OSM, Dash" : 
-         priority == 2 ? "Navigation, OSM" : 
-         priority == 3 ? "Navigation, Dash" : 
-         priority == 4 ? "Navigation" : 
-         priority == 5 ? "OSM, Dash, Navigation" : 
-         priority == 6 ? "OSM, Navigation, Dash" : 
-         priority == 7 ? "OSM, Navigation" : 
-         priority == 8 ? "OSM, Dash" : 
+  return priority == 0 ? "導航, 儀表, OSM" : 
+         priority == 1 ? "導航, OSM, 儀表" : 
+         priority == 2 ? "導航, OSM" : 
+         priority == 3 ? "導航, 儀表" : 
+         priority == 4 ? "導航" : 
+         priority == 5 ? "OSM, 儀表, 導航" : 
+         priority == 6 ? "OSM, 導航, 儀表" : 
+         priority == 7 ? "OSM, 導航" : 
+         priority == 8 ? "OSM, 儀表" : 
          priority == 9 ? "OSM" : 
-         priority == 10 ? "Dash, Navigation, OSM" : 
-         priority == 11 ? "Dash, OSM, Navigation" : 
-         priority == 12 ? "Dash, OSM" : 
-         priority == 13 ? "Dash, Navigation" : 
-         priority == 14 ? "Dash" : 
-         priority == 15 ? "Highest" : 
-         "Lowest";,
+         priority == 10 ? "儀表, 導航, OSM" : 
+         priority == 11 ? "儀表, OSM, 導航" : 
+         priority == 12 ? "儀表, OSM" : 
+         priority == 13 ? "儀表, 導航" : 
+         priority == 14 ? "儀表" : 
+         priority == 15 ? "最高" : 
+         "最低";,
   return v >= 0 ? v % 17 : 16;
 )
 
-ParamController(StandardJerk, "StandardJerk", "Jerk Value", "Set the jerk value for the 'Standard Personality'.\n\nValue represents the responsiveness of the brake/gas pedals.\n\nHigher value = Less responsive/more 'relaxed'\n\nStock has a value of 1.0.", "../assets/offroad/icon_blank.png",
+ParamController(StandardJerk, "StandardJerk", "Jerk 值", "設置“標準模式”的Jerk值。\n\n數值代表剎車/油門踏板的反應能力.\n\n更高的數值代表更少的力道/更“放鬆”\n\n預設值為1.0.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("StandardJerk") / 10.0);,
   return std::clamp(v, 1, 50);
 )
 
-ParamController(StandardFollow, "StandardFollow", "Time", "Set the following distance for the 'Standard Personality'.\n\nValue represents the time (in seconds) to follow the lead vehicle.\n\nStock has a value of 1.45.", "../assets/standard.png",
+ParamController(StandardFollow, "StandardFollow", "時間", "設定標準模式跟車距離。\n\n數值反應與前車跟隨距離的秒數設定\n\n預設值為 1.45.", "../assets/standard.png",
   return QString::number(params.getInt("StandardFollow") / 10.0) + " sec";,
   return std::clamp(v, 10, 50);
 )
 
-ParamController(StoppingDistance, "StoppingDistance", "   Increase Stopping Distance", "Increase the stopping distance for a more comfortable stop.", "../assets/offroad/icon_blank.png",
+ParamController(StoppingDistance, "StoppingDistance", "增加停止距離", "增加停車距離以獲得更舒適的停車體驗.", "../assets/offroad/icon_blank.png",
   const int distance = params.getInt("StoppingDistance");
-  return distance == 0 ? "Off" : QString::number(distance) + (isMetric ? " meters" : " feet");,
+  return distance == 0 ? "關閉" : QString::number(distance) + (isMetric ? " meters" : " feet");,
   return std::clamp(v, 0, isMetric ? 5 : 15);
 )
 
-ParamController(WheelIcon, "WheelIcon", "Steering Wheel Icon", "Replace the stock openpilot steering wheel icon with a custom icon.\n\nWant to submit your own steering wheel? Post it in the 'feature-request' channel on the FrogPilot Discord!", "../assets/offroad/icon_openpilot.png",
+ParamController(WheelIcon, "WheelIcon", "方向盤圖示", "用自定義圖標替換官方方向盤圖示", "../assets/offroad/icon_openpilot.png",
   const int wheel = params.getInt("WheelIcon");
   return wheel == 0 ? "Stock" : wheel == 1 ? "Lexus" : wheel == 2 ? "Toyota" : wheel == 3 ? "Frog" : wheel == 4 ? "Rocket" : wheel == 5 ? "Hyundai" : "Stalin";,
   return v >= 0 ? v % 7 : 6;
 )
 
-ParamController(TurnAggressiveness, "TurnAggressiveness", "   Turn Speed Aggressiveness", "Adjusts how quickly the car takes turns. Higher values mean faster turns, while lower values make turns more gentle.", "../assets/offroad/icon_blank.png",
+ParamController(TurnAggressiveness, "TurnAggressiveness", "轉彎速度積極性", "調整汽車速度。 較高的值意味著轉彎更快，而較低的值意味著轉彎更平緩.", "../assets/offroad/icon_blank.png",
   return QString::number(params.getInt("TurnAggressiveness")) + "%";,
   return std::clamp(v, 1, 200);
 )
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+ParamController(RoadtypeProfile, "RoadtypeProfile", "選擇行駛的道路種類", "關閉或選擇目前行駛的路段可依特定條件改變最高時速設定.", "../assets/offroad/icon_blank.png",
+  const int roadtype = params.getInt("RoadtypeProfile");
+  return roadtype == 0 ? "關閉" :roadtype == 1 ? "平面" : roadtype == 2 ? "快速" : "高速";,
+  return std::clamp(v, 0, 3);
+)
+////////////////////////////////////////////////////////////////////////////////////////////////////

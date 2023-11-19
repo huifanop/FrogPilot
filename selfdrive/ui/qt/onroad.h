@@ -121,6 +121,9 @@ private:
   // FrogPilot widgets
   void drawCompass(QPainter &p);
   void drawLeadInfo(QPainter &p);
+//////////////////////////////////
+  void drawPersonalities(QPainter &p);
+//////////////////////////////////
   void drawStatusBar(QPainter &p);
   void drawTurnSignals(QPainter &p);
 
@@ -184,10 +187,25 @@ private:
   int conditionalStatus;
   int customColors;
   int customSignals;
+////////////////////////////
+  float batteryVol;
+  int accProfile;
+  int vtsctaProfile;
+  int vtsccsProfile;
+  int roadProfile;
+  int personalityProfile;
+  bool autoaccProfile;
+////////////////////////////
   int totalFrames = 8;
   PersonalityButton *personality_btn;
   ScreenRecorder *recorder_btn;
   QPixmap compass_inner_img;
+////////////////////////////
+  QVector<std::pair<QPixmap, QString>> profile_data;
+  QVector<std::pair<QPixmap, QString>> accprofile_data;
+  QVector<std::pair<QPixmap, QString>> roadprofile_data;
+  QVector<std::pair<QPixmap, QString>> autoaccprofile_data;
+////////////////////////////
   size_t animationFrameIndex;
   std::unordered_map<int, std::pair<QString, std::pair<QColor, std::map<double, QBrush>>>> themeConfiguration;
   std::vector<QPixmap> signalImgVector;

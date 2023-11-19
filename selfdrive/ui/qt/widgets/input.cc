@@ -68,7 +68,7 @@ InputDialog::InputDialog(const QString &title, QWidget *parent, const QString &s
     vlayout->addWidget(sublabel, 1, Qt::AlignTop | Qt::AlignLeft);
   }
 
-  QPushButton* cancel_btn = new QPushButton(tr("Cancel"));
+  QPushButton* cancel_btn = new QPushButton(tr("取消"));
   cancel_btn->setFixedSize(386, 125);
   cancel_btn->setStyleSheet(R"(
     QPushButton {
@@ -170,7 +170,7 @@ void InputDialog::handleEnter() {
     done(QDialog::Accepted);
     emitText(line->text());
   } else {
-    setMessage(tr("Need at least %n character(s)!", "", minLength), false);
+    setMessage(tr("至少需要 %n 個字元!", "", minLength), false);
   }
 }
 
@@ -229,23 +229,23 @@ ConfirmationDialog::ConfirmationDialog(const QString &prompt_text, const QString
 }
 
 bool ConfirmationDialog::alert(const QString &prompt_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("Ok"), "", false, parent);
+  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("重新確認"), "", false, parent);
   return d.exec();
 }
 
 bool ConfirmationDialog::confirm(const QString &prompt_text, const QString &confirm_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, confirm_text, tr("Cancel"), false, parent);
+  ConfirmationDialog d = ConfirmationDialog(prompt_text, confirm_text, tr("重新確認"), false, parent);
   return d.exec();
 }
 
 bool ConfirmationDialog::rich(const QString &prompt_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("Ok"), "", true, parent);
+  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("重新確認"), "", true, parent);
   return d.exec();
 }
 
 // Reboot dialog box for FrogPilot panel
 bool ConfirmationDialog::toggle(const QString &prompt_text, const QString &confirm_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, confirm_text, tr("Reboot Later"), false, parent);
+  ConfirmationDialog d = ConfirmationDialog(prompt_text, confirm_text, tr("稍後重啟"), false, parent);
   return d.exec();
 }
 
@@ -257,7 +257,7 @@ bool ConfirmationDialog::toggleAlert(const QString &prompt_text, const QString &
 
 // Yes or no dialog box for FrogPilot panel
 bool ConfirmationDialog::yesorno(const QString &prompt_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("Yes"), tr("No"), false, parent);
+  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("是"), tr("否"), false, parent);
   return d.exec();
 }
 
@@ -299,7 +299,7 @@ MultiOptionDialog::MultiOptionDialog(const QString &prompt_text, const QStringLi
   QButtonGroup *group = new QButtonGroup(listWidget);
   group->setExclusive(true);
 
-  QPushButton *confirm_btn = new QPushButton(tr("Select"));
+  QPushButton *confirm_btn = new QPushButton(tr("選擇"));
   confirm_btn->setObjectName("confirm_btn");
   confirm_btn->setEnabled(false);
 
@@ -333,7 +333,7 @@ MultiOptionDialog::MultiOptionDialog(const QString &prompt_text, const QStringLi
   main_layout->addLayout(blayout);
   blayout->setSpacing(50);
 
-  QPushButton *cancel_btn = new QPushButton(tr("Cancel"));
+  QPushButton *cancel_btn = new QPushButton(tr("取消"));
   QObject::connect(cancel_btn, &QPushButton::clicked, this, &ConfirmationDialog::reject);
   QObject::connect(confirm_btn, &QPushButton::clicked, this, &ConfirmationDialog::accept);
   blayout->addWidget(cancel_btn);
