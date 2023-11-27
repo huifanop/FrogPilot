@@ -106,6 +106,7 @@ private:
   bool scheduleCompleted;
   bool schedulePending;
   int schedule;
+  QString elapsedTime;
   QString offlineFolderPath = "/data/media/0/osm/offline";
   std::string osmDownloadProgress;
   std::string previousOSMDownloadProgress;

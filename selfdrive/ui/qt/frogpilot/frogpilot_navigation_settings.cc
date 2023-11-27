@@ -82,38 +82,32 @@ void FrogPilotNavigationPanel::hideEvent(QHideEvent *event) {
 }
 
 void FrogPilotNavigationPanel::updateState() {
-  if (schedule) downloadSchedule();
-
-  if (!isVisible()) return;
-
   if (downloadActive) updateStatuses();
+  if (schedule) downloadSchedule();
 }
 
 void FrogPilotNavigationPanel::updateStatuses() {
-  std::thread([&] {
-    static std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
-    osmDownloadProgress = params.get("OSMDownloadProgress");
+  static std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+  osmDownloadProgress = params.get("OSMDownloadProgress");
+  downloadActive = elapsedTime != "Downloaded";
 
-    if (osmDownloadProgress != previousOSMDownloadProgress) {
-      qint64 fileSize = calculateDirectorySize(offlineFolderPath);
-      offlineMapsSize->setText(formatSize(fileSize));
-      previousOSMDownloadProgress = osmDownloadProgress;
-    }
+  if (osmDownloadProgress != previousOSMDownloadProgress && isVisible()) {
+    qint64 fileSize = calculateDirectorySize(offlineFolderPath);
+    offlineMapsSize->setText(formatSize(fileSize));
+    previousOSMDownloadProgress = osmDownloadProgress;
+  }
 
-    const QString elapsedTime = calculateElapsedTime(osmDownloadProgress, startTime);
+  elapsedTime = calculateElapsedTime(osmDownloadProgress, startTime);
 
-    offlineMapsElapsed->setText(elapsedTime);
-    offlineMapsETA->setText(calculateETA(osmDownloadProgress, startTime));
-    offlineMapsStatus->setText(formatDownloadStatus(osmDownloadProgress));
+  offlineMapsElapsed->setText(elapsedTime);
+  offlineMapsETA->setText(calculateETA(osmDownloadProgress, startTime));
+  offlineMapsStatus->setText(formatDownloadStatus(osmDownloadProgress));
 
-    downloadActive = elapsedTime != "Downloaded";
-
-    if (downloadActive != previousDownloadActive) {
-      startTime = !downloadActive ? std::chrono::steady_clock::now() : startTime;
-      updateVisibility(downloadActive);
-      previousDownloadActive = downloadActive;
-    }
-  }).detach();
+  if (downloadActive != previousDownloadActive) {
+    startTime = !downloadActive ? std::chrono::steady_clock::now() : startTime;
+    updateVisibility(downloadActive);
+    previousDownloadActive = downloadActive;
+  }
 }
 
 void FrogPilotNavigationPanel::updateVisibility(bool visibility) {
