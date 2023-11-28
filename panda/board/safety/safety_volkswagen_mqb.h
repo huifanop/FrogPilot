@@ -162,17 +162,19 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
       // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
       if (volkswagen_longitudinal) {
         bool set_button = GET_BIT(to_push, 16U);
-        bool resume_button = GET_BIT(to_push, 19U);
-        if ((volkswagen_set_button_prev && !set_button) || (volkswagen_resume_button_prev && !resume_button)) {
-          controls_allowed = acc_main_on;
-        }
+        bool resume_button = GET_BIT(to_push, 19U);   
+        /////////鍵盤控制/////////////     
+        controls_allowed = acc_main_on;
+        /////////////////////////////
         volkswagen_set_button_prev = set_button;
         volkswagen_resume_button_prev = resume_button;
       }
       // Always exit controls on rising edge of Cancel
       // Signal: GRA_ACC_01.GRA_Abbrechen
       if (GET_BIT(to_push, 13U) == 1U) {
-        controls_allowed = false;
+        //////////鍵盤控制////////////
+        controls_allowed = controls_allowed;
+        //////////////////////////////
       }
     }
 
