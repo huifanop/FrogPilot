@@ -291,7 +291,7 @@ class Controls:
 ###################自動啟動ACC並帶入最高速限##########################################
     vegokph = CS.vEgo *3.6
     if self.params.get_bool("AutoACC", True):
-      if not self.params.get_bool('IsEngaged') and (vegokph >10 or self.sm['longitudinalPlan'].trafficState == 3):
+      if not self.params.get_bool('IsEngaged') and vegokph >10 :
           self.params_memory.put_bool('KeyResume', True)
           if self.params_memory.get_int('DetectSpeedLimit') != 0:
               self.params_memory.put_bool('SpeedLimitChanged', True)
