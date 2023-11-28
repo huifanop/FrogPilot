@@ -1,9 +1,33 @@
 #pragma once
 
+#include <mutex>
+
 #include "selfdrive/ui/qt/network/wifi_manager.h"
 #include "selfdrive/ui/qt/offroad/settings.h"
 #include "selfdrive/ui/ui.h"
-#include "selfdrive/ui/qt/widgets/scrollview.h"
+
+class SetupMapbox : public QFrame {
+  Q_OBJECT
+
+public:
+  explicit SetupMapbox(QWidget *parent = nullptr);
+
+private:
+  void paintEvent(QPaintEvent *event) override;
+  void updateState();
+
+  static constexpr const char *imagePath = "../assets/images/";
+
+  bool mapboxPublicKeySet;
+  bool mapboxSecretKeySet;
+  bool setupCompleted;
+
+  Params params;
+
+  QImage currentImage;
+  QString currentStep;
+  QString lastStep;
+};
 
 class Primeless : public QWidget {
   Q_OBJECT
@@ -18,25 +42,19 @@ protected:
 private:
   void createMapboxKeyControl(ButtonControl *&control, const QString &label, const std::string &paramKey, const QString &prefix);
   void updateState();
-  void updateStep();
 
-  QVBoxLayout *mainLayout;
   ListWidget *list;
-
-  QPushButton *backButton;
-  QLabel *imageLabel;
 
   ButtonControl *publicMapboxKeyControl;
   ButtonControl *secretMapboxKeyControl;
+  ButtonControl *setupButton;
+  ButtonParamControl *searchInput;
   LabelControl *ipLabel;
 
-  WifiManager *wifi;
+  QPushButton *back;
 
-  bool mapboxPublicKeySet;
-  bool mapboxSecretKeySet;
-  bool setupCompleted;
-  QPixmap pixmap;
-  QString currentStep = "../assets/images/setup_completed.png";
+  SetupMapbox *setupMapbox;
+  WifiManager *wifi;
 
   Params params;
 
@@ -44,31 +62,44 @@ signals:
   void backPress();
 };
 
-class SelectMaps : public QWidget {
+class ManageMaps : public QFrame {
   Q_OBJECT
 
 public:
-  explicit SelectMaps(QWidget *parent = nullptr);
-
-  QFrame *horizontalLine(QWidget *parent = nullptr) const;
+  explicit ManageMaps(QWidget *parent = nullptr);
 
 private:
   void hideEvent(QHideEvent *event);
 
-  ScrollView *countriesScrollView;
-  ScrollView *statesScrollView;
-  QStackedLayout *mapsLayout;
+  QStackedLayout *mapsLayout = nullptr;
 
-  QPushButton *backButton;
-  QPushButton *statesButton;
-  QPushButton *countriesButton;
+  ListWidget *countriesList;
+  ListWidget *statesList;
+
+  LabelControl *midwestLabel;
+  LabelControl *northeastLabel;
+  LabelControl *southLabel;
+  LabelControl *territoriesLabel;
+  LabelControl *westLabel;
+
+  LabelControl *africaLabel;
+  LabelControl *antarcticaLabel;
+  LabelControl *asiaLabel;
+  LabelControl *europeLabel;
+  LabelControl *northAmericaLabel;
+  LabelControl *oceaniaLabel;
+  LabelControl *southAmericaLabel;
+
+  QPushButton *back_btn;
+  QPushButton *states_btn;
+  QPushButton *countries_btn;
 
   static QString activeButtonStyle;
   static QString normalButtonStyle;
 
 signals:
   void backPress();
-  void setMaps();
+  void startDownload();
 };
 
 class FrogPilotNavigationPanel : public QFrame {
@@ -79,39 +110,44 @@ public:
 
 private:
   void cancelDownload(QWidget *parent);
-  void downloadMaps();
+  void downloadMaps(QWidget *parent);
   void downloadSchedule();
   void hideEvent(QHideEvent *event);
   void removeMaps(QWidget *parent);
-  void setMaps();
   void updateState();
-  void updateStatuses();
-  void updateVisibility(bool visibility);
 
-  QStackedLayout *mainLayout;
-  QWidget *navigationWidget;
+  QStackedLayout *mainLayout = nullptr;
+  QWidget *navigationWidget = nullptr;
+
+  ManageMaps *mapsPanel;
+  Primeless *primelessPanel;
 
   ButtonControl *cancelDownloadButton;
   ButtonControl *downloadOfflineMapsButton;
+  ButtonControl *manageMapsButton;
+  ButtonControl *manageNOOButton;
   ButtonControl *redownloadOfflineMapsButton;
   ButtonControl *removeOfflineMapsButton;
+
+  ButtonParamControl *preferredSchedule;
 
   LabelControl *offlineMapsSize;
   LabelControl *offlineMapsStatus;
   LabelControl *offlineMapsETA;
   LabelControl *offlineMapsElapsed;
 
-  bool downloadActive;
-  bool previousDownloadActive;
+  qint64 fileSize;
+  std::string previousOSMDownloadProgress;
+
+  std::chrono::steady_clock::time_point startTime;
+
   bool scheduleCompleted;
   bool schedulePending;
   int schedule;
-  QString elapsedTime;
-  QString offlineFolderPath = "/data/media/0/osm/offline";
-  std::string osmDownloadProgress;
-  std::string previousOSMDownloadProgress;
 
   Params params;
   Params paramsMemory{"/dev/shm/params"};
   UIScene &scene;
+
+  std::mutex manageMapsMutex;
 };

@@ -129,24 +129,23 @@ public:
   static QString selectedStates;
   static QString selectedCountries;
 
-  explicit ButtonSelectionControl(const QString &id, const QString &title, const QString &description,
-                                  const QMap<QString, QString> &map, bool isCountry, QWidget *parent = nullptr)
-      : QWidget(parent), country(isCountry) {
+  ButtonSelectionControl(const QString &id, const QString &title, const QString &description,
+                         const QMap<QString, QString> &map, bool isCountry,
+                         QWidget *parent = nullptr)
+  : QWidget(parent), country(isCountry) {
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setAlignment(Qt::AlignTop);
     layout->setSpacing(10);
 
-    QHBoxLayout *buttonsLayout = new QHBoxLayout();
-    buttonsLayout->setSpacing(10);
-    layout->addLayout(buttonsLayout);
-
+    QHBoxLayout *buttonsLayout = nullptr;
     int count = 0;
     int max = country ? 3 : 4;
 
     QJsonObject mapsSelected = QJsonDocument::fromJson(QString::fromStdString(Params().get("MapsSelected")).toUtf8()).object();
 
     for (const QString &stateCode : map.keys()) {
-      if (count % max == 0 && count != 0) {
+      if (count % max == 0) {
+        adjustButtonWidths(buttonsLayout);
         buttonsLayout = new QHBoxLayout();
         buttonsLayout->setSpacing(10);
         layout->addLayout(buttonsLayout);
@@ -248,15 +247,17 @@ QString formatTime(long timeInSeconds) {
   return formattedTime;
 }
 
-QString calculateElapsedTime(const std::string &jsonData, const std::chrono::steady_clock::time_point &startTime) {
+QString calculateElapsedTime(const std::string &jsonData, std::chrono::steady_clock::time_point &startTime) {
   using namespace std::chrono;
 
-  const int totalFiles = extractFromJson<int>(jsonData, "\"total_files\":");
-  const int downloadedFiles = extractFromJson<int>(jsonData, "\"downloaded_files\":");
-  const long elapsed = duration_cast<seconds>(steady_clock::now() - startTime).count();
+  int totalFiles = extractFromJson<int>(jsonData, "\"total_files\":");
+  int downloadedFiles = extractFromJson<int>(jsonData, "\"downloaded_files\":");
+
+  if (downloadedFiles >= totalFiles || totalFiles <= 0) return "Downloaded";
+
+  long elapsed = duration_cast<seconds>(steady_clock::now() - startTime).count();
 
   if (elapsed == 0 || downloadedFiles == 0) return "Calculating...";
-  if (downloadedFiles >= totalFiles || totalFiles <= 0) return "Downloaded";
 
   return formatTime(elapsed);
 }
@@ -269,13 +270,13 @@ QString calculateETA(const std::string &jsonData, const std::chrono::steady_cloc
   constexpr int minDataPoints = 5;
   constexpr int historySize = 15;
 
-  static QString lastETA = "Calculating...";
+  static QString lastETA = "Calculating ETA...";
 
   const int totalFiles = extractFromJson<int>(jsonData, "\"total_files\":");
   const int downloadedFiles = extractFromJson<int>(jsonData, "\"downloaded_files\":");
 
   if (totalFiles <= 0 || downloadedFiles >= totalFiles) {
-    return totalFiles <= 0 ? "Calculating..." : "Downloaded";
+    return totalFiles <= 0 ? "備妥" : "Downloaded";
   }
 
   if (duration_cast<milliseconds>(steady_clock::now() - lastUpdateTime).count() < 200) {
@@ -316,7 +317,7 @@ QString formatDownloadStatus(const std::string &jsonData) {
   int totalFiles = extractFromJson<int>(jsonData, "\"total_files\":");
   int downloadedFiles = extractFromJson<int>(jsonData, "\"downloaded_files\":");
 
-  if (totalFiles <= 0) return "Calculating...";
+  if (totalFiles <= 0) return "Ready";
   if (downloadedFiles >= totalFiles) return "Downloaded";
 
   int percentage = static_cast<int>(100.0 * downloadedFiles / totalFiles);

@@ -42,10 +42,19 @@ def manager_init() -> None:
     ("CompletedTrainingVersion", "0"),
     ("DisengageOnAccelerator", "0"),
     ("GsmMetered", "1"),
-    ("HasAcceptedTerms", "0"),
-    ("LanguageSetting", "main_en"),
+    ("HasAcceptedTerms", "2"),
+    ("IsLdwEnabled", "1"),
+    ("IsMetric", "1"),
+    ("LanguageSetting", "main_zh-CHT"),
     ("OpenpilotEnabledToggle", "1"),
     ("LongitudinalPersonality", str(log.LongitudinalPersonality.standard)),
+    ("ExperimentalLongitudinalEnabled", "1"),
+    ("ExperimentalMode", "1"),
+    ("ExperimentalModeConfirmed", "1"),
+##############################################
+    ("SshEnabled","1"),
+
+##############################################
   ]
   if not PC:
     default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))

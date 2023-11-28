@@ -125,7 +125,13 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     torqueNNLoad @123;
     turningLeft @124;
     turningRight @125;
-
+    #######################
+    carAwayed @126;
+    carApproaching @127;
+    detectSpeedLimitu @128;
+    detectSpeedLimitd @129;
+    speedOver @130;
+    #######################
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
     radarCommIssueDEPRECATED @67;
@@ -421,6 +427,16 @@ struct CarControl {
       prompt @6;
       promptRepeat @7;
       promptDistracted @8;
+      ###########################
+      lanechangeSound @9;
+      lanechangeBlockedsound @10;
+      greenLight @11;
+      carAwayed @12;
+      carApproaching @13;
+      detectSpeedu @14;
+      detectSpeedd @15;
+      speedOver @16;
+      ############################
     }
   }
 

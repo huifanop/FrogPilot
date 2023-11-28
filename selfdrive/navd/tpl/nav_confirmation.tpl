@@ -10,7 +10,7 @@
             <option value="recent">Recent</option>
             <option value="home">Set Home</option>
             <option value="work">Set Work</option>
-<option value="fav1">Set Favorite 1</option>
+            <option value="fav1">Set Favorite 1</option>
             <option value="fav2">Set Favorite 2</option>
             <option value="fav3">Set Favorite 3</option>
           </select>

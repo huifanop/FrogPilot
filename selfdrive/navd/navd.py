@@ -136,7 +136,7 @@ class RouteEngine:
 
     lang = self.params.get('LanguageSetting', encoding='utf8')
     if lang is not None:
-      lang = lang.replace('main_', '')
+      lang = 'zh-Hant'
 
     params = {
       'access_token': self.mapbox_token,

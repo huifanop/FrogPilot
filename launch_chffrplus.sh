@@ -85,7 +85,16 @@ function launch {
   # start manager
   cd selfdrive/manager
   ./build.py && ./manager.py
-
+# ###################################################
+#   if [ ! -d /data/media/0/log ]; then
+#     mkdir -p /data/media/0/log/
+#   fi
+#   if [ ! -d /data/media/mapd ]; then
+#     mkdir -p /data/media/mapd/
+#   fi
+#   cd selfdrive/manager
+#   ./build.py && ./manager.py > /data/media/0/log/launch_log_$(date +"%Y%m%d_%H%M%S").txt
+# ###################################################
   # if broken, keep on screen error
   while true; do sleep 1; done
 }

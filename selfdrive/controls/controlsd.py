@@ -78,7 +78,11 @@ class Controls:
     # FrogPilot variables
     self.params = Params()
     self.params_memory = Params("/dev/shm/params")
-
+###################################################################################################
+    self.params_memory.put_bool("KeyResume", False)
+    self.params_memory.put_bool("KeyCancel", False)
+    # self.params.put_int("RoadtypeProfile", 1)
+###################################################################################################
     fire_the_babysitter = self.params.get_bool("FireTheBabysitter")
     mute_dm = fire_the_babysitter and self.params.get_bool("MuteDM")
 
@@ -271,7 +275,11 @@ class Controls:
       (CS.brakePressed and (not self.CS_prev.brakePressed or not CS.standstill)) or \
       (CS.regenBraking and (not self.CS_prev.regenBraking or not CS.standstill)):
       self.events.add(EventName.pedalPressed)
-
+      ################################################
+      self.params_memory.put_bool("KeyResume", False)
+      self.params_memory.put_int('SpeedPrev',0)
+      self.params_memory.put_bool('KeyChanged', True)
+      ################################################
     if CS.brakePressed and CS.standstill:
       self.events.add(EventName.preEnableStandstill)
 
@@ -280,7 +288,30 @@ class Controls:
 
     if not self.CP.notCar:
       self.events.add_from_msg(self.sm['driverMonitoringState'].events)
-
+###################自動啟動ACC並帶入最高速限##########################################
+    vegokph = CS.vEgo *3.6
+    if self.params.get_bool("AutoACC", True):
+      if not self.params.get_bool('IsEngaged') and (vegokph >10 or self.sm['longitudinalPlan'].trafficState == 3):
+          self.params_memory.put_bool('KeyResume', True)
+          if self.params_memory.get_int('DetectSpeedLimit') != 0:
+              self.params_memory.put_bool('SpeedLimitChanged', True)
+          else:
+            if self.params.get_int("RoadtypeProfile") == 1:
+              self.params_memory.put_int('KeySetSpeed', 60)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            elif self.params.get_int("RoadtypeProfile") == 2:
+              self.params_memory.put_int('KeySetSpeed', 90)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            elif self.params.get_int("RoadtypeProfile") == 3:
+              self.params_memory.put_int('KeySetSpeed', 120)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            else:
+              self.params_memory.put_int('KeySetSpeed', 40)
+              self.params_memory.put_bool('KeyChanged', True)
+####################################################################################
     # Add car events, ignore if CAN isn't valid
     if CS.canValid:
       self.events.add_from_msg(CS.events)
@@ -326,7 +357,10 @@ class Controls:
       direction = self.sm['lateralPlan'].laneChangeDirection
       if (CS.leftBlindspot and direction == LaneChangeDirection.left) or \
          (CS.rightBlindspot and direction == LaneChangeDirection.right):
-        self.events.add(EventName.laneChangeBlocked)
+        ##########################################################
+        if self.params.get_bool("Laneblindspotdetection") == 1:
+          self.events.add(EventName.laneChangeBlocked)
+        ##########################################################
       else:
         if direction == LaneChangeDirection.left:
           self.events.add(EventName.preLaneChangeLeft)
@@ -334,7 +368,10 @@ class Controls:
           self.events.add(EventName.preLaneChangeRight)
     elif self.sm['lateralPlan'].laneChangeState in (LaneChangeState.laneChangeStarting,
                                                     LaneChangeState.laneChangeFinishing):
-      self.events.add(EventName.laneChange)
+      ##########################################################
+      if self.params.get_bool("ChangeLaneReminder") == 1 :
+        self.events.add(EventName.laneChange)
+      ##########################################################
 
     # Handle turning
     if not CS.standstill:
@@ -385,6 +422,57 @@ class Controls:
       self.events.add(EventName.canBusMissing)
     elif not CS.canValid:
       self.events.add(EventName.canError)
+    ##############前車遠離後自動帶入速度控制########################################
+    if (self.sm['longitudinalPlan'].trafficState == 3):
+      if self.params.get_bool("CarAwayReminder") == 1 :
+        self.events.add(EventName.carAwayed)      
+      if self.params_memory.get_int('DetectSpeedLimit') !=0 :
+        self.params_memory.put_bool('SpeedLimitChanged', True)
+      else:
+        if self.params.get_int("RoadtypeProfile") == 1:
+          self.params_memory.put_int('KeySetSpeed', 60)
+          self.params_memory.put_bool('KeyChanged', True)
+          self.params_memory.put_int('SpeedPrev',0)
+        elif self.params.get_int("RoadtypeProfile") == 2:
+          self.params_memory.put_int('KeySetSpeed', 90)
+          self.params_memory.put_bool('KeyChanged', True)
+          self.params_memory.put_int('SpeedPrev',0)
+        elif self.params.get_int("RoadtypeProfile") == 3:
+          self.params_memory.put_int('KeySetSpeed', 120)
+          self.params_memory.put_bool('KeyChanged', True)
+          self.params_memory.put_int('SpeedPrev',0)
+    #前車急煞動作
+    if self.sm['longitudinalPlan'].carapproch:
+      if self.params.get_bool("CarApproachingReminder") == 1 :
+        self.events.add(EventName.carApproaching)
+      if self.params_memory.get_int('SpeedPrev') == 0 and self.params_memory.get_int('KeySetSpeed') >= 40:
+        self.params_memory.put_int('SpeedPrev',self.params_memory.get_int('KeySetSpeed'))
+        if self.params.get_int("RoadtypeProfile") == 1:
+          self.params_memory.put_int('KeySetSpeed', 30)
+          self.params_memory.put_bool('KeyChanged', True)
+        elif self.params.get_int("RoadtypeProfile") == 2:
+          self.params_memory.put_int('KeySetSpeed', 50)
+          self.params_memory.put_bool('KeyChanged', True)
+        elif self.params.get_int("RoadtypeProfile") == 3:
+          self.params_memory.put_int('KeySetSpeed', 60)
+          self.params_memory.put_bool('KeyChanged', True)
+    # 當汽車不再接近時恢復之前的速度
+    if self.sm['longitudinalPlan'].carnotapproch and self.params_memory.get_int('SpeedPrev') != 0:
+      self.params_memory.put_int('KeySetSpeed', self.params_memory.get_int('SpeedPrev'))
+      self.params_memory.put_int('SpeedPrev',0)
+      self.params_memory.put_bool('KeyChanged', True)
+    #超速提醒
+    if self.sm['longitudinalPlan'].speedover:
+      self.events.add(EventName.speedOver)  
+    #速限變更提醒  
+    if self.sm['longitudinalPlan'].dspeedlimitu:
+       self.events.add(EventName.detectSpeedLimitu)
+       self.slchanged = False
+    #速限消失提醒
+    if self.sm['longitudinalPlan'].dspeedlimitd and not self.slchanged:
+       self.events.add(EventName.detectSpeedLimitd)
+       self.slchanged = True
+    #############################################################################
 
     # generic catch-all. ideally, a more specific event should be added above instead
     can_rcv_timeout = self.can_rcv_timeout_counter >= 5
@@ -458,9 +546,19 @@ class Controls:
 
       if self.sm['modelV2'].frameDropPerc > 20:
         self.events.add(EventName.modeldLagging)
-
+############綠燈帶入提醒與時速控制####################################
     if self.sm['longitudinalPlan'].greenLight:
-      self.events.add(EventName.greenLight)
+        if self.params.get_bool("GreenLightReminder") == 1:
+            self.events.add(EventName.greenLight)
+        if self.params_memory.get_int('DetectSpeedLimit') != 0:
+            self.params_memory.put_bool('SpeedLimitChanged', True)
+        else:
+            current_setspeed = self.params_memory.get_int('KeySetSpeed')
+            if self.params.get_int("RoadtypeProfile") == 1 and current_setspeed < 60:
+                self.params_memory.put_int('KeySetSpeed', 60)
+                self.params_memory.put_bool('KeyChanged', True)
+                self.params_memory.put_int('SpeedPrev', 0)
+###################################################################
 
   def data_sample(self):
     """Receive data from sockets and update carState"""

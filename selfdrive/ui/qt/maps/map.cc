@@ -215,15 +215,15 @@ void MapWindow::updateState(const UIState &s) {
 
   loaded_once = loaded_once || (m_map && m_map->isFullyLoaded());
   if (!loaded_once) {
-    setError(tr("Map Loading"));
+    setError(tr("地圖下載中"));
     return;
   }
   initLayers();
 
   if (!locationd_valid) {
-    setError(tr("Waiting for GPS"));
+    setError(tr("等待GPS訊號"));
   } else if (routing_problem) {
-    setError(tr("Waiting for route"));
+    setError(tr("等待路徑規畫"));
   } else {
     setError("");
   }
@@ -310,8 +310,11 @@ void MapWindow::initializeGL() {
   }
 
   m_map->setMargins({0, 350, 0, 50});
-  m_map->setPitch(MIN_PITCH);
-  m_map->setStyleUrl("mapbox://styles/commaai/clkqztk0f00ou01qyhsa5bzpj");
+  /////////////////////////////////////////////////
+  m_map->setPitch(MAX_PITCH);
+  m_map->setStyleUrl("mapbox://styles/huifan/clobmb7yu00cr01r88f9shqk5");
+  //m_map->setStyleUrl("mapbox://styles/mapbox/navigation-day-v1");
+  /////////////////////////////////////////////////
 
   QObject::connect(m_map.data(), &QMapboxGL::mapChanged, [=](QMapboxGL::MapChange change) {
     // set global animation duration to 0 ms so visibility changes are instant

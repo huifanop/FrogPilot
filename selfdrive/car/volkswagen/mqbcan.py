@@ -94,7 +94,9 @@ def create_acc_accel_control(packer, bus, acc_type, acc_enabled, accel, acc_cont
     acc_hold_type = 0
 
   acc_07_values = {
-    "ACC_Anhalteweg": 0.75 if stopping else 20.46,  # Distance to stop (stopping coordinator handles terminal roll-out)
+#################調整起步#################
+    "ACC_Anhalteweg": 0.2 if stopping else 20.46,  # Distance to stop (stopping coordinator handles terminal roll-out)
+###################################################
     "ACC_Freilauf_Info": 2 if acc_enabled else 0,
     "ACC_Folgebeschl": 3.02,  # Not using secondary controller accel unless and until we understand its impact
     "ACC_Sollbeschleunigung_02": accel if acc_enabled else 3.01,
@@ -106,12 +108,15 @@ def create_acc_accel_control(packer, bus, acc_type, acc_enabled, accel, acc_cont
 
   return commands
 
-
-def create_acc_hud_control(packer, bus, acc_hud_status, set_speed, lead_distance):
+##################################################################
+def create_acc_hud_control(packer, bus, acc_hud_status, set_speed, lead_distance, personality):
+##################################################################
   values = {
     "ACC_Status_Anzeige": acc_hud_status,
     "ACC_Wunschgeschw_02": set_speed if set_speed < 250 else 327.36,
-    "ACC_Gesetzte_Zeitluecke": 3,
+##################################################################
+    "ACC_Gesetzte_Zeitluecke":  1 if personality == 0 else 3 if personality == 1 else 5,
+##################################################################
     "ACC_Display_Prio": 3,
     "ACC_Abstandsindex": lead_distance,
   }

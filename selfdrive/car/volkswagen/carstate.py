@@ -2,6 +2,9 @@ import numpy as np
 from cereal import car
 from openpilot.common.conversions import Conversions as CV
 from openpilot.selfdrive.car.interfaces import CarStateBase
+##################################################################
+from openpilot.common.params import put_int_nonblocking
+##################################################################
 from opendbc.can.parser import CANParser
 from openpilot.selfdrive.car.volkswagen.values import DBC, CANBUS, PQ_CARS, NetworkLocation, TransmissionType, GearShifter, \
                                             CarControllerParams
@@ -41,8 +44,9 @@ class CarState(CarStateBase):
       pt_cp.vl["ESP_19"]["ESP_HL_Radgeschw_02"],
       pt_cp.vl["ESP_19"]["ESP_HR_Radgeschw_02"],
     )
-
-    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
+##########儀表時速與C3同步############
+    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])*1.0526315789)
+####################################
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw == 0
 
@@ -57,7 +61,9 @@ class CarState(CarStateBase):
     # Verify EPS readiness to accept steering commands
     hca_status = self.CCP.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
     ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
-    ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
+###########全時修正LKAS FAULT###############
+    ret.steerFaultTemporary = hca_status in ("INITIALIZING")
+####################################
 
     # Update gas, brakes, and gearshift.
     ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
@@ -132,6 +138,22 @@ class CarState(CarStateBase):
       ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
       if ret.cruiseState.speed > 90:
         ret.cruiseState.speed = 0
+
+##################################################################
+     # Driving personalities function
+    if self.personalities_via_wheel:
+        self.personality_profile = self.params.get_int("LongitudinalPersonality")
+        self.previous_personality_profile = self.personality_profile
+        self.params_memory.put_bool("PersonalityChangedViaUI", False)
+        self.distance_button = pt_cp.vl["GRA_ACC_01"]["GRA_Verstellung_Zeitluecke"]
+        if self.distance_button and not self.distance_previously_pressed:
+          self.personality_profile = (self.previous_personality_profile + 2) % 3
+        self.distance_previously_pressed = self.distance_button
+        if self.personality_profile != self.previous_personality_profile:
+          put_int_nonblocking("LongitudinalPersonality", self.personality_profile)
+          self.params_memory.put_bool("PersonalityChangedViaWheel", True)
+          self.previous_personality_profile = self.personality_profile
+##################################################################
 
     # Update button states for turn signals and ACC controls, capture all ACC button state/config for passthrough
     ret.leftBlinker = bool(pt_cp.vl["Blinkmodi_02"]["Comfort_Signal_Left"])

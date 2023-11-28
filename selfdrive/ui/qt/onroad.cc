@@ -12,6 +12,9 @@
 
 #include "common/timing.h"
 #include "selfdrive/ui/qt/util.h"
+////////////////////////////
+#include "system/hardware/hw.h"
+////////////////////////////
 #ifdef ENABLE_MAPS
 #include "selfdrive/ui/qt/maps/map_helpers.h"
 #include "selfdrive/ui/qt/maps/map_panel.h"
@@ -290,8 +293,8 @@ void OnroadAlerts::paintEvent(QPaintEvent *event) {
     return;
   }
   static std::map<cereal::ControlsState::AlertSize, const int> alert_heights = {
-    {cereal::ControlsState::AlertSize::SMALL, 271},
-    {cereal::ControlsState::AlertSize::MID, 420},
+    {cereal::ControlsState::AlertSize::SMALL, 200},
+    {cereal::ControlsState::AlertSize::MID, 400},
     {cereal::ControlsState::AlertSize::FULL, height()},
   };
   int h = alert_heights[alert.size];
@@ -304,7 +307,7 @@ void OnroadAlerts::paintEvent(QPaintEvent *event) {
     radius = 0;
     offset = 0;
   }
-  QRect r = QRect(0 + margin, height() - h + margin - offset, width() - margin*2, h - margin*2);
+  QRect r = QRect(350 + margin, height() - h + margin - offset, width() - margin*18, h - margin*2);
 
   QPainter p(this);
 
@@ -328,16 +331,16 @@ void OnroadAlerts::paintEvent(QPaintEvent *event) {
   p.setPen(QColor(0xff, 0xff, 0xff));
   p.setRenderHint(QPainter::TextAntialiasing);
   if (alert.size == cereal::ControlsState::AlertSize::SMALL) {
-    p.setFont(InterFont(74, QFont::DemiBold));
+    p.setFont(InterFont(70, QFont::Normal));
     p.drawText(r, Qt::AlignCenter, alert.text1);
   } else if (alert.size == cereal::ControlsState::AlertSize::MID) {
-    p.setFont(InterFont(88, QFont::Bold));
+    p.setFont(InterFont(70, QFont::Normal));
     p.drawText(QRect(0, c.y() - 125, width(), 150), Qt::AlignHCenter | Qt::AlignTop, alert.text1);
     p.setFont(InterFont(66));
     p.drawText(QRect(0, c.y() + 21, width(), 90), Qt::AlignHCenter, alert.text2);
   } else if (alert.size == cereal::ControlsState::AlertSize::FULL) {
     bool l = alert.text1.length() > 15;
-    p.setFont(InterFont(l ? 132 : 177, QFont::Bold));
+    p.setFont(InterFont(l ? 100 : 177, QFont::Normal));
     p.drawText(QRect(0, r.y() + (l ? 240 : 270), width(), 600), Qt::AlignHCenter | Qt::TextWordWrap, alert.text1);
     p.setFont(InterFont(88));
     p.drawText(QRect(0, r.height() - (l ? 361 : 420), width(), 300), Qt::AlignHCenter | Qt::TextWordWrap, alert.text2);
@@ -387,6 +390,7 @@ void ExperimentalButton::updateState(const UIState &s) {
   }
 
   // FrogPilot variables
+  leadInfo = scene.lead_info;
   rotatingWheel = scene.rotating_wheel;
   wheelIcon = scene.wheel_icon;
 
@@ -412,17 +416,17 @@ void ExperimentalButton::paintEvent(QPaintEvent *event) {
 
   if (!scene.show_driver_camera) {
     if (rotatingWheel) {
-      drawIconRotate(p, QPoint(btn_size / 2, btn_size / 2 + 10), img, background_color, (isDown() || (!engageable && !scene.always_on_lateral_active)) ? 0.6 : 1.0, steeringAngleDeg);
+      drawIconRotate(p, QPoint(btn_size / 2, btn_size / 2 + (leadInfo ? 10 : 0)), img, background_color, (isDown() || (!engageable && !scene.always_on_lateral_active)) ? 0.6 : 1.0, steeringAngleDeg);
     } else {
-      drawIcon(p, QPoint(btn_size / 2, btn_size / 2 + 10), img, background_color, (isDown() || (!engageable && !scene.always_on_lateral_active)) ? 0.6 : 1.0);
+      drawIcon(p, QPoint(btn_size / 2, btn_size / 2 + (leadInfo ? 10 : 0)), img, background_color, (isDown() || (!engageable && !scene.always_on_lateral_active)) ? 0.6 : 1.0);
     }
   }
 }
 
 
 // MapSettingsButton
-MapSettingsButton::MapSettingsButton(QWidget *parent) : QPushButton(parent) {
-  setFixedSize(btn_size, btn_size);
+MapSettingsButton::MapSettingsButton(QWidget *parent) : QPushButton(parent), scene(uiState()->scene) {
+  setFixedSize(btn_size + 25, btn_size + 25);
   settings_img = loadPixmap("../assets/navigation/icon_directions_outlined.svg", {img_size, img_size});
 
   // hidden by default, made visible if map is created (has prime or mapbox token)
@@ -430,9 +434,14 @@ MapSettingsButton::MapSettingsButton(QWidget *parent) : QPushButton(parent) {
   setEnabled(false);
 }
 
+void MapSettingsButton::updateState(const UIState &s) {
+  update();
+}
+
 void MapSettingsButton::paintEvent(QPaintEvent *event) {
+  const bool moveRight = scene.compass && scene.personalities_via_screen;
   QPainter p(this);
-  drawIcon(p, QPoint(btn_size / 2, btn_size / 2), settings_img, QColor(0, 0, 0, 166), isDown() ? 0.6 : 1.0);
+  drawIcon(p, QPoint(btn_size / 2 + (moveRight ? 25 : 0), btn_size / 2 + 50), settings_img, QColor(0, 0, 0, 166), isDown() ? 0.6 : 1.0);
 }
 
 
@@ -444,37 +453,26 @@ AnnotatedCameraWidget::AnnotatedCameraWidget(VisionStreamType type, QWidget* par
   main_layout->setMargin(UI_BORDER_SIZE);
   main_layout->setSpacing(0);
 
-  experimental_btn = new ExperimentalButton(this);
-
-  map_settings_btn = new MapSettingsButton(this);
-
-  dm_img = loadPixmap("../assets/img_driver_face.png", {img_size + 5, img_size + 5});
-
-  // FrogPilot widgets
-  QHBoxLayout *top_right_layout = new QHBoxLayout();
-
   // Neokii screen recorder
+  QHBoxLayout *top_right_layout = new QHBoxLayout();
+  top_right_layout->setSpacing(0);
   recorder_btn = new ScreenRecorder(this);
   top_right_layout->addWidget(recorder_btn);
 
+  experimental_btn = new ExperimentalButton(this);
   top_right_layout->addWidget(experimental_btn);
 
-  main_layout->addLayout(top_right_layout);
+  main_layout->addLayout(top_right_layout, 0);
   main_layout->setAlignment(top_right_layout, Qt::AlignTop | Qt::AlignRight);
 
-  main_layout->addWidget(map_settings_btn, 0, Qt::AlignTop | Qt::AlignRight);
+  map_settings_btn = new MapSettingsButton(this);
+  main_layout->addWidget(map_settings_btn, 0, Qt::AlignBottom | Qt::AlignRight);
 
-  bottom_layout = new QHBoxLayout();
+  dm_img = loadPixmap("../assets/img_driver_face.png", {img_size + 5, img_size + 5});
 
+  // FrogPilot buttons
   personality_btn = new PersonalityButton(this);
-  bottom_layout->addWidget(personality_btn);
-
-  bottom_layout->addStretch();
-
-  compass_img = new Compass(this);
-  bottom_layout->addWidget(compass_img);
-
-  main_layout->addLayout(bottom_layout);
+  main_layout->addWidget(personality_btn, 0, Qt::AlignBottom | Qt::AlignLeft);
 
   QTimer *record_timer = new QTimer(this);
   connect(record_timer, &QTimer::timeout, this, [this]() {
@@ -485,10 +483,47 @@ AnnotatedCameraWidget::AnnotatedCameraWidget(VisionStreamType type, QWidget* par
   record_timer->start(1000 / UI_FREQ);
 
   // FrogPilot variable checks
-  reverseCruise = params.getBool("ReverseCruise");
-  showSLCOffset = params.getBool("ShowSLCOffset");
-  speedHidden = params.getBool("HideSpeed");
+  if (params.getBool("HideSpeed")) {
+    speedHidden = true;
+  }
+  if (params.getBool("ReverseCruise")) {
+    reverseCruise = true;
+  }
+  if (params.getBool("ShowSLCOffset")) {
+    showSLCOffset = true;
+  }
 
+  // Load miscellaneous images
+  compass_inner_img = loadPixmap("../assets/images/compass_inner.png", {img_size, img_size});
+/////////////////////////////////////////////////////
+  // Personalities profiles
+  profile_data = {
+    {QPixmap("../assets/aggressive.png"), "接近"},
+    {QPixmap("../assets/standard.png"), "普通"},
+    {QPixmap("../assets/relaxed.png"), "遠離"}
+  };
+
+  // Driving personalities profiles
+  accprofile_data = {
+    {QPixmap("../assets/aggressive.png"), "節能"},
+    {QPixmap("../assets/standard.png"), "正常"},
+    {QPixmap("../assets/relaxed.png"), "快速"}
+  };
+
+  // Roadtype Profiles
+  roadprofile_data = {
+    {QPixmap("../assets/aggressive.png"), "未選道路"},
+    {QPixmap("../assets/aggressive.png"), "平面道路"},
+    {QPixmap("../assets/standard.png"), "快速道路"},
+    {QPixmap("../assets/relaxed.png"), "高速公路"}
+  };
+
+  // AutoACCtype Profiles
+  autoaccprofile_data = {
+    {QPixmap("../assets/aggressive.png"), "手動"},
+    {QPixmap("../assets/aggressive.png"), "自動"}
+  };
+////////////////////////////////////////////////////////////
   // Custom themes configuration
   themeConfiguration = {
     {1, {QString("frog_theme"), {QColor(23, 134, 68, 242), {{0.0, QBrush(QColor::fromHslF(144 / 360., 0.71, 0.31, 0.9))},
@@ -520,6 +555,21 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
   const auto cs = sm["controlsState"].getControlsState();
   const auto car_state = sm["carState"].getCarState();
   const auto nav_instruction = sm["navInstruction"].getNavInstruction();
+//////////////////////////////////////////////
+  std::stringstream buffer;
+  buffer << std::ifstream("/sys/class/hwmon/hwmon1/in1_input").rdbuf();
+  float voltage = (float)std::atoi(buffer.str().c_str()) / 1000.;
+
+
+  int aprofile = params.getInt("AccelerationProfile");
+  int vtscta = params.getInt("TurnAggressiveness");
+  int vtsccs = params.getInt("CurveSensitivity");
+  int rtprofile = params.getInt("RoadtypeProfile");
+  int leaddis = params.getInt("leaddisProfile");
+  int leadspeed = params.getInt("leadspeedProfile");
+  int leadspeeddiff = params.getInt("leadspeeddiffProfile");
+  bool autoacc = params.getBool("AutoACC");
+  //////////////////////////////////////////////////////////
 
   // Handle older routes where vCruiseCluster is not set
   float v_cruise =  cs.getVCruiseCluster() == 0.0 ? cs.getVCruise() : cs.getVCruiseCluster();
@@ -545,7 +595,7 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
   has_us_speed_limit = (nav_alive && speed_limit_sign == cereal::NavInstruction::SpeedLimitSign::MUTCD) || slcSpeedLimit;
   has_eu_speed_limit = (nav_alive && speed_limit_sign == cereal::NavInstruction::SpeedLimitSign::VIENNA);
   is_metric = s.scene.is_metric;
-  speedUnit =  s.scene.is_metric ? tr("km/h") : tr("mph");
+  speedUnit =  s.scene.is_metric ? tr("公里/小時") : tr("mph");
   hideBottomIcons = (cs.getAlertSize() != cereal::ControlsState::AlertSize::NONE || customSignals && (turnSignalLeft || turnSignalRight) || showDriverCamera);
   status = s.status;
 
@@ -561,14 +611,26 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
 
   // hide map settings button for alerts and flip for right hand DM
   if (map_settings_btn->isEnabled()) {
+    map_settings_btn->updateState(s);
     map_settings_btn->setVisible(!hideBottomIcons);
-    main_layout->setAlignment(map_settings_btn, (rightHandDM ? Qt::AlignLeft : Qt::AlignRight) | Qt::AlignTop);
+    main_layout->setAlignment(map_settings_btn, (rightHandDM || compass ? Qt::AlignLeft : Qt::AlignRight) | Qt::AlignBottom);
+    if (!onroadAdjustableProfiles) {
+      QSpacerItem *spacer = new QSpacerItem(20, 25, QSizePolicy::Minimum, QSizePolicy::Fixed);
+      main_layout->addSpacerItem(spacer);
+    }
+  }
+
+  main_layout->setAlignment(personality_btn, (rightHandDM ? Qt::AlignRight : Qt::AlignLeft) | Qt::AlignBottom);
+  personality_btn->setVisible(onroadAdjustableProfiles && !hideBottomIcons && !s.scene.show_driver_camera);
+  if (paramsMemory.getBool("PersonalityChangedViaWheel")) {
+    personality_btn->checkUpdate();
   }
 
   // FrogPilot variables
   accelerationPath = scene.acceleration_path;
   adjacentPath = scene.adjacent_path;
   alwaysOnLateral = scene.always_on_lateral_active;
+  bearingDeg = scene.bearing_deg;
   blindSpotLeft = scene.blind_spot_left;
   blindSpotRight = scene.blind_spot_right;
   cameraView = scene.camera_view;
@@ -598,26 +660,18 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
   turnSignalLeft = scene.turn_signal_left;
   turnSignalRight = scene.turn_signal_right;
   vtscOffset = 0.1 * scene.vtsc_offset * (is_metric ? MS_TO_KPH : MS_TO_MPH) + 0.9 * vtscOffset;
-
-  const bool enableCompass = compass && !hideBottomIcons;
-  compass_img->setVisible(enableCompass);
-  if (enableCompass) {
-    if (bearingDeg != scene.bearing_deg) {
-      bearingDeg = scene.bearing_deg;
-      compass_img->updateState(bearingDeg);
-    }
-    bottom_layout->setAlignment(compass_img, (rightHandDM ? Qt::AlignLeft : Qt::AlignRight));
-  }
-
-  const bool enablePersonalityButton = onroadAdjustableProfiles && !hideBottomIcons;
-  personality_btn->setVisible(enablePersonalityButton);
-  if (enablePersonalityButton) {
-    if (paramsMemory.getBool("PersonalityChangedViaWheel")) {
-      personality_btn->checkUpdate();
-    }
-    bottom_layout->setAlignment(personality_btn, (rightHandDM ? Qt::AlignRight : Qt::AlignLeft));
-  }
-
+//////////////////////////////////////////////
+  personalityProfile = params.getInt("LongitudinalPersonality");
+  batteryVol = voltage;
+  accProfile = aprofile;
+  vtsctaProfile = vtscta;
+  vtsccsProfile = vtsccs;
+  roadProfile = rtprofile;
+  autoaccProfile = autoacc;
+  leaddisProfile = leaddis;
+  leadspeedProfile = leadspeed;
+  leadspeeddiffProfile = leadspeeddiff;
+///////////////////////////////////////////////
   // Update the turn signal animation images upon toggle change
   if (customSignals != scene.custom_signals) {
     customSignals = scene.custom_signals;
@@ -658,7 +712,9 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
   QString speedLimitOffsetStr = (slcSpeedLimitOffset > 1) ? "+" + QString::number(std::nearbyint(slcSpeedLimitOffset)) : "–";
   QString speedStr = QString::number(std::nearbyint(speed));
   QString setSpeedStr = is_cruise_set ? QString::number(std::nearbyint(setSpeed - fmax(vtscOffset - 1, 0))) : "–";
-
+  ////////////////////////////////////
+  QString batteryvolStr = (batteryVol > 1) ? QString::number(batteryVol, 'f', 1) : "–";
+  ////////////////////////////////////
   // Draw outer box + border to contain set speed and speed limit
   const int sign_margin = 12;
   const int us_sign_height = 186;
@@ -712,10 +768,10 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
     max_color = QColor(0xa6, 0xa6, 0xa6, 0xff);
     set_speed_color = QColor(0x72, 0x72, 0x72, 0xff);
   }
-  p.setFont(InterFont(40, QFont::DemiBold));
+  p.setFont(InterFont(40, QFont::Normal));
   p.setPen(max_color);
-  p.drawText(set_speed_rect.adjusted(0, 27, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("MAX"));
-  p.setFont(InterFont(90, QFont::Bold));
+  p.drawText(set_speed_rect.adjusted(0, 27, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("最高"));
+  p.setFont(InterFont(90, QFont::Normal));
   p.setPen(set_speed_color);
   p.drawText(set_speed_rect.adjusted(0, 77, 0, 0), Qt::AlignTop | Qt::AlignHCenter, setSpeedStr);
 
@@ -731,17 +787,17 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
     p.save();
     p.setOpacity(slcOverridden ? 0.25 : 1.0);
     if (showSLCOffset) {
-      p.setFont(InterFont(28, QFont::DemiBold));
-      p.drawText(sign_rect.adjusted(0, 22, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("LIMIT"));
-      p.setFont(InterFont(70, QFont::Bold));
+      p.setFont(InterFont(28, QFont::Normal));
+      p.drawText(sign_rect.adjusted(0, 22, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("速限"));
+      p.setFont(InterFont(70, QFont::Normal));
       p.drawText(sign_rect.adjusted(0, 51, 0, 0), Qt::AlignTop | Qt::AlignHCenter, speedLimitStr);
-      p.setFont(InterFont(50, QFont::DemiBold));
+      p.setFont(InterFont(50, QFont::Normal));
       p.drawText(sign_rect.adjusted(0, 120, 0, 0), Qt::AlignTop | Qt::AlignHCenter, speedLimitOffsetStr);
     } else {
-      p.setFont(InterFont(28, QFont::DemiBold));
-      p.drawText(sign_rect.adjusted(0, 22, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("SPEED"));
-      p.drawText(sign_rect.adjusted(0, 51, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("LIMIT"));
-      p.setFont(InterFont(70, QFont::Bold));
+      p.setFont(InterFont(28, QFont::Normal));
+      p.drawText(sign_rect.adjusted(0, 22, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("速度"));
+      p.drawText(sign_rect.adjusted(0, 51, 0, 0), Qt::AlignTop | Qt::AlignHCenter, tr("速限"));
+      p.setFont(InterFont(70, QFont::Normal));
       p.drawText(sign_rect.adjusted(0, 85, 0, 0), Qt::AlignTop | Qt::AlignHCenter, speedLimitStr);
     }
     p.restore();
@@ -755,20 +811,25 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
     p.setPen(QPen(Qt::red, 20));
     p.drawEllipse(sign_rect.adjusted(16, 16, -16, -16));
 
-    p.setFont(InterFont((speedLimitStr.size() >= 3) ? 60 : 70, QFont::Bold));
+    p.setFont(InterFont((speedLimitStr.size() >= 3) ? 60 : 70, QFont::Normal));
     p.setPen(blackColor());
     p.drawText(sign_rect, Qt::AlignCenter, speedLimitStr);
   }
 
   // current speed
   if (!speedHidden) {
-    p.setFont(InterFont(176, QFont::Bold));
+    p.setFont(InterFont(176, QFont::Normal));
     drawText(p, rect().center().x(), 210, speedStr);
     p.setFont(InterFont(66));
     drawText(p, rect().center().x(), 290, speedUnit, 200);
   }
 
   p.restore();
+
+  // Compass
+  if (compass && !hideBottomIcons) {
+    drawCompass(p);
+  }
 
   // Lead following logics
   if (leadInfo) {
@@ -777,7 +838,65 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
 
   // FrogPilot status bar
   drawStatusBar(p);
+///////////////////////////////////////////////
+  const QRect ci_rect(rect().left() + 50, rect().bottom() - 575, 220, 500);
+  p.setPen(Qt::NoPen);
+  if (leadspeeddiffProfile < -20) {
+    p.setBrush(Qt::red);
+  } else if  (leadspeeddiffProfile <0 && leadspeeddiffProfile >-20) {
+    p.setBrush(QColor(255, 165, 0));
+  }
+  else {
+    p.setBrush(whiteColor());
+  }
 
+  p.drawRoundedRect(ci_rect, 24, 24);
+  p.setPen(QPen(blackColor(), 6));
+  p.drawRoundedRect(ci_rect.adjusted(9, 9, -9, -9), 16, 16);
+
+  p.setFont(InterFont(45, QFont::Normal));
+  int index = qBound(0, roadProfile, 3);
+  QString roadprofile_text = roadprofile_data[index].second;
+  p.drawText(ci_rect.adjusted(20, 10, 0, 0), Qt::AlignTop | Qt::AlignJustify, roadprofile_text);
+  
+  p.setFont(InterFont(40, QFont::Normal));
+    index = qBound(0, accProfile-1, 2);
+  QString accprofile_text = "駕駛  "+accprofile_data[index].second;
+  p.drawText(ci_rect.adjusted(20, 65, 0, 0), Qt::AlignTop | Qt::AlignJustify, accprofile_text);
+  
+  index = qBound(0, personalityProfile, 2);
+  QString profile_text = "車距  "+profile_data[index].second;
+  p.drawText(ci_rect.adjusted(20, 110, 0, 0), Qt::AlignTop | Qt::AlignJustify, profile_text);
+
+  // QString vtscta_text = "彎速   " + QString::number(vtsctaProfile);
+  // p.drawText(ci_rect.adjusted(20, 165, 0, 0), Qt::AlignTop | Qt::AlignJustify, vtscta_text);
+  // QString vtsccs_text = "彎幅   " + QString::number(vtsccsProfile);
+  // p.drawText(ci_rect.adjusted(20, 210, 0, 0), Qt::AlignTop | Qt::AlignJustify, vtsccs_text);
+
+  QString leaddis_text = "前車距 " + QString::number(leaddisProfile);
+  p.drawText(ci_rect.adjusted(20, 165, 0, 0), Qt::AlignTop | Qt::AlignJustify, leaddis_text);
+  
+  QString leadspeed_text = "前車速 " + QString::number(leadspeedProfile);
+  p.drawText(ci_rect.adjusted(20, 210, 0, 0), Qt::AlignTop | Qt::AlignJustify, leadspeed_text);
+  
+  QString vr_text = "速差  " +QString::number(leadspeeddiffProfile);
+  p.drawText(ci_rect.adjusted(20, 255, 0, 0), Qt::AlignTop | Qt::AlignJustify, vr_text);
+
+  p.setFont(InterFont(45, QFont::Normal));
+  if (autoaccProfile) {
+    index =1;
+    } else {
+      index =0;
+      }
+    // index = qBound(0, autoaccProfile, 1);
+  QString autoaccprofile_text = autoaccprofile_data[index].second+"ACC";
+  p.drawText(ci_rect.adjusted(20, 305, 0, 0), Qt::AlignTop | Qt::AlignJustify, autoaccprofile_text);
+
+  p.setFont(InterFont(40, QFont::Normal));
+  p.drawText(ci_rect.adjusted(20, 360, 0, 0), Qt::AlignTop | Qt::AlignJustify, tr("電池 電壓"));
+  p.setFont(InterFont(60, QFont::Normal));
+  p.drawText(ci_rect.adjusted(0, 420, 0, 0), Qt::AlignTop | Qt::AlignHCenter, batteryvolStr);
+///////////////////////////////////////////////////
   // Turn signal animation
   if (customSignals && (turnSignalLeft || turnSignalRight)) {
     drawTurnSignals(p);
@@ -961,7 +1080,7 @@ void AnnotatedCameraWidget::drawLaneLines(QPainter &painter, const UIState *s) {
   if (adjacentPath && (laneWidthLeft != 0 || laneWidthRight != 0)) {
     // Set up the units
     const double conversionFactor = is_metric ? 1.0 : 3.28084;
-    const QString unit_d = is_metric ? " meters" : " feet";
+    const QString unit_d = is_metric ? " 公尺" : " feet";
 
     // Declare the lane width thresholds
     constexpr float minLaneWidth = 2.5f;
@@ -1008,7 +1127,7 @@ void AnnotatedCameraWidget::drawDriverState(QPainter &painter, const UIState *s)
 
   // base icon
   int offset = UI_BORDER_SIZE + btn_size / 2 + 25;
-  int xOffset = offset + (onroadAdjustableProfiles ? 275 : 0);
+  int xOffset = compass && map_settings_btn->isEnabled() ? (rightHandDM ? -350 : 350) + (onroadAdjustableProfiles ? 75 : 0) : offset + (onroadAdjustableProfiles ? 275 : 0);
   int x = rightHandDM ? width() - xOffset : xOffset;
   int y = height() - offset;
   float opacity = dmActive ? 0.65 : 0.2;
@@ -1083,10 +1202,15 @@ void AnnotatedCameraWidget::drawLead(QPainter &painter, const cereal::RadarState
   // Add lead info
   if (leadInfo) {
     // Declare the variables
-    QString unit_d = "meters";
-    QString unit_s = "km/h";
+    QString unit_d = "距:";
+    QString unit_s = "速:";
     float distance = d_rel;
     float lead_speed = std::max(lead_data.getVLead(), 0.0f);  // Ensure speed doesn't go under 0 m/s cause that's dumb
+////////////////////////////////////////////////////////////////////////
+    params.putInt("leaddisProfile", distance);
+    params.putInt("leadspeedProfile", (lead_speed * 3.6));
+    params.putInt("leadspeeddiffProfile", (v_rel * 3.6));
+////////////////////////////////////////////////////////////////////////
 
     // Conversion factors and units
     constexpr float toFeet = 3.28084f;
@@ -1106,13 +1230,13 @@ void AnnotatedCameraWidget::drawLead(QPainter &painter, const cereal::RadarState
 
     // Form the text and center it below the chevron
     painter.setPen(Qt::white);
-    painter.setFont(InterFont(35, QFont::Bold));
-
+    painter.setFont(InterFont(60, QFont::Normal));
     const QString text = QString("%1 %2 | %3 %4")
-                        .arg(distance, 0, 'f', 2, '0')
                         .arg(unit_d)
-                        .arg(lead_speed, 0, 'f', 2, '0')
-                        .arg(unit_s);
+                        .arg(distance, 0, 'f', 2, '0')
+                        .arg(unit_s)
+                        .arg(lead_speed, 0, 'f', 2, '0');
+                        
 
     // Calculate the text starting position
     const QFontMetrics metrics(painter.font());
@@ -1202,6 +1326,13 @@ void AnnotatedCameraWidget::paintEvent(QPaintEvent *event) {
         if (lead_one.getStatus()) {
           drawLead(painter, lead_one, s->scene.lead_vertices[0]);
         }
+////////////////////////////////////////////////////////////////////////
+        else {
+          params.putInt("leaddisProfile", 0);
+          params.putInt("leadspeedProfile", 0);
+          params.putInt("leadspeeddiffProfile", 0);
+        }  
+////////////////////////////////////////////////////////////////////////
         if (lead_two.getStatus() && (std::abs(lead_one.getDRel() - lead_two.getDRel()) > 3.0)) {
           drawLead(painter, lead_two, s->scene.lead_vertices[1]);
         }
@@ -1241,111 +1372,98 @@ void AnnotatedCameraWidget::showEvent(QShowEvent *event) {
 
 // FrogPilot widgets
 
-Compass::Compass(QWidget *parent) : QWidget(parent) {
-  setFixedSize(375, 325);
+void AnnotatedCameraWidget::drawCompass(QPainter &p) {
+  p.save();
 
-  compassSize = 200;
-  circleOffset = compassSize / 2;
-  degreeLabelOffset = circleOffset + 20;
-  innerCompass = circleOffset / 1.25;
-  x = compassSize / 1.5 + 100;
-  y = compassSize / 1.5 + 50;
+  // Variable declarations
+  constexpr int circle_size = 250;
+  constexpr int circle_offset = circle_size / 2;
+  constexpr int degreeLabelOffset = circle_offset + 25;
+  constexpr int inner_compass = btn_size / 2;
+  const int x = !rightHandDM ? rect().right() - btn_size / 2 - (UI_BORDER_SIZE * 2) - 10 : btn_size / 2 + (UI_BORDER_SIZE * 2) + 10;
+  const int y = rect().bottom() - 210;
 
-  compassInnerImg = loadPixmap("../assets/images/compass_inner.png", QSize(compassSize / 1.5, compassSize / 1.5));
-}
-
-void Compass::updateState(int bearing_deg) {
-  bearingDeg = bearing_deg;
-  update();
-}
-
-void Compass::initializeStaticElements() {
-  staticElements = QPixmap(size());
-  staticElements.fill(Qt::transparent);
-  QPainter p(&staticElements);
-
+  // Enable Antialiasing
   p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
   // Configure the circles
-  QPen whitePen(Qt::white, 2);
+  const QPen whitePen(Qt::white, 2);
   p.setPen(whitePen);
 
-  // Draw the circle background and white inner circle
-  p.setOpacity(1.0);
-  p.setBrush(QColor(0, 0, 0, 100));
-  p.drawEllipse(x - circleOffset, y - circleOffset, circleOffset * 2, circleOffset * 2);
+  const auto drawCircle = [&](const int offset, const QBrush &brush = Qt::NoBrush) {
+    p.setOpacity(1.0);
+    p.setBrush(brush);
+    p.drawEllipse(x - offset, y - offset, offset * 2, offset * 2);
+  };
 
-  // Draw the white circles
-  p.setBrush(Qt::NoBrush);
-  p.drawEllipse(x - (innerCompass + 5), y - (innerCompass + 5), (innerCompass + 5) * 2, (innerCompass + 5) * 2);
-  p.drawEllipse(x - degreeLabelOffset, y - degreeLabelOffset, degreeLabelOffset * 2, degreeLabelOffset * 2);
+  // Draw the circle background and white inner circle
+  drawCircle(circle_offset, blackColor(100));
+
+  // Rotate and draw the compass_inner_img image
+  p.translate(x, y);
+  p.rotate(bearingDeg);
+  p.drawPixmap(-compass_inner_img.width() / 2, -compass_inner_img.height() / 2, compass_inner_img);
+
+  // Reset transformation for subsequent drawing
+  p.rotate(-bearingDeg);
+  p.translate(-x, -y);
+
+  // Draw the cardinal directions
+  p.setFont(InterFont(25, QFont::Bold));
+
+  const auto drawDirection = [&](const QString &text, const int from, const int to, const int align) {
+    // Move the "E" and "W" directions a bit closer to the middle so they're more uniform
+    const int offset = (text == "E") ? -5 : ((text == "W") ? 5 : 0);
+    // Set the opacity based on whether the direction label is currently being pointed at
+    p.setOpacity((bearingDeg >= from && bearingDeg < to) ? 1.0 : 0.2);
+    p.drawText(QRect(x - inner_compass + offset, y - inner_compass, btn_size, btn_size), align, text);
+  };
+
+  drawDirection("N", 0, 68, Qt::AlignTop | Qt::AlignHCenter);
+  drawDirection("E", 23, 158, Qt::AlignRight | Qt::AlignVCenter);
+  drawDirection("S", 113, 248, Qt::AlignBottom | Qt::AlignHCenter);
+  drawDirection("W", 203, 338, Qt::AlignLeft | Qt::AlignVCenter);
+  drawDirection("N", 293, 360, Qt::AlignTop | Qt::AlignHCenter);
+
+  // Draw the white circle outlining the cardinal directions
+  drawCircle(inner_compass + 5);
+
+  // Draw the white circle outlining the bearing degrees
+  drawCircle(degreeLabelOffset);
 
   // Draw the black background for the bearing degrees
   QPainterPath outerCircle, innerCircle;
   outerCircle.addEllipse(x - degreeLabelOffset, y - degreeLabelOffset, degreeLabelOffset * 2, degreeLabelOffset * 2);
-  innerCircle.addEllipse(x - circleOffset, y - circleOffset, compassSize, compassSize);
+  innerCircle.addEllipse(x - circle_offset, y - circle_offset, circle_size, circle_size);
+  p.setOpacity(1.0);
   p.fillPath(outerCircle.subtracted(innerCircle), Qt::black);
 
-  // Draw the static degree lines
-  for (int i = 0; i < 360; i += 15) {
-    const bool isCardinalDirection = i % 90 == 0;
-    const int lineLength = isCardinalDirection ? 12 : 8;
-    p.setPen(QPen(Qt::white, isCardinalDirection ? 2 : 1));
+  // Draw the degree lines and bearing degrees
+  const auto drawCompassElements = [&](const int angle) {
+    const bool isCardinalDirection = angle % 90 == 0;
+    const int lineLength = isCardinalDirection ? 15 : 10;
+    const bool isBold = abs(angle - static_cast<int>(bearingDeg)) <= 7;
+
+    // Set the current bearing degree value to bold
+    p.setFont(InterFont(8, isBold ? QFont::Normal : QFont::Normal));
+    p.setPen(QPen(Qt::white, isCardinalDirection ? 3 : 1));
+
+    // Place the elements in their respective spots around their circles
     p.save();
     p.translate(x, y);
-    p.rotate(i);
-    p.drawLine(0, -(compassSize / 2 - lineLength), 0, -(compassSize / 2));
+    p.rotate(angle);
+    p.drawLine(0, -(circle_size / 2 - lineLength), 0, -(circle_size / 2));
+    p.translate(0, -(circle_size / 2 + 12));
+    p.rotate(-angle);
+    p.drawText(QRect(-20, -10, 40, 20), Qt::AlignCenter, QString::number(angle));
     p.restore();
-  }
-}
+  };
 
-void Compass::paintEvent(QPaintEvent *event) {
-  QPainter p(this);
-  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-
-  if (!staticElementsInitialized) {
-    initializeStaticElements();
-    staticElementsInitialized = true;
-  }
-
-  // Draw static elements
-  p.drawPixmap(0, 0, staticElements);
-
-  // Rotate and draw the compassInnerImg image
-  p.translate(x, y);
-  p.rotate(bearingDeg);
-  p.drawPixmap(-compassInnerImg.width() / 2, -compassInnerImg.height() / 2, compassInnerImg);
-  p.rotate(-bearingDeg);
-  p.translate(-x, -y);
-
-  // Draw the dynamic bearing degree numbers and lines
-  QFont font = InterFont(6, QFont::Normal);
   for (int i = 0; i < 360; i += 15) {
-    const bool isBold = abs(i - static_cast<int>(bearingDeg)) <= 7;
-    font.setWeight(isBold ? QFont::Bold : QFont::Normal);
-    p.setFont(font);
-    p.setPen(QPen(Qt::white, i % 90 == 0 ? 2 : 1));
-
-    p.save();
-    p.translate(x, y);
-    p.rotate(i);
-    p.drawLine(0, -(compassSize / 2 - (i % 90 == 0 ? 12 : 8)), 0, -(compassSize / 2));
-    p.translate(0, -(compassSize / 2 + 12));
-    p.rotate(-i);
-    p.drawText(QRect(-20, -10, 40, 20), Qt::AlignCenter, QString::number(i));
-    p.restore();
+    drawCompassElements(i);
   }
 
-  // Draw cardinal directions
-  p.setFont(InterFont(20, QFont::Bold));
-  const QString directions[] = {"N", "E", "S", "W"};
-  const int angles[] = {0, 90, 180, 270};
-  const int alignmentFlags[] = {Qt::AlignTop | Qt::AlignHCenter, Qt::AlignRight | Qt::AlignVCenter, Qt::AlignBottom | Qt::AlignHCenter, Qt::AlignLeft | Qt::AlignVCenter};
-  for (int i = 0; i < 4; ++i) {
-    const int offset = (directions[i] == "E") ? -4 : (directions[i] == "W" ? 4 : 0);
-    p.setOpacity((bearingDeg >= angles[i] - 22 && bearingDeg < angles[i] + 23) ? 1.0 : 0.2);
-    p.drawText(QRect(x - innerCompass + offset, y - innerCompass, innerCompass * 2, innerCompass * 2), alignmentFlags[i], directions[i]);
-  }
+  p.restore();
 }
 
 void AnnotatedCameraWidget::drawLeadInfo(QPainter &p) {
@@ -1418,7 +1536,7 @@ void AnnotatedCameraWidget::drawLeadInfo(QPainter &p) {
   const QRect insightsRect(rect().left() - 1, rect().top() - 60, rect().width() + 2, 100);
   p.setBrush(QColor(0, 0, 0, 150));
   p.drawRoundedRect(insightsRect, 30, 30);
-  p.setFont(InterFont(30, QFont::DemiBold));
+  p.setFont(InterFont(30, QFont::Normal));
   p.setRenderHint(QPainter::TextAntialiasing);
 
   // Calculate positioning for text drawing
@@ -1455,17 +1573,14 @@ void AnnotatedCameraWidget::drawLeadInfo(QPainter &p) {
 }
 
 PersonalityButton::PersonalityButton(QWidget *parent) : QPushButton(parent), scene(uiState()->scene) {
-  setFixedSize(btn_size * 1.25, btn_size + 100);
+  setFixedSize(btn_size * 2, btn_size * 3);
 
   // Configure the profile vector
-  profile_data = {
-    {QPixmap("../assets/aggressive.png"), "Aggressive"},
-    {QPixmap("../assets/standard.png"), "Standard"},
-    {QPixmap("../assets/relaxed.png"), "Relaxed"}
-  };
-
-  fadeDuration = 1000.0;
-  textDuration = 3000.0;
+  // profile_data = {
+  //   {QPixmap("../assets/aggressive.png"), "接近"},
+  //   {QPixmap("../assets/standard.png"), "普通"},
+  //   {QPixmap("../assets/relaxed.png"), "遠離"}
+  // };
 
   // Start the timer as soon as the button is created
   transitionTimer.start();
@@ -1499,32 +1614,40 @@ void PersonalityButton::updateState() {
   transitionTimer.restart();
 }
 
-void PersonalityButton::paintEvent(QPaintEvent *event) {
-  QPainter p(this);
-  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+void PersonalityButton::paintEvent(QPaintEvent *) {
+  // Declare the constants
+  constexpr qreal fadeDuration = 1000.0;  // 1 second
+  constexpr qreal textDuration = 3000.0;  // 3 seconds
 
+  QPainter p(this);
   int elapsed = transitionTimer.elapsed();
   qreal textOpacity = qBound(0.0, 1.0 - ((elapsed - textDuration) / fadeDuration), 1.0);
   qreal imageOpacity = qBound(0.0, (elapsed - textDuration) / fadeDuration, 1.0);
 
-  QPixmap profile_image = profile_data[personalityProfile].first;
-  QString profile_text = profile_data[personalityProfile].second;
+  // Enable Antialiasing
+  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
-  int offset = scene.compass ? 125 : 100;
-  QRect textRect(0, offset, width(), height() - offset);
-  QPoint imagePoint((btn_size * 1.25 / 2), (btn_size / 2) + offset);
+  // Configure the button
+  const auto &[profile_image, profile_text] = profile_data[personalityProfile];
+  QRect rect(0, 0, width(), height());
 
-  // Draw the profile text
+  // Draw the profile text with the calculated opacity
+///////////////////////////////
+  textOpacity = 0;
+///////////////////////////////  
   if (textOpacity > 0.0) {
     p.setOpacity(textOpacity);
-    p.setFont(InterFont(40, QFont::Bold));
+    p.setFont(InterFont(40, QFont::Normal));
     p.setPen(Qt::white);
-    p.drawText(textRect, Qt::AlignCenter, profile_text);
+    p.drawText(rect, Qt::AlignCenter, profile_text);
   }
 
-  // Draw the profile image
+  // Draw the profile image with the calculated opacity
+///////////////////////////////
+  imageOpacity = 0;
+///////////////////////////////
   if (imageOpacity > 0.0) {
-    drawIcon(p, imagePoint, profile_image, Qt::transparent, imageOpacity);
+    drawIcon(p, QPoint((btn_size / 2) * 1.25, btn_size / 2), profile_image, Qt::transparent, imageOpacity);
   }
 }
 
@@ -1532,12 +1655,12 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
   p.save();
 
   // Variable declarations
-  static QElapsedTimer timer;
+  // static QElapsedTimer timer;
   static QString lastShownStatus;
-  static bool displayStatusText = false;
+  // static bool displayStatusText = false;
 
-  constexpr qreal fadeDuration = 1500.0;  // 1.5 seconds
-  constexpr qreal textDuration = 5000.0;  // 5 seconds
+  // constexpr qreal fadeDuration = 1500.0;  // 1.5 seconds
+  // constexpr qreal textDuration = 5000.0;  // 5 seconds
 
   const QString roadName = roadNameUI ? QString::fromStdString(paramsMemory.get("RoadName")) : QString();
   const QString screenSuffix = ". Double tap the screen to revert";
@@ -1545,52 +1668,52 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
 
   // Conditional Experimental Mode statuses
   QMap<int, QString> conditionalStatusMap = {
-    {0, "Conditional Experimental Mode ready"},
-    {1, "Conditional Experimental overridden"},
-    {2, "Experimental Mode manually activated"},
-    {3, "Conditional Experimental overridden"},
-    {4, "Experimental Mode manually activated"},
-    {5, "Experimental Mode activated for navigation" + (mapOpen ? "" : QString(" instructions input"))},
-    {6, "Experimental Mode activated due to" + (mapOpen ? "SLC" : QString(" no speed limit set"))},
-    {7, "Experimental Mode activated due to" + (mapOpen ? " speed" : " speed being less than " + QString::number(conditionalSpeedLead) + (is_metric ? " kph" : " mph"))},
-    {8, "Experimental Mode activated due to" + (mapOpen ? " speed" : " speed being less than " + QString::number(conditionalSpeed) + (is_metric ? " kph" : " mph"))},
-    {9, "Experimental Mode activated for slower lead"},
-    {10, "Experimental Mode activated for turn" + (mapOpen ? "" : QString(" / lane change"))},
-    {11, "Experimental Mode activated for stop" + (mapOpen ? "" : QString(" sign / stop light"))},
-    {12, "Experimental Mode activated for curve"}
+    {0, "條件式實驗模式運作中"},
+    {1, "條件式實驗模式被覆蓋"},
+    {2, "手動啟動實驗模式"},
+    {3, "條件式實驗模式被覆蓋"},
+    {4, "手動啟動實驗模式"},
+    {5, "導航因素" + (mapOpen ? "" : QString(" instructions input"))},
+    {6, "SLC" + (mapOpen ? "SLC" : QString(" no speed limit set"))},
+    {7, "Speed" + (mapOpen ? " speed" : " speed being less than " + QString::number(conditionalSpeedLead) + (is_metric ? " kph" : " mph"))},
+    {8, "Speed" + (mapOpen ? " speed" : " speed being less than " + QString::number(conditionalSpeed) + (is_metric ? " kph" : " mph"))},
+    {9, "低速前車"},
+    {10, "方向燈" + (mapOpen ? "" : QString(" / 變換車道"))},
+    {11, "停止訊號" + (mapOpen ? "" : QString("標誌 / 紅燈"))},
+    {12, "過彎"}
   };
 
   // Display the appropriate status
   QString newStatus;
   if (alwaysOnLateral) {
-    newStatus = QString("Always On Lateral active") + (mapOpen ? "" : ". Press the \"Cruise Control\" button to disable");
+    newStatus = QString("全時置中啟動中") + (mapOpen ? "" : ".ACC OFF才可關閉");
   } else if (conditionalExperimental) {
     newStatus = conditionalStatusMap.contains(conditionalStatus) && status != STATUS_DISENGAGED ? conditionalStatusMap[conditionalStatus] : conditionalStatusMap[0];
   }
 
   // Check if status has changed or if the road name is empty
   if (newStatus != lastShownStatus || roadName.isEmpty()) {
-    displayStatusText = true;
+    // displayStatusText = true;
     lastShownStatus = newStatus;
-    timer.restart();
-  } else if (displayStatusText && timer.hasExpired(textDuration + fadeDuration)) {
-    displayStatusText = false;
+    // timer.restart();
+  // } else if (displayStatusText && timer.hasExpired(textDuration + fadeDuration)) {
+  //   displayStatusText = false;
   }
   if (!alwaysOnLateral && !mapOpen && status != STATUS_DISENGAGED && !newStatus.isEmpty()) {
     newStatus += (conditionalStatus == 3 || conditionalStatus == 4) ? screenSuffix : (conditionalStatus == 1 || conditionalStatus == 2) ? wheelSuffix : "";
   }
 
   // Calculate opacities
-  qreal roadNameOpacity;
-  qreal statusTextOpacity;
-  const int elapsed = timer.elapsed();
-  if (displayStatusText) {
-    statusTextOpacity = qBound(0.0, 1.0 - (elapsed - textDuration) / fadeDuration, 1.0);
-    roadNameOpacity = 1.0 - statusTextOpacity;
-  } else {
-    roadNameOpacity = qBound(0.0, elapsed / fadeDuration, 1.0);
-    statusTextOpacity = 1.0 - roadNameOpacity;
-  }
+  // qreal roadNameOpacity;
+  // qreal statusTextOpacity;
+  // const int elapsed = timer.elapsed();
+  // if (displayStatusText) {
+  //   statusTextOpacity = qBound(0.0, 1.0 - (elapsed - textDuration) / fadeDuration, 1.0);
+  //   roadNameOpacity = 1.0 - statusTextOpacity;
+  // } else {
+  //   roadNameOpacity = qBound(0.0, elapsed / fadeDuration, 1.0);
+  //   statusTextOpacity = 1.0 - roadNameOpacity;
+  // }
 
   // Draw status bar
   const QRect currentRect = rect();
@@ -1600,23 +1723,33 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
   p.drawRoundedRect(statusBarRect, 30, 30);
 
   // Configure the text
-  p.setFont(InterFont(40, QFont::Bold));
+  p.setFont(InterFont(40, QFont::Normal));
   p.setPen(Qt::white);
   p.setRenderHint(QPainter::TextAntialiasing);
 
   // Draw the status text with the calculated opacity
-  p.setOpacity(statusTextOpacity);
+  //p.setOpacity(statusTextOpacity);
   QRect textRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignCenter | Qt::TextWordWrap, newStatus);
   textRect.moveBottom(statusBarRect.bottom() - 50);
   p.drawText(textRect, Qt::AlignCenter | Qt::TextWordWrap, newStatus);
 
   // Draw the road name with the calculated opacity
   if (!roadName.isEmpty()) {
-    p.setOpacity(roadNameOpacity);
-    textRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
-    textRect.moveBottom(statusBarRect.bottom() - 50);
-    p.drawText(textRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
+      // p.setOpacity(roadNameOpacity);
+      p.setFont(InterFont(70, QFont::Normal));
+      QRect roadNameRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
+      roadNameRect.moveBottom(statusBarRect.bottom() - 105);  // Adjust the vertical position as needed
+      p.drawText(roadNameRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
   }
+//   if (!roadName.isEmpty()) {
+// /////////////////////////////
+//     p.setOpacity(roadNameOpacity);
+//     textRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
+//     textRect.moveBottom(statusBarRect.bottom() - 105);
+//     p.drawText(textRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
+// ///////////////////////////////
+//   }
+
 
   p.restore();
 }

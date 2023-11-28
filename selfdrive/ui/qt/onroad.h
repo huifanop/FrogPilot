@@ -59,6 +59,7 @@ private:
   bool engageable;
 
   // FrogPilot variables
+  bool leadInfo;
   bool rotatingWheel;
   int steeringAngleDeg;
   int wheelIcon;
@@ -72,59 +73,36 @@ class MapSettingsButton : public QPushButton {
 
 public:
   explicit MapSettingsButton(QWidget *parent = 0);
+  void updateState(const UIState &s);
 
 private:
   void paintEvent(QPaintEvent *event) override;
 
+  const UIScene &scene;
   QPixmap settings_img;
 };
 
-// FrogPilot widgets
+// FrogPilot buttons
 class PersonalityButton : public QPushButton {
 public:
   explicit PersonalityButton(QWidget *parent = 0);
 
   void checkUpdate();
+  void handleClick();
+  void updateState();
 
 private:
-  void handleClick();
   void paintEvent(QPaintEvent *event) override;
-  void updateState();
 
   Params params;
   Params paramsMemory{"/dev/shm/params"};
   const UIScene &scene;
 
-  int personalityProfile;
-  qreal fadeDuration;
-  qreal textDuration;
+  int personalityProfile = 0;
 
   QElapsedTimer transitionTimer;
 
   QVector<std::pair<QPixmap, QString>> profile_data;
-};
-
-class Compass : public QWidget {
-public:
-  explicit Compass(QWidget *parent = nullptr);
-
-  void initializeStaticElements();
-  void updateState(int bearing_deg);
-
-protected:
-  void paintEvent(QPaintEvent *event) override;
-
-private:
-  bool staticElementsInitialized;
-  int bearingDeg;
-  int circleOffset;
-  int compassSize;
-  int degreeLabelOffset;
-  int innerCompass;
-  int x;
-  int y;
-  QPixmap compassInnerImg;
-  QPixmap staticElements;
 };
 
 // container window for the NVG UI
@@ -143,6 +121,9 @@ private:
   // FrogPilot widgets
   void drawCompass(QPainter &p);
   void drawLeadInfo(QPainter &p);
+//////////////////////////////////
+  void drawPersonalities(QPainter &p);
+//////////////////////////////////
   void drawStatusBar(QPainter &p);
   void drawTurnSignals(QPainter &p);
 
@@ -169,7 +150,6 @@ private:
   bool wide_cam_requested = false;
 
   // FrogPilot variables
-  QHBoxLayout *bottom_layout;
   Params params;
   Params paramsMemory{"/dev/shm/params"};
   const UIScene &scene;
@@ -208,10 +188,28 @@ private:
   int conditionalStatus;
   int customColors;
   int customSignals;
+////////////////////////////
+  float batteryVol;
+  int accProfile;
+  int vtsctaProfile;
+  int vtsccsProfile;
+  int roadProfile;
+  int personalityProfile;
+  bool autoaccProfile;
+  int leaddisProfile;
+  int leadspeedProfile;
+  int leadspeeddiffProfile;
+////////////////////////////
   int totalFrames = 8;
-  Compass *compass_img;
   PersonalityButton *personality_btn;
   ScreenRecorder *recorder_btn;
+  QPixmap compass_inner_img;
+////////////////////////////
+  QVector<std::pair<QPixmap, QString>> profile_data;
+  QVector<std::pair<QPixmap, QString>> accprofile_data;
+  QVector<std::pair<QPixmap, QString>> roadprofile_data;
+  QVector<std::pair<QPixmap, QString>> autoaccprofile_data;
+////////////////////////////
   size_t animationFrameIndex;
   std::unordered_map<int, std::pair<QString, std::pair<QColor, std::map<double, QBrush>>>> themeConfiguration;
   std::vector<QPixmap> signalImgVector;

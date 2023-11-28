@@ -21,7 +21,15 @@ const std::tuple<AudibleAlert, QString, int, float> sound_list[] = {
   {AudibleAlert::PROMPT, "prompt.wav", 0, MAX_VOLUME},
   {AudibleAlert::PROMPT_REPEAT, "prompt.wav", QSoundEffect::Infinite, MAX_VOLUME},
   {AudibleAlert::PROMPT_DISTRACTED, "prompt_distracted.wav", QSoundEffect::Infinite, MAX_VOLUME},
-
+  // hfop//////////////////////////////////////////////
+  {AudibleAlert::CAR_AWAYED, "carawayed.wav", QSoundEffect::Infinite, MAX_VOLUME},
+  {AudibleAlert::GREEN_LIGHT, "greenlighted.wav", QSoundEffect::Infinite, MAX_VOLUME},
+  {AudibleAlert::LANECHANGE_BLOCKEDSOUND, "lanechangeBlockedsound.wav", QSoundEffect::Infinite, MAX_VOLUME},
+  {AudibleAlert::LANECHANGE_SOUND, "lanechange.wav", 0, MAX_VOLUME},
+  {AudibleAlert::CAR_APPROACHING, "carapproaching.wav", 0, MAX_VOLUME},
+  {AudibleAlert::DETECT_SPEEDU, "dspeedu.wav", 0, MAX_VOLUME},
+  {AudibleAlert::DETECT_SPEEDD, "dspeedd.wav", 0, MAX_VOLUME},
+  ///////////////////////////////////////////////////
   {AudibleAlert::WARNING_SOFT, "warning_soft.wav", QSoundEffect::Infinite, MAX_VOLUME},
   {AudibleAlert::WARNING_IMMEDIATE, "warning_immediate.wav", QSoundEffect::Infinite, MAX_VOLUME},
 };
