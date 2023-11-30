@@ -175,7 +175,7 @@ void MapWindow::updateState(const UIState &s) {
         m_map->setPaintProperty("navLayer", "line-color", getNavPathColor(nav_enabled));
       }
       if (nav_enabled) {
-        emit requestVisible(true);
+        emit requestVisible(false);
       }
     }
     uiState()->scene.navigate_on_openpilot = nav_enabled;
@@ -209,7 +209,7 @@ void MapWindow::updateState(const UIState &s) {
     // Show map on destination set/change
     if (allow_open) {
       emit requestSettings(false);
-      emit requestVisible(true);
+      emit requestVisible(false);
     }
   }
 
@@ -310,11 +310,8 @@ void MapWindow::initializeGL() {
   }
 
   m_map->setMargins({0, 350, 0, 50});
-  /////////////////////////////////////////////////
-  m_map->setPitch(MAX_PITCH);
-  m_map->setStyleUrl("mapbox://styles/huifan/clobmb7yu00cr01r88f9shqk5");
-  //m_map->setStyleUrl("mapbox://styles/mapbox/navigation-day-v1");
-  /////////////////////////////////////////////////
+  m_map->setPitch(MIN_PITCH);
+  m_map->setStyleUrl("mapbox://styles/mapbox/navigation-day-v1");
 
   QObject::connect(m_map.data(), &QMapboxGL::mapChanged, [=](QMapboxGL::MapChange change) {
     // set global animation duration to 0 ms so visibility changes are instant

@@ -55,7 +55,7 @@
     <div id="jsonOutput"></div>
   </div>
 
-  <div id="map" style="flex: 1;"></div>
+  <div id="map" style="flex: 0 0 33.33%;"></div>
 
 </div>
     
