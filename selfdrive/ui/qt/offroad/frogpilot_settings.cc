@@ -7,7 +7,7 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
 
   mainLayout = new QVBoxLayout(this);
 
-  QLabel *const descriptionLabel = new QLabel("Click on the toggle names to see a detailed toggle description", this);
+  QLabel *const descriptionLabel = new QLabel("點選設定標題顯示詳細說明", this);
   mainLayout->addWidget(descriptionLabel);
   mainLayout->addSpacing(25);
   mainLayout->addWidget(whiteHorizontalLine());
