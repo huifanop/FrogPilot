@@ -396,7 +396,7 @@ class LongitudinalPlanner:
     #   longitudinalPlan.trafficState = 3
 
     if vegokph < 3 and have_lead:
-      if self.params.get_int("leaddisProfile") >6 or self.params.get_int("leadspeedProfile") > 5 or self.params.get_int("leadspeeddiffProfile") > 5 :
+      if self.params.get_int("leadspeeddiffProfile") > 5 :
         longitudinalPlan.trafficState = 3
 
     ########################################################
