@@ -29,10 +29,12 @@ A_CRUISE_MAX_BP = [0., 10.0, 25., 40.]
 A_CRUISE_MIN_BP_CUSTOM = [0., 2.0, 2.01, 11., 11.01, 18., 18.01, 28., 28.01,  33., 55.]
                  # MPH = [0., 6.71, 13.4, 17.9, 24.6, 33.6, 44.7, 55.9, 67.1, 123]
 A_CRUISE_MAX_BP_CUSTOM = [0.,    3,   6.,   8.,  11.,  15.,  20.,  25.,  30., 55.]
-
-A_CRUISE_MIN_VALS_ECO_TUNE = [-0.480, -0.480, -0.40, -0.40, -0.40, -0.36, -0.32, -0.28, -0.28, -0.25, -0.25]
-A_CRUISE_MAX_VALS_ECO_TUNE = [3.5, 3.3, 1.7, 1.1, .76, .62, .47, .36, .28, .09]
-
+#########################################################################################
+#A_CRUISE_MIN_VALS_ECO_TUNE = [-0.480, -0.480, -0.40, -0.40, -0.40, -0.36, -0.32, -0.28, -0.28, -0.25, -0.25]
+A_CRUISE_MIN_VALS_ECO_TUNE = [-0.530, -0.530, -0.45, -0.45, -0.45, -0.41, -0.37, -0.33, -0.33, -0.30, -0.30]
+#A_CRUISE_MAX_VALS_ECO_TUNE = [3.5, 3.3, 1.7, 1.1, .76, .62, .47, .36, .28, .09]
+A_CRUISE_MAX_VALS_ECO_TUNE = [3.3, 3.1, 1.5, 0.9, 0.56, 0.42, 0.27, 0.16, 0.08, -0.11]
+#########################################################################################
 A_CRUISE_MIN_VALS_SPORT_TUNE = [-0.500, -0.500, -0.42, -0.42, -0.42, -0.42, -0.40, -0.35, -0.35, -0.30, -0.30]
 A_CRUISE_MAX_VALS_SPORT_TUNE = [3.5, 3.5, 3.0, 2.6, 1.4, 1.0, 0.7, 0.6, .38, .2]
 
@@ -395,7 +397,7 @@ class LongitudinalPlanner:
     # if vegokph < 1 and vrelkph > 5 and have_lead :
     #   longitudinalPlan.trafficState = 3
 
-    if vegokph < 3 and have_lead:
+    if vegokph < 1 and have_lead:
       if self.params.get_int("leadspeeddiffProfile") > 5 :
         longitudinalPlan.trafficState = 3
 

@@ -18,11 +18,9 @@ class CarControllerParams:
   LKAS_MAX_TORQUE = 1               # A value of 1 is easy to overpower
   STEER_THRESHOLD = 1.0
 
-def __init__(self, CP):
-#######################################################
-  self.params = Params()
-  self.params_memory = Params("/dev/shm/params")
-#######################################################
+  def __init__(self, CP):
+    pass
+
 
 class CAR(StrEnum):
   BODY = "COMMA BODY"

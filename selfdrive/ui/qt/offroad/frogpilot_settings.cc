@@ -486,7 +486,7 @@ void FrogPilotPanel::setParams() {
     {"CameraView", FrogsGoMoo ? "1" : "0"},
     {"CECurves", "1"},
     {"CECurvesLead", "1"},
-    {"CENavigation", "1"},
+    {"CENavigation", "0"},
     {"CESignal", "1"},
     {"CESlowerLead", "1"},
     {"CESpeed", "0"},

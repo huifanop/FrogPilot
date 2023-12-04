@@ -51,7 +51,7 @@ void ScreenRecorder::applyColor() {
 void ScreenRecorder::paintEvent(QPaintEvent *event) {
   QPainter p(this);
   QRect rect(45, 45, width() - 90, height() - 90);
-  QColor bgColor = !recording ? recording_color : QColor::fromRgbF(0, 0, 0, 0.3);
+  QColor bgColor = recording ? recording_color : QColor::fromRgbF(1, 0, 0, 0.6);
 
   p.setRenderHint(QPainter::Antialiasing);
   p.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -132,6 +132,12 @@ void ScreenRecorder::stop() {
 }
 
 void ScreenRecorder::update_screen() {
+  if (!uiState()->scene.started) {
+    if (recording) {
+      stop();
+    }
+    return;
+  }
   if (!recording) return;
 
   if (milliseconds() - started > 1000 * 60 * 3) {
