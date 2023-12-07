@@ -175,6 +175,7 @@ common/i2c.h
 selfdrive/controls/__init__.py
 selfdrive/controls/conditional_experimental_mode.py
 selfdrive/controls/controlsd.py
+selfdrive/controls/mtsc.py
 selfdrive/controls/plannerd.py
 selfdrive/controls/radard.py
 selfdrive/controls/speed_limit_controller.py

@@ -1033,7 +1033,7 @@ struct LongitudinalPlan @0xe00b5b3eba12876c {
   stoppedEquivalenceFactorStock @47 :Float32;
   vtscOffset @48 :Float32;
   #########################
-  trafficState @49 : Int32;
+  carawayck @49 : Bool;
   carapproch @50 :Bool;
   carnotapproch @51 :Bool;
   dspeedlimitu @52 :Bool;

@@ -79,8 +79,8 @@ void MapInstructions::updateInstructions(cereal::NavInstruction::Reader instruct
   secondary->setVisible(secondary_str.length() > 0);
   secondary->setText(secondary_str);
 
-  auto distance_str_pair = map_format_distance(instruction.getManeuverDistance(), uiState()->scene.is_metric);
-  distance->setText(QString("%1 %2").arg(distance_str_pair.first, distance_str_pair.second));
+  auto distance_str_pair = map_format_distance(instruction.getManeuverDistance(), uiState()->scene.is_metric);  
+  distance->setText(QString("%1 %2").arg(distance_str_pair.first, distance_str_pair.second));  
 
   // Show arrow with direction
   QString type = QString::fromStdString(instruction.getManeuverType());

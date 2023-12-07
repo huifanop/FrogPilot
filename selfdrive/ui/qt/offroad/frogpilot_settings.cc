@@ -13,25 +13,22 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
   mainLayout->addWidget(whiteHorizontalLine());
 
   static const std::vector<std::tuple<QString, QString, QString, QString>> toggles = {
+    {"Model", "模型選擇 (需要重啟)", "選擇你想使用的OP模型.\n\nFV = Farmville(Default)\nNLP = New Lemon Pie", "../assets/offroad/icon_calibration.png"},
+    {"MTSCEnabled", "地圖彎道速度控制", "When enabled, the car will slow down when it predicts a lateral acceleration greater than 2.0 m/s^2.", "../assets/offroad/icon_speed_map.png"},
+    {"SpeedLimitController", "限速控制器", "使用 Open Street Maps、Navigate On openpilot 和汽車儀表板將車輛速度設定為當前速度限制.", "../assets/offroad/icon_speed_limit.png"},
+    {"VisionTurnControl", "視覺轉向速度控制", "根據路面曲率自動調整車速，轉彎更順暢.", "../assets/offroad/icon_vtc.png"},
+    {"TurnDesires", "意圖轉彎", "打開此選項在低於最低自動換道時速40KMH以下時打方向燈時獲得更精準的轉彎.", "../assets/navigation/direction_continue_right.png"},
+    {"ExperimentalModeViaPress", "利用畫面或方向盤開啟實驗模式", "通過雙擊方向盤上的“車道偏離”/LKAS 按鈕(Toyota/Lexus Only)以啟用或禁用實驗模式，或雙擊營幕覆蓋“條件實驗模式”'. ", "../assets/img_experimental_white.svg"},
     {"AdjustablePersonalities", "駕駛模式", "透過畫面切換駕駛模式.\n\n1 格 = 積極\n2 格 = 標準\n3 格 = 輕鬆", "../assets/offroad/icon_distance.png"},
+    {"CustomPersonalities", "設定駕駛模式", "根據您的喜好設定駕駛模式細項設定.", "../assets/offroad/icon_custom.png"},
     {"AlwaysOnLateral", "全時置中模式", "使用剎車或油門踏板時仍保持橫向控制。只有停用“定速”後才能解除.", "../assets/offroad/icon_always_on_lateral.png"},
     {"ConditionalExperimental", "條件式的實驗模式", "根據特定條件自動啟動實驗模式.", "../assets/offroad/icon_conditional.png"},
-    {"CustomPersonalities", "設定駕駛模式", "根據您的喜好設定駕駛模式細項設定.", "../assets/offroad/icon_custom.png"},
-    {"DeviceShutdown", "設備自動關機設定", "設置設備在熄火後自動關閉的時間，以減少能源浪費並防止電池耗盡.", "../assets/offroad/icon_time.png"},
-    {"ExperimentalModeViaPress", "利用畫面或方向盤開啟實驗模式", "通過雙擊方向盤上的“車道偏離”/LKAS 按鈕(Toyota/Lexus Only)以啟用或禁用實驗模式，或雙擊營幕覆蓋“條件實驗模式”'. ", "../assets/img_experimental_white.svg"},
     {"FireTheBabysitter", "關閉監控", "禁用 openpilot 的一些‘保姆協議’", "../assets/offroad/icon_babysitter.png"},
+    {"DeviceShutdown", "設備自動關機設定", "設置設備在熄火後自動關閉的時間，以減少能源浪費並防止電池耗盡.", "../assets/offroad/icon_time.png"},
     {"LateralTune", "橫向調整", "改變 openpilot 的駕駛方式.", "../assets/offroad/icon_lateral_tune.png"},
-    {"LongitudinalTune", "縱向調整", "改變 openpilot 加速和煞車方式.", "../assets/offroad/icon_longitudinal_tune.png"},
-    {"Model", "模型選擇 (需要重啟)", "選擇你想使用的OP模型.\n\nFV = Farmville(Default)\nNLP = New Lemon Pie", "../assets/offroad/icon_calibration.png"},
+    {"LongitudinalTune", "縱向調整", "改變 openpilot 加速和煞車方式.", "../assets/offroad/icon_longitudinal_tune.png"},   
     {"NudgelessLaneChange", "自動變換車道", "不需輕推方向盤即可變換車道.", "../assets/offroad/icon_lane.png"},
-    {"PauseLateralOnSignal", "打方向燈時暫停橫向控制", "打方向燈時暫停橫向控制.", "../assets/offroad/icon_pause_lane.png"},
-    {"SpeedLimitController", "限速控制器", "使用 Open Street Maps、Navigate On openpilot 和汽車儀表板將車輛速度設定為當前速度限制.", "../assets/offroad/icon_speed_limit.png"},
-    {"TurnDesires", "意圖轉彎", "打開此選項在低於最低自動換道時速40KMH以下時打方向燈時獲得更精準的轉彎.", "../assets/navigation/direction_continue_right.png"},
-    {"VisionTurnControl", "視覺轉向速度控制", "根據路面曲率自動調整車速，轉彎更順暢.", "../assets/offroad/icon_vtc.png"},
-/////////////////////////////////////////////////////////////////////////////////////////////
-    {"Roadtype", "道路種類及語音", "啟用道路種類設定可依特定條件改變最高時速設定，特定條件如：綠燈.前車遠離.變換車道.前車減速時會有中文語音提醒，不同模型偵測結果會有差異.", "../assets/offroad/icon_vtc.png"},
-    {"AutoACC", "自動啟動ACC", "啟用後當踩下油門後會自動啟動ACC，靜止狀態下重複踩兩次煞車後停止ACC.", "../assets/offroad/icon_lane.png"}
-/////////////////////////////////////////////////////////////////////////////////////////////
+    {"PauseLateralOnSignal", "打方向燈時暫停橫向控制", "打方向燈時暫停橫向控制.", "../assets/offroad/icon_pause_lane.png"}
   };
 
   for (const auto &[key, label, desc, icon] : toggles) {
@@ -118,19 +115,6 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
         new CurveSensitivity(),
         new TurnAggressiveness(),
       });
-      // hfop///////////////////////////////////
-    } else if (key == "Roadtype") {
-      createSubControl(key, label, desc, icon, {
-        new RoadtypeProfile(),
-      });
-      createSubButtonControl(key, {
-        {"GreenLightReminder", "綠燈語音"},
-        {"CarAwayReminder", "前車遠離語音"},
-        {"CarApproachingReminder", "前車急煞語音"},
-        {"Laneblindspotdetection", "換車道盲點語音"},
-        {"ChangeLaneReminder", "變換車道語音"}
-      }, mainLayout);
-      ///////////////////////////////////////////
     } else {
       mainLayout->addWidget(control);
       if (key != std::get<0>(toggles.back())) mainLayout->addWidget(horizontalLine());
@@ -139,8 +123,140 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(QWidget *parent) : FrogPilotPanel
   setInitialToggleStates();
 }
 
-FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel(parent) {
+// FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel(parent) {
+//   mainLayout = new QVBoxLayout(this);
+
+//   QHBoxLayout *gmLayout = new QHBoxLayout();
+//   gmLayout->setSpacing(25);
+//   gmLayout->setContentsMargins(0, 0, 0, 0);
+
+//   QLabel *gmIconLabel = new QLabel(this);
+//   gmIconLabel->setPixmap(QPixmap("../assets/offroad/icon_gm.png").scaledToWidth(80, Qt::SmoothTransformation));
+
+//   QLabel *gmTextLabel = new QLabel("GM", this);
+
+//   gmLayout->addWidget(gmIconLabel);
+//   gmLayout->addWidget(gmTextLabel);
+//   gmLayout->addStretch(1);
+//   mainLayout->addLayout(gmLayout);
+//   mainLayout->addWidget(whiteHorizontalLine());
+
+//   static const std::vector<std::tuple<QString, QString, QString, QString>> gmToggles = {
+//     {"EVTable", "EV Lookup Tables", "Smoothens out the gas and brake controls for EV vehicles.", "../assets/offroad/icon_blank.png"},
+//     {"LowerVolt", "Lower Volt Enable Speed", "Lowers the Volt's minimum enable speed in order to enable openpilot at any speed.", "../assets/offroad/icon_blank.png"}
+//   };
+
+//   for (const auto &[key, label, desc, icon] : gmToggles) {
+//     ParamControl *control = createParamControl(key, label, desc, icon, this);
+//     mainLayout->addWidget(control);
+//     if (key != std::get<0>(gmToggles.back())) mainLayout->addWidget(horizontalLine());
+//   }
+
+//   mainLayout->addWidget(whiteHorizontalLine());
+//   mainLayout->setSpacing(25);
+//   QHBoxLayout *toyotaLayout = new QHBoxLayout();
+//   toyotaLayout->addWidget(whiteHorizontalLine());
+//   toyotaLayout->setSpacing(25);
+//   toyotaLayout->setContentsMargins(0, 0, 0, 0);
+
+//   QLabel *toyotaIconLabel = new QLabel(this);
+//   toyotaIconLabel->setPixmap(QPixmap("../assets/offroad/icon_toyota.png").scaledToWidth(80, Qt::SmoothTransformation));
+
+//   QLabel *toyotaTextLabel = new QLabel("Toyota", this);
+
+//   toyotaLayout->addWidget(toyotaIconLabel);
+//   toyotaLayout->addWidget(toyotaTextLabel);
+//   toyotaLayout->addStretch(1);
+//   mainLayout->addLayout(toyotaLayout);
+//   mainLayout->addWidget(whiteHorizontalLine());
+
+//   static const std::vector<std::tuple<QString, QString, QString, QString>> toyotaToggles = {
+//     {"LockDoors", "Lock Doors In Drive", "Automatically locks the doors when in drive and unlocks when in park.", "../assets/offroad/icon_blank.png"},
+//     {"SNGHack", "SNG Hack", "Enable the SNG Hack for vehicles without stock stop and go.", "../assets/offroad/icon_blank.png"},
+//     {"TSS2Tune", "TSS2 Tune", "Tuning profile for TSS2 vehicles. Based on the tuning profile from DragonPilot.", "../assets/offroad/icon_blank.png"}
+//   };
+
+//   for (const auto &[key, label, desc, icon] : toyotaToggles) {
+//     ParamControl *control = createParamControl(key, label, desc, icon, this);
+//     mainLayout->addWidget(control);
+//     if (key != std::get<0>(toyotaToggles.back())) mainLayout->addWidget(horizontalLine());
+//   }
+
+//   setInitialToggleStates();
+// }
+
+FrogPilotVisualsPanel::FrogPilotVisualsPanel(QWidget *parent) : FrogPilotPanel(parent) {
   mainLayout = new QVBoxLayout(this);
+
+  QLabel *const descriptionLabel = new QLabel("點選設定標題顯示詳細說明", this);
+  mainLayout->addWidget(descriptionLabel);
+  mainLayout->addSpacing(25);
+  mainLayout->addWidget(whiteHorizontalLine());
+
+  static const std::vector<std::tuple<QString, QString, QString, QString>> toggles = {
+    {"SilentMode", "靜音模式", "關閉所有聲音保持完全靜音的運作.", "../assets/offroad/icon_mute.png"},
+    {"GreenLightAlert", "綠燈提醒", "交通號誌從紅燈轉為綠燈時產生提示.", "../assets/offroad/icon_green_light.png"},
+    {"CameraView", "相機視圖（僅限外觀）", "為 UI 設定您首選的相機視圖。此切換純粹是裝飾性的，不會影響openpilot 對其他相機的使用.", "../assets/offroad/icon_camera.png"},
+    {"CustomUI", "自定義道路畫面", "定義自己喜歡的道路介面.", "../assets/offroad/icon_road.png"},
+    {"ScreenBrightness", "螢幕亮度", "自行設定螢幕亮度或使用預設自動亮度設置.", "../assets/offroad/icon_light.png"},
+    {"CustomTheme", "自訂外觀主題", "啟動後使用自訂外觀，關閉則為官方外觀.", "../assets/frog.png"},
+    {"Compass", "指南針", "畫面中添加指南針，顯示您的行駛方位.", "../assets/offroad/icon_compass.png"},
+    {"DriverCamera", "倒車顯示駕駛鏡頭", "倒車時顯示駕駛畫面.", "../assets/img_driver_face_static.png"},
+    {"RotatingWheel", "旋轉方向盤", "畫面右上角的方向盤與方向盤同步旋轉.", "../assets/offroad/icon_rotate.png"},
+    {"WheelIcon", "方向盤圖示", "用自定義圖示替換 openpilot 方向盤圖標!", "../assets/offroad/icon_openpilot.png"},
+  };
+
+  for (const auto &[key, label, desc, icon] : toggles) {
+    ParamControl *control = createParamControl(key, label, desc, icon, this);
+    if (key == "CameraView") {
+      mainLayout->addWidget(new CameraView());
+      mainLayout->addWidget(horizontalLine());
+    } else if (key == "CustomUI") {
+      createSubControl(key, label, desc, icon, {
+        createDualParamControl(new LaneLinesWidth(), new RoadEdgesWidth()),
+        createDualParamControl(new PathWidth(), new PathEdgeWidth())
+      });
+      createSubButtonControl(key, {
+        {"AccelerationPath", "加速路徑"},
+        {"AdjacentPath", "相鄰路徑"},
+        {"BlindSpotPath", "盲點路徑"}
+      }, mainLayout);
+      createSubButtonControl(key, {
+        {"ShowFPS", "顯示 FPS"},
+        {"LeadInfo", "前車資訊"},
+        {"RoadNameUI", "道路名稱"}
+      }, mainLayout);
+      createSubButtonControl(key, {
+        {"UnlimitedLength", "“無限”道路畫面長度"}
+      }, mainLayout);
+    } else if (key == "CustomTheme") {
+      createSubControl(key, label, desc, icon, {
+        createDualParamControl(new CustomColors(), new CustomIcons()),
+        createDualParamControl(new CustomSignals(), new CustomSounds()),
+      });
+    } else if (key == "ScreenBrightness") {
+      mainLayout->addWidget(new ScreenBrightness());
+      mainLayout->addWidget(horizontalLine());
+    } else if (key == "WheelIcon") {
+      mainLayout->addWidget(new WheelIcon());
+      mainLayout->addWidget(horizontalLine());
+    } else {
+      mainLayout->addWidget(control);
+      if (key != std::get<0>(toggles.back())) mainLayout->addWidget(horizontalLine());
+    }
+  }
+  setInitialToggleStates();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+HFOPControlsPanel::HFOPControlsPanel(QWidget *parent) : FrogPilotPanel(parent) {
+  setParams();
+  mainLayout = new QVBoxLayout(this);
+
+  QLabel *const descriptionLabel = new QLabel("點選設定標題顯示詳細說明", this);
+  mainLayout->addWidget(descriptionLabel);
+  mainLayout->addSpacing(25);
+  mainLayout->addWidget(whiteHorizontalLine());
 
   QHBoxLayout *forceFingerprintLayout = new QHBoxLayout();
   forceFingerprintLayout->setSpacing(25);
@@ -174,120 +290,47 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(QWidget *parent) : FrogPilotPanel
   mainLayout->addLayout(forceFingerprintLayout);
   mainLayout->addWidget(whiteHorizontalLine());
 
-  QHBoxLayout *gmLayout = new QHBoxLayout();
-  gmLayout->setSpacing(25);
-  gmLayout->setContentsMargins(0, 0, 0, 0);
-
-  QLabel *gmIconLabel = new QLabel(this);
-  gmIconLabel->setPixmap(QPixmap("../assets/offroad/icon_gm.png").scaledToWidth(80, Qt::SmoothTransformation));
-
-  QLabel *gmTextLabel = new QLabel("GM", this);
-
-  gmLayout->addWidget(gmIconLabel);
-  gmLayout->addWidget(gmTextLabel);
-  gmLayout->addStretch(1);
-  mainLayout->addLayout(gmLayout);
-  mainLayout->addWidget(whiteHorizontalLine());
-
-  static const std::vector<std::tuple<QString, QString, QString, QString>> gmToggles = {
-    {"EVTable", "EV Lookup Tables", "Smoothens out the gas and brake controls for EV vehicles.", "../assets/offroad/icon_blank.png"},
-    {"LowerVolt", "Lower Volt Enable Speed", "Lowers the Volt's minimum enable speed in order to enable openpilot at any speed.", "../assets/offroad/icon_blank.png"}
-  };
-
-  for (const auto &[key, label, desc, icon] : gmToggles) {
-    ParamControl *control = createParamControl(key, label, desc, icon, this);
-    mainLayout->addWidget(control);
-    if (key != std::get<0>(gmToggles.back())) mainLayout->addWidget(horizontalLine());
-  }
-
-  mainLayout->addWidget(whiteHorizontalLine());
-  mainLayout->setSpacing(25);
-  QHBoxLayout *toyotaLayout = new QHBoxLayout();
-  toyotaLayout->addWidget(whiteHorizontalLine());
-  toyotaLayout->setSpacing(25);
-  toyotaLayout->setContentsMargins(0, 0, 0, 0);
-
-  QLabel *toyotaIconLabel = new QLabel(this);
-  toyotaIconLabel->setPixmap(QPixmap("../assets/offroad/icon_toyota.png").scaledToWidth(80, Qt::SmoothTransformation));
-
-  QLabel *toyotaTextLabel = new QLabel("Toyota", this);
-
-  toyotaLayout->addWidget(toyotaIconLabel);
-  toyotaLayout->addWidget(toyotaTextLabel);
-  toyotaLayout->addStretch(1);
-  mainLayout->addLayout(toyotaLayout);
-  mainLayout->addWidget(whiteHorizontalLine());
-
-  static const std::vector<std::tuple<QString, QString, QString, QString>> toyotaToggles = {
-    {"LockDoors", "Lock Doors In Drive", "Automatically locks the doors when in drive and unlocks when in park.", "../assets/offroad/icon_blank.png"},
-    {"SNGHack", "SNG Hack", "Enable the SNG Hack for vehicles without stock stop and go.", "../assets/offroad/icon_blank.png"},
-    {"TSS2Tune", "TSS2 Tune", "Tuning profile for TSS2 vehicles. Based on the tuning profile from DragonPilot.", "../assets/offroad/icon_blank.png"}
-  };
-
-  for (const auto &[key, label, desc, icon] : toyotaToggles) {
-    ParamControl *control = createParamControl(key, label, desc, icon, this);
-    mainLayout->addWidget(control);
-    if (key != std::get<0>(toyotaToggles.back())) mainLayout->addWidget(horizontalLine());
-  }
-
-  setInitialToggleStates();
-}
-
-FrogPilotVisualsPanel::FrogPilotVisualsPanel(QWidget *parent) : FrogPilotPanel(parent) {
-  mainLayout = new QVBoxLayout(this);
-
-  QLabel *const descriptionLabel = new QLabel("點選設定標題顯示詳細說明", this);
-  mainLayout->addWidget(descriptionLabel);
-  mainLayout->addSpacing(25);
-  mainLayout->addWidget(whiteHorizontalLine());
 
   static const std::vector<std::tuple<QString, QString, QString, QString>> toggles = {
-    {"CustomTheme", "自訂外觀主題", "啟動後使用自訂外觀，關閉則為官方外觀.", "../assets/frog.png"},
-    {"CameraView", "相機視圖（僅限外觀）", "為 UI 設定您首選的相機視圖。此切換純粹是裝飾性的，不會影響openpilot 對其他相機的使用.", "../assets/offroad/icon_camera.png"},
-    {"Compass", "指南針", "畫面中添加指南針，顯示您的行駛方位.", "../assets/offroad/icon_compass.png"},
-    {"CustomUI", "自定義道路畫面", "定義自己喜歡的道路介面.", "../assets/offroad/icon_road.png"},
-    {"DriverCamera", "倒車顯示駕駛鏡頭", "倒車時顯示駕駛畫面.", "../assets/img_driver_face_static.png"},
-    {"GreenLightAlert", "綠燈提醒", "交通號誌從紅燈轉為綠燈時產生提示.", "../assets/offroad/icon_green_light.png"},
-    {"RotatingWheel", "旋轉方向盤", "畫面右上角的方向盤與方向盤同步旋轉.", "../assets/offroad/icon_rotate.png"},
-    {"ScreenBrightness", "螢幕亮度", "自行設定螢幕亮度或使用預設自動亮度設置.", "../assets/offroad/icon_light.png"},
-    {"SilentMode", "靜音模式", "關閉所有聲音保持完全靜音的運作.", "../assets/offroad/icon_mute.png"},
-    {"WheelIcon", "方向盤圖示", "用自定義圖示替換 openpilot 方向盤圖標!", "../assets/offroad/icon_openpilot.png"},
+    {"AutoACC", "自動啟動ACC", "啟用後當速度大於設定，會自動啟動ACC，低於於10公里煞車會解除ACC.", "../assets/offroad/icon_lane.png"},
+    {"CarAway", "前車遠離偵測", "啟用後當前車速度改變時會有提醒.", "../assets/offroad/icon_vtc.png"},
+    {"Roadtype", "道路種類設定", "開啟後可依道路種類在特定條件下預設時速", "../assets/offroad/icon_vtc.png"},
+    {"Speeddistance", "車速調控跟車距離", "開啟後可依行車路線自動切換跟車距離， 1格 60公里 2格90公里 3格120公里.", "../assets/offroad/icon_vtc.png"},
+    {"Navspeed", "圖資速限", "開啟後可當下所在道路的圖資自動切換速限.", "../assets/offroad/icon_vtc.png"},
+    {"Emergencycontrol", "緊急調控車速", "開啟後可當前方車輛快速減速時，會自動調降速限.", "../assets/offroad/icon_vtc.png"},
+    {"speedoverreminder", "超速提醒", "當車速高於40公里，且速度高於最高速限時會有提醒，並自動重新設定圖資最高速限.", "../assets/offroad/icon_vtc.png"},
+    {"Voicereminder", "中文語音提醒", "開啟後可在特定條件下發出語音提醒，特定條件如：綠燈.前車遠離.變換車道.前車減速時會有中文語音提醒，不同模型偵測結果會有差異.", "../assets/offroad/icon_vtc.png"}
+    //{"IsVagBlindspotEnabled", "換道盲點觸發方向盤震動", "啟用後當變換道時，若盲點偵測道車輛會使方向盤產生震動.", "../assets/offroad/icon_vtc.png"},
   };
 
   for (const auto &[key, label, desc, icon] : toggles) {
     ParamControl *control = createParamControl(key, label, desc, icon, this);
-    if (key == "CameraView") {
-      mainLayout->addWidget(new CameraView());
-      mainLayout->addWidget(horizontalLine());
-    } else if (key == "CustomUI") {
+    if (key == "AutoACC") {
       createSubControl(key, label, desc, icon, {
-        createDualParamControl(new LaneLinesWidth(), new RoadEdgesWidth()),
-        createDualParamControl(new PathWidth(), new PathEdgeWidth())
+        new AutoACCspeed(),
+      });
+    } else if (key == "Roadtype") {
+      createSubControl(key, label, desc, icon, {
+        new RoadtypeProfile(),
+      });
+    } else if (key == "CarAway") {
+      createSubControl(key, label, desc, icon, {
+        new CarAwayspeed(),
+      });
+    } else if (key == "Voicereminder") {
+      createSubControl(key, label, desc, icon, {
       });
       createSubButtonControl(key, {
-        {"AccelerationPath", "加速路徑"},
-        {"AdjacentPath", "相鄰路徑"},
-        {"BlindSpotPath", "盲點路徑"},
+        {"Laneblindspotdetection", "換車道盲點語音"},
+        {"ChangeLaneReminder", "變換車道語音"},
+        {"CarAwayReminder", "前車遠離語音"},
+        {"CarApproachingReminder", "前車急煞語音"}
       }, mainLayout);
-      createSubButtonControl(key, {
-        {"ShowFPS", "顯示 FPS"},
-        {"LeadInfo", "前車資訊"},
-        {"RoadNameUI", "道路名稱"},
+      createSubButtonControl(key, {  
+        {"GreenLightReminder", "綠燈語音"},
+        {"NavReminder", "導航語音"},
+        {"SpeedlimituReminder", "速限變更提醒"}
       }, mainLayout);
-      createSubButtonControl(key, {
-        {"UnlimitedLength", "“無限”道路畫面長度"},
-      }, mainLayout);
-    } else if (key == "CustomTheme") {
-      createSubControl(key, label, desc, icon, {
-        createDualParamControl(new CustomColors(), new CustomIcons()),
-        createDualParamControl(new CustomSignals(), new CustomSounds()),
-      });
-    } else if (key == "ScreenBrightness") {
-      mainLayout->addWidget(new ScreenBrightness());
-      mainLayout->addWidget(horizontalLine());
-    } else if (key == "WheelIcon") {
-      mainLayout->addWidget(new WheelIcon());
-      mainLayout->addWidget(horizontalLine());
     } else {
       mainLayout->addWidget(control);
       if (key != std::get<0>(toggles.back())) mainLayout->addWidget(horizontalLine());
@@ -507,7 +550,7 @@ void FrogPilotPanel::setParams() {
     {"EVTable", "0"},
     {"ExperimentalModeViaPress", "1"},
     {"FireTheBabysitter", FrogsGoMoo ? "1" : "1"},
-    {"GreenLightAlert", "0"},
+    {"GreenLightAlert", "1"},
     {"LaneChangeTime", "1"},
     {"LaneDetection", "1"},
     {"LaneLinesWidth", "4"},
@@ -559,14 +602,22 @@ void FrogPilotPanel::setParams() {
     {"WheelIcon", "0"},
     //Fan///////////////////
     {"AutoACC", "1"},
+    {"AutoACCspeed", "10"},
     {"CarApproachingReminder", "1"},
+    {"CarAway", "1"},
+    {"CarAwayspeed", "5"},
     {"CarAwayReminder", "1"},
     {"ChangeLaneReminder", "1"},
-    {"Chinesevoicealert", "1"},
-    {"GreenLightReminder", "0"},    
+    {"GreenLightReminder", "1"},    
     {"Laneblindspotdetection", "1"},
+    {"Navspeed", "1"},
+    {"NavReminder", "1"},
+    {"Emergencycontrol", "1"},
     {"Roadtype", "1"},
-    {"RoadtypeProfile", "1"}
+    {"RoadtypeProfile", "1"},
+    {"speedoverreminder", "1"},
+    {"Speeddistance", "1"},
+    {"Voicereminder", "1"}    
     ////////////////////////
   };
 

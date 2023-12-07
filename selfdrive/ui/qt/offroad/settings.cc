@@ -410,8 +410,9 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
     {tr("軟體資訊"), new SoftwarePanel(this)},
     {tr("控制設定"), new FrogPilotControlsPanel(this)},
     {tr("導航設定"), new FrogPilotNavigationPanel(this)},
-    {tr("車輛設定"), new FrogPilotVehiclesPanel(this)},
+    // {tr("車輛設定"), new FrogPilotVehiclesPanel(this)},
     {tr("介面設定"), new FrogPilotVisualsPanel(this)},
+    {tr("H F O P"), new HFOPControlsPanel(this)},
   };
 
   nav_btns = new QButtonGroup(this);

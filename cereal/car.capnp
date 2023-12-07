@@ -131,6 +131,14 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     detectSpeedLimitu @128;
     detectSpeedLimitd @129;
     speedOver @130;
+    ######NAV語音######
+    navTurn @131;
+    navUturn @132;
+    navturnLeft @133;
+    navturnRight @134;
+    navSharpright @135;
+    navSharpleft @136;
+    navOfframp @137;
     #######################
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
@@ -436,6 +444,14 @@ struct CarControl {
       detectSpeedu @14;
       detectSpeedd @15;
       speedOver @16;
+      ######NAV語音######
+      navTurn @17;
+      navUturn @18;
+      navturnRight @19;
+      navturnLeft @20;
+      navSharpright @21;
+      navSharpleft @22;
+      navOfframp @23;
       ############################
     }
   }

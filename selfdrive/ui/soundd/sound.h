@@ -21,7 +21,7 @@ const std::tuple<AudibleAlert, QString, int, float> sound_list[] = {
   {AudibleAlert::PROMPT, "prompt.wav", 0, MAX_VOLUME},
   {AudibleAlert::PROMPT_REPEAT, "prompt.wav", QSoundEffect::Infinite, MAX_VOLUME},
   {AudibleAlert::PROMPT_DISTRACTED, "prompt_distracted.wav", QSoundEffect::Infinite, MAX_VOLUME},
-  // hfop//////////////////////////////////////////////
+  ///////////////////////////////////////////////////
   {AudibleAlert::CAR_AWAYED, "carawayed.wav", QSoundEffect::Infinite, MAX_VOLUME},
   {AudibleAlert::GREEN_LIGHT, "greenlighted.wav", QSoundEffect::Infinite, MAX_VOLUME},
   {AudibleAlert::LANECHANGE_BLOCKEDSOUND, "lanechangeBlockedsound.wav", QSoundEffect::Infinite, MAX_VOLUME},
@@ -29,6 +29,14 @@ const std::tuple<AudibleAlert, QString, int, float> sound_list[] = {
   {AudibleAlert::CAR_APPROACHING, "carapproaching.wav", 0, MAX_VOLUME},
   {AudibleAlert::DETECT_SPEEDU, "dspeedu.wav", 0, MAX_VOLUME},
   {AudibleAlert::DETECT_SPEEDD, "dspeedd.wav", 0, MAX_VOLUME},
+  ////////////NAV語音////////////////////////
+  {AudibleAlert::NAV_TURN, "navTurn.wav", 0, MAX_VOLUME},
+  {AudibleAlert::NAVTURN_LEFT, "navturnLeft.wav", 0, MAX_VOLUME},
+  {AudibleAlert::NAVTURN_RIGHT, "navturnRight.wav", 0, MAX_VOLUME},
+  {AudibleAlert::NAV_UTURN, "navUturn.wav", 0, MAX_VOLUME},
+  {AudibleAlert::NAV_OFFRAMP, "navOfframp.wav", 0, MAX_VOLUME},
+  {AudibleAlert::NAV_OFFRAMP, "navSharpright.wav", 0, MAX_VOLUME},
+  {AudibleAlert::NAV_OFFRAMP, "navSharpleft.wav", 0, MAX_VOLUME},
   ///////////////////////////////////////////////////
   {AudibleAlert::WARNING_SOFT, "warning_soft.wav", QSoundEffect::Infinite, MAX_VOLUME},
   {AudibleAlert::WARNING_IMMEDIATE, "warning_immediate.wav", QSoundEffect::Infinite, MAX_VOLUME},

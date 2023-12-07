@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark-mode">
+<html>
   <head>
     <meta charset="utf-8">
     <title>HFOP Navigation</title>

@@ -140,18 +140,25 @@ public:
   explicit FrogPilotControlsPanel(QWidget *parent = nullptr);
 };
 
-class FrogPilotVehiclesPanel : public FrogPilotPanel {
-  Q_OBJECT
+// class FrogPilotVehiclesPanel : public FrogPilotPanel {
+//   Q_OBJECT
 
-public:
-  explicit FrogPilotVehiclesPanel(QWidget *parent = nullptr);
-};
+// public:
+//   explicit FrogPilotVehiclesPanel(QWidget *parent = nullptr);
+// };
 
 class FrogPilotVisualsPanel : public FrogPilotPanel {
   Q_OBJECT
 
 public:
   explicit FrogPilotVisualsPanel(QWidget *parent = nullptr);
+};
+
+class HFOPControlsPanel : public FrogPilotPanel {
+  Q_OBJECT
+
+public:
+  explicit HFOPControlsPanel(QWidget *parent = nullptr);
 };
 
 #define ParamController(className, paramName, labelText, descText, iconPath, getValueStrFunc, newValueFunc) \
@@ -165,7 +172,7 @@ public: \
     if (std::string(#className) == "AdjustablePersonalities") { \
       label.setFixedWidth(300); \
     } \
-    if (std::string(#className) == "CameraView" || std::string(#className) == "DeviceShutdown" || std::string(#className) == "StoppingDistance" || std::string(#className) == "WheelIcon") { \
+    if (std::string(#className) == "CameraView" || std::string(#className) == "DeviceShutdown" || std::string(#className) == "StoppingDistance" || std::string(#className) == "WheelIcon"|| std::string(#className) == "CarAwayspeed"|| std::string(#className) == "AutoACCspeed") { \
       label.setFixedWidth(225); \
     } \
     if (std::string(#className) == "CESpeed" || std::string(#className) == "CESpeedLead" || std::string(#className) == "Offset1" || std::string(#className) == "Offset2" || std::string(#className) == "Offset3" || std::string(#className) == "Offset4") { \
@@ -194,8 +201,10 @@ private: \
 
 ParamController(AccelerationProfile, "AccelerationProfile", "加速模式", "通過運動型或更節能的配置更改 openpilot 的加速速度.", "../assets/offroad/icon_blank.png",
   const int profile = params.getInt("AccelerationProfile");
-  return profile == 1 ? "節能" : profile == 2 ? "正常" : "運動";,
-  return std::clamp(v, 1, 3);
+  // return profile == 1 ? "節能" : profile == 2 ? "正常" : "運動";,
+  return profile == 1 ? "節能" : profile == 2 ? "正常" : profile == 3 ?"運動" : "超節能";,
+  // return std::clamp(v, 1, 4);
+  return v >= 0 ? v % 5 : 4;
 )
 
 ParamController(AdjustablePersonalities, "AdjustablePersonalities", "跟車控制", "使用方向盤上的「距離」按鈕或透過其他品牌的道路使用者介面切換個性。.\n\n1 格 = 接近\n2 格 = 標準\n3 格 = 遠離", "../assets/offroad/icon_distance.png",
@@ -410,6 +419,18 @@ ParamController(TurnAggressiveness, "TurnAggressiveness", "轉彎速度積極性
   return std::clamp(v, 1, 200);
 )
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+ParamController(AutoACCspeed, "AutoACCspeed", "自動啟動ACC設定", "設定自動啟動ACC的時速條件設定.", "../assets/offroad/icon_blank.png",
+  const int speed = params.getInt("AutoACCspeed");
+  return speed == 0 ? "關閉" : QString::number(speed) + (isMetric ? " 公里" : " feet");,
+  return std::clamp(v, 0, isMetric ? 20 : 60);
+)
+
+ParamController(CarAwayspeed, "CarAwayspeed", "前車速度差設定", "設定前車時速大於多少公里時提醒.", "../assets/offroad/icon_blank.png",
+  const int caspeed = params.getInt("CarAwayspeed");
+  return caspeed == 0 ? "關閉" : QString::number(caspeed) + (isMetric ? " 公里" : " feet");,
+  return std::clamp(v, 0, isMetric ? 10 : 30);
+)
+
 ParamController(RoadtypeProfile, "RoadtypeProfile", "選擇行駛的道路種類", "關閉或選擇目前行駛的路段可依特定條件改變最高時速設定.", "../assets/offroad/icon_blank.png",
   const int roadtype = params.getInt("RoadtypeProfile");
   return roadtype == 0 ? "關閉" :roadtype == 1 ? "平面" : roadtype == 2 ? "快速" : "高速";,

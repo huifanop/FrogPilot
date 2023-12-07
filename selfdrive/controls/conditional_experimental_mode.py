@@ -43,13 +43,10 @@ class ConditionalExperimentalMode:
     self.acarapproch = False
     self.bcarapproch = True
     self.detect_speed_prev = 0
-    self.slchangedu = False
-    self.slchangedd = False
     self.lead_emer_count = 0
     self.lead_emeroff_count = 0
     self.detect_drel_count =5
     self.previous_lead_distance = 0
-    # self.speedover = False
     ###################################
     self.update_frogpilot_params()
 
@@ -113,13 +110,14 @@ class ConditionalExperimentalMode:
       return True
 ##################################################################
     if(self.detect_emergency(speed_difference, dvratio) or self.detect_drel(lead_distance)) and v_ego_kph > 20  and lead_distance < 100  and speed_difference < 0:
-      if self.params_memory.get_int('SpeedPrev') == 0:
-        self.params_memory.put_int('SpeedPrev',self.params_memory.get_int('KeySetSpeed'))
-      self.params_memory.put_int('KeySetSpeed', math.floor((v_ego_kph-5) / 5) * 5)
-      self.params_memory.put_bool('KeyChanged', True)
-      self.acarapproch = True
-      self.bcarapproch = False
-      emergencyslow = True
+      if self.params.get_bool('Emergencycontrol') :
+        if self.params_memory.get_int('SpeedPrev') == 0:
+          self.params_memory.put_int('SpeedPrev',self.params_memory.get_int('KeySetSpeed'))
+        self.params_memory.put_int('KeySetSpeed', math.floor((v_ego_kph-5) / 5) * 5)
+        self.params_memory.put_bool('KeyChanged', True)
+        self.acarapproch = True
+        self.bcarapproch = False
+        emergencyslow = True
     if (self.detect_emer_off(speed_difference) or not lead) and self.params_memory.get_int('SpeedPrev') != 0:
       self.params_memory.put_int('KeySetSpeed', self.params_memory.get_int('SpeedPrev'))
       self.params_memory.put_bool('KeyChanged', True)

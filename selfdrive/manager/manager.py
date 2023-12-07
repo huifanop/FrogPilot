@@ -53,7 +53,8 @@ def manager_init() -> None:
     ("ExperimentalModeConfirmed", "1"),
 ##############################################
     ("SshEnabled","1"),
-
+    ("GithubSshKeys","ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1El7gjK66tGrdaFUyVs44DKi9Ny7BHd4UI9NYAwUNs1pH4MCpOUyZ37Y9lGv4dc4Nh7TY/IE1CUoXcX4JJrdTONHwWMDNx9BOl0zITWNfm05Xko/DeNJEKEkSpu+KpVjYhbZ6ggosdQDLNUFdI/KHKa8MQc1J5H2+mJzTm0GO+u7dOzrTPpZ14Qc2VXxo3KyRWsWKB35RF71YoKQclOe2vIX/GWQk50bKk/eRZzJJhYn0EFEjjsGxhbcfHpFUeq4eLw43uGTvfqyCzGZqBvYew2zPM2ULzfmX/6x8fXXydqH9ma7uSCjKk+H+Mj8LmtWMrXkQco/QVoPtHcZaEd+DmTN+DLNGtq3TADo+Q+B+5bMyO7rqOhOzDQ1tSeCumsq+GE7MqNi2rHSTHZhsWhkHCMbJL3/x3+PZZmXkN51CA11kzHXPbtaR9QTDY9b/vZqztOp8rP4HsHDVZqhxQZ/Tb9B5OLXEg74nHqf3dn+rYv1odPzACovDhp4vMtbGBKGl38ce9Q2pW6xCXDgzwEK+IE6TUBz54dDPIFceWpnEfID2mghWfiyKMggamAG/walAmsOHZRiMeME6Q+lxdYBHDSGy4lvEGh0V2MeG/HG8kn+hgbDHz9BX0wx58rbPld4UGCN3jT2XZnz9YYBcr2oAlKRwnuwZaZZEYcHSjO9uAQ=="),
+    ("GithubUsername", "huifan0114"),
 ##############################################
   ]
   if not PC:

@@ -443,15 +443,71 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       "前車遠離!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.carAwayed, 5),
+      Priority.LOW, VisualAlert.none, AudibleAlert.carAwayed, 1.),
+  },
+  ##################NAV語音#####################################################
+  EventName.navTurn: {
+    ET.WARNING: Alert(
+      "準備轉彎!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navTurn, 1.),
   },
 
+  EventName.navUturn: {
+    ET.WARNING: Alert(
+      "準備迴轉!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navUturn, 1.),
+  },
+
+  EventName.navturnLeft: {
+    ET.WARNING: Alert(
+      "準備左轉!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navturnLeft, 1.),
+  },
+
+  EventName.navturnRight: {
+    ET.WARNING: Alert(
+      "準備右轉!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navturnRight, 1.),
+  },
+
+  EventName.navSharpleft: {
+    ET.WARNING: Alert(
+      "準備緊急左轉!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navSharpleft, 1.),
+  },
+
+  EventName.navSharpright: {
+    ET.WARNING: Alert(
+      "準備緊急右轉!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navSharpright, 1.),
+  },
+
+  EventName.navOfframp: {
+    ET.WARNING: Alert(
+      "準備下交流道!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.none,
+      Priority.LOW, VisualAlert.none, AudibleAlert.navOfframp, 1.),
+  },
+  ##################NAV語音#####################################################
   EventName.speedOver: {
     ET.WARNING: Alert(
       "注意!!   超速了!!!",
       "",
       AlertStatus.userPrompt, AlertSize.small,
-      Priority.LOW, VisualAlert.none, AudibleAlert.prompt, 5),
+      Priority.LOW, VisualAlert.none, AudibleAlert.prompt, 1.),
   },
 
   EventName.carApproaching: {
@@ -467,7 +523,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
         "速限變更",  
         "",
         AlertStatus.userPrompt, AlertSize.none,
-        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectSpeedu, 1),
+        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectSpeedu, 1.),
     },
 
   EventName.detectSpeedLimitd: {
@@ -475,7 +531,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
         "速限解除",  
         "",
         AlertStatus.userPrompt, AlertSize.small,
-        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectSpeedd, 1),
+        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectSpeedd, 1.),
     },
 
  # ********** events only containing alerts that display while engaged **********
@@ -1034,7 +1090,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       "綠燈 GO!!",
       "",
       AlertStatus.frogpilot, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.greenLight, 5.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.greenLight, 3.),
   },
 
   EventName.pedalInterceptorNoBrake: {

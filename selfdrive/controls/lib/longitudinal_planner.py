@@ -12,6 +12,7 @@ from openpilot.common.realtime import DT_MDL
 from openpilot.selfdrive.modeld.constants import ModelConstants
 from openpilot.selfdrive.car.interfaces import ACCEL_MIN, ACCEL_MAX
 from openpilot.selfdrive.controls.conditional_experimental_mode import ConditionalExperimentalMode
+from openpilot.selfdrive.controls.mtsc import mtsc
 from openpilot.selfdrive.controls.speed_limit_controller import SpeedLimitController
 from openpilot.selfdrive.controls.lib.longcontrol import LongCtrlState
 from openpilot.selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import LongitudinalMpc
@@ -30,10 +31,11 @@ A_CRUISE_MIN_BP_CUSTOM = [0., 2.0, 2.01, 11., 11.01, 18., 18.01, 28., 28.01,  33
                  # MPH = [0., 6.71, 13.4, 17.9, 24.6, 33.6, 44.7, 55.9, 67.1, 123]
 A_CRUISE_MAX_BP_CUSTOM = [0.,    3,   6.,   8.,  11.,  15.,  20.,  25.,  30., 55.]
 #########################################################################################
-#A_CRUISE_MIN_VALS_ECO_TUNE = [-0.480, -0.480, -0.40, -0.40, -0.40, -0.36, -0.32, -0.28, -0.28, -0.25, -0.25]
 A_CRUISE_MIN_VALS_ECO_TUNE = [-0.530, -0.530, -0.45, -0.45, -0.45, -0.41, -0.37, -0.33, -0.33, -0.30, -0.30]
-#A_CRUISE_MAX_VALS_ECO_TUNE = [3.5, 3.3, 1.7, 1.1, .76, .62, .47, .36, .28, .09]
 A_CRUISE_MAX_VALS_ECO_TUNE = [3.3, 3.1, 1.5, 0.9, 0.56, 0.42, 0.27, 0.16, 0.08, -0.11]
+
+A_CRUISE_MIN_VALS_SUPERECO_TUNE = [-0.480, -0.480, -0.40, -0.40, -0.40, -0.36, -0.32, -0.28, -0.28, -0.25, -0.25]
+A_CRUISE_MAX_VALS_SUPERECO_TUNE = [3.5, 3.3, 1.7, 1.1, .76, .62, .47, .36, .28, .09]
 #########################################################################################
 A_CRUISE_MIN_VALS_SPORT_TUNE = [-0.500, -0.500, -0.42, -0.42, -0.42, -0.42, -0.40, -0.35, -0.35, -0.30, -0.30]
 A_CRUISE_MAX_VALS_SPORT_TUNE = [3.5, 3.5, 3.0, 2.6, 1.4, 1.0, 0.7, 0.6, .38, .2]
@@ -55,6 +57,12 @@ def get_min_accel_eco_tune(v_ego):
 
 def get_max_accel_eco_tune(v_ego):
   return interp(v_ego, A_CRUISE_MAX_BP_CUSTOM, A_CRUISE_MAX_VALS_ECO_TUNE)
+
+def get_min_accel_supereco_tune(v_ego):
+  return interp(v_ego, A_CRUISE_MIN_BP_CUSTOM, A_CRUISE_MIN_VALS_SUPERECO_TUNE)
+
+def get_max_accel_supereco_tune(v_ego):
+  return interp(v_ego, A_CRUISE_MAX_BP_CUSTOM, A_CRUISE_MAX_VALS_SUPERECO_TUNE)
 
 def get_min_accel_sport_tune(v_ego):
   return interp(v_ego, A_CRUISE_MIN_BP_CUSTOM, A_CRUISE_MIN_VALS_SPORT_TUNE)
@@ -100,9 +108,7 @@ class LongitudinalPlanner:
     self.read_param()
     self.personality = log.LongitudinalPersonality.standard
     #########################################
-    self.trafficState = 0
-    # self.acarapproch = False
-    # self.bcarapproch = True
+    self.carawayck = False
     self.detect_speed_prev = 0
     self.slchangedu = False
     self.slchangedd = False
@@ -123,6 +129,7 @@ class LongitudinalPlanner:
     self.stopped_for_light_previously = False
 
     self.green_light_count = 0
+    self.m_offset = 0
     self.overridden_speed = 0
     self.slc_target = 0
     self.v_offset = 0
@@ -177,6 +184,8 @@ class LongitudinalPlanner:
         accel_limits = [A_CRUISE_MIN, get_max_accel(v_ego)]
       elif self.acceleration_profile == 3:
         accel_limits = [get_min_accel_sport_tune(v_ego), get_max_accel_sport_tune(v_ego)]
+      elif self.acceleration_profile == 4:
+        accel_limits = [get_min_accel_supereco_tune(v_ego), get_max_accel_supereco_tune(v_ego)]  
       accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngleDeg, accel_limits, self.CP)
     else:
       accel_limits = [ACCEL_MIN, ACCEL_MAX]
@@ -201,36 +210,8 @@ class LongitudinalPlanner:
     carcontrol, carstate, modeldata, radarstate = sm['carControl'], sm['carState'], sm['modelV2'], sm['radarState']
     enabled = sm['controlsState'].enabled
     have_lead = ConditionalExperimentalMode.detect_lead(radarstate)
-    ###############################################################
-    lead = ConditionalExperimentalMode.detect_lead(radarstate)
-    lead_distance = radarstate.leadOne.dRel
-    speed_difference = radarstate.leadOne.vRel * 3.6
-    # speedlimit = sm['navInstruction'].speedLimit*3.6
-    # speedlimit = SpeedLimitController.desired_speed_limit * 3.6
-    speedlimit = int(self.params_memory.get_int('DetectSpeedLimit')*1.1)
-    standstill = carstate.standstill
-    v_ego_kph = v_ego * 3.6
-    if v_ego_kph >=40 and speedlimit >= 40 :
-      if (v_ego_kph - speedlimit) >= 1:
-        self.speedover = True
-        if self.params_memory.get_int('DetectSpeedLimit') !=0 :
-          if self.params_memory.get_int('DetectSpeedLimit') <40:
-            self.params_memory.put_int('DetectSpeedLimit',40)
-          else:
-            self.params_memory.put_bool('SpeedLimitChanged', True)
-      else:
-        self.speedover = False
-    elif v_ego_kph <40 :
-      self.speedover = False
 
-    # if lead:
-    #     if v_ego_kph >=30 and speed_difference <=-20 and lead_distance <=40:
-    #       self.acarapproch = True
-    #       self.bcarapproch = False
-    #     else:
-    #       self.acarapproch = False
-    #       self.bcarapproch = True
-    #################################################################
+    
     # Conditional Experimental Mode
     if self.conditional_experimental_mode and enabled:
       ConditionalExperimentalMode.update(carstate, modeldata, radarstate, v_ego, v_lead, self.v_offset)
@@ -248,12 +229,20 @@ class LongitudinalPlanner:
       self.green_light_count = np.clip(self.green_light_count, 0, 10)
 
       # Only trigger the alert if the green light is detected for 0.5 seconds
-      self.green_light = self.green_light_count >= 10 and self.previously_driving and not have_lead
+      self.green_light = self.green_light_count >= 10 and self.previously_driving and (v_lead > 5 if have_lead else True)
       # Reset the counter when the green light alert is triggered
       self.green_light_count *= not self.green_light
 
       self.stopped_for_light_previously |= stopped_for_light
       self.stopped_for_light_previously &= not self.green_light
+
+    # Pfeiferj's Map Turn Speed Controller
+    mtsc_v = mtsc.target_speed(v_ego, sm['carState'].aEgo)
+    if v_cruise > mtsc_v and mtsc_v != 0:
+      self.m_offset = max(0, int(v_cruise - mtsc_v))
+      v_cruise = mtsc_v
+    else:
+      self.m_offset = 0
 
     # Pfeiferj's Speed Limit Controller
     if self.speed_limit_controller:
@@ -277,26 +266,6 @@ class LongitudinalPlanner:
           v_cruise = self.slc_target
       else:
         self.slc_target = self.overridden_speed
-      #################################################################
-      # detect_sl = int(sm['navInstruction'].speedLimit * 3.6)
-      detect_sl = SpeedLimitController.desired_speed_limit * 3.6
-      if detect_sl != self.detect_speed_prev and v_ego*3.6 > 5:    
-        if detect_sl > 0:
-          self.params_memory.put_int('DetectSpeedLimit', detect_sl)
-          self.params_memory.put_bool('SpeedLimitChanged', True)
-          self.slchangedu = True
-          self.slchangedd = False        
-          self.detect_speed_prev = detect_sl
-        else:
-          self.detect_speed_prev = 0
-          self.params_memory.put_int('DetectSpeedLimit', 0 )
-          self.slchangedd = True
-          self.slchangedu = False
-      else:
-        self.params_memory.put_bool('SpeedLimitChanged', False)
-        self.slchangedu = False
-        self.slchangedd = False 
-      #################################################################
 
     # Pfeiferj's Vision Turn Controller
     if self.vision_turn_controller and prev_accel_constraint:
@@ -350,14 +319,147 @@ class LongitudinalPlanner:
     self.a_desired = float(interp(DT_MDL, ModelConstants.T_IDXS[:CONTROL_N], self.a_desired_trajectory))
     self.v_desired_filter.x = self.v_desired_filter.x + DT_MDL * (self.a_desired + a_prev) / 2.0
 
+
+    ################################################################################
+    #定義
+    standstill = carstate.standstill
+
+    v_ego_kph = v_ego * 3.6
+    detect_sl = SpeedLimitController.desired_speed_limit * 3.6
+    speedlimit = int(self.params_memory.get_int('DetectSpeedLimit')*1.1)
+
+    Auto_ACC = self.params.get_bool("AutoACC")
+    AutoACCspeed = self.params.get_int('AutoACCspeed')
+    Speed_distance = self.params.get_bool("Speeddistance")
+    Navspeed = self.params.get_bool('Navspeed')
+    Roadtype = self.params.get_bool('Roadtype')
+    Roadtype_Profile = self.params.get_int("RoadtypeProfile")
+    CarAway = self.params.get_bool("CarAway")
+    CarAway_speed = self.params.get_int('CarAwayspeed')
+    aheadspeed = self.params.get_int("leadspeeddiffProfile")
+    current_setspeed = self.params_memory.get_int('KeySetSpeed')
+    have_lead = ConditionalExperimentalMode.detect_lead(sm['radarState'])
+    Auto_ACC_pass = v_ego_kph > AutoACCspeed
+    CarAway_pass = CarAway_speed < aheadspeed
+    SpeedLimitChangedck = self.params_memory.get_bool('SpeedLimitChanged')
+    KeyChangedck = self.params_memory.get_bool('KeyChanged')
+
+    #自動啟動ACC並帶入最高速限
+    if Auto_ACC :
+      if not self.params.get_bool('IsEngaged') and Auto_ACC_pass:
+        self.params_memory.put_bool('KeyResume', True)
+        self.params_memory.put_bool('KeyChanged', True)
+        if self.params_memory.get_int('DetectSpeedLimit') != 0 :
+          if Navspeed  :
+              self.params_memory.put_bool('SpeedLimitChanged', True)
+        else:
+          if Roadtype  :  
+            if Roadtype_Profile == 1:
+              self.params_memory.put_int('KeySetSpeed', 60)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            elif Roadtype_Profile == 2:
+              self.params_memory.put_int('KeySetSpeed', 90)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            elif Roadtype_Profile == 3:
+              self.params_memory.put_int('KeySetSpeed', 120)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+
+    #前車遠離後自動帶入速度控制
+    if CarAway:
+      if v_ego_kph < 1 and have_lead and CarAway_pass:
+        self.carawayck = True
+        if self.params_memory.get_int('DetectSpeedLimit') !=0 :
+          if Navspeed :
+            self.params_memory.put_bool('SpeedLimitChanged', True)
+        else:
+          if Roadtype :
+            if Roadtype_Profile == 1:
+              self.params_memory.put_int('KeySetSpeed', 60)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            elif Roadtype_Profile == 2:
+              self.params_memory.put_int('KeySetSpeed', 90)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+            elif Roadtype_Profile == 3:
+              self.params_memory.put_int('KeySetSpeed', 120)
+              self.params_memory.put_bool('KeyChanged', True)
+              self.params_memory.put_int('SpeedPrev',0)
+      else:
+        self.carawayck = False
+
+    #速度調控車距
+    LongitudinalPersonalityck = self.params.get_int("LongitudinalPersonality")
+    if Speed_distance :
+      if SpeedLimitChangedck==True or KeyChangedck==True:
+        if v_ego_kph ==1 and v_ego_kph<5:
+          if LongitudinalPersonalityck != 0 :
+            self.params.put_int("LongitudinalPersonality", 0)
+            self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
+        elif v_ego_kph == 60 and v_ego_kph < 65:
+          if LongitudinalPersonalityck != 1 :
+            self.params.put_int("LongitudinalPersonality",1)
+            self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
+        elif v_ego_kph == 90 and v_ego_kph < 95:
+          if LongitudinalPersonalityck != 2 :
+              self.params.put_int("LongitudinalPersonality",2)
+              self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
+    
+    #綠燈帶入提醒與時速控制
+    if self.green_light:
+      if self.params_memory.get_int('DetectSpeedLimit') != 0:
+        if Navspeed  :
+          self.params_memory.put_bool('SpeedLimitChanged', True)
+      else:
+        if Roadtype  :
+          if Roadtype_Profile == 1 and current_setspeed < 60:
+            self.params_memory.put_int('KeySetSpeed', 60)
+            self.params_memory.put_bool('KeyChanged', True)
+            self.params_memory.put_int('SpeedPrev', 0)
+    #################################################################
+    # 速限變更偵測
+    if self.params.get_bool("SpeedlimituReminder") :
+      if detect_sl != self.detect_speed_prev and v_ego_kph > 5:    
+        if detect_sl > 0:
+          self.params_memory.put_int('DetectSpeedLimit', detect_sl)
+          self.params_memory.put_bool('SpeedLimitChanged', True)
+          self.slchangedu = True
+          self.slchangedd = False        
+          self.detect_speed_prev = detect_sl
+        else:
+          self.detect_speed_prev = 0
+          self.params_memory.put_int('DetectSpeedLimit', 0 )
+          self.slchangedd = True
+          self.slchangedu = False
+      else:
+        self.params_memory.put_bool('SpeedLimitChanged', False)
+        self.slchangedu = False
+        self.slchangedd = False 
+    #超速偵測
+    if v_ego_kph >=40 and speedlimit >= 40 :
+      if (v_ego_kph - speedlimit) >= 1:
+        self.speedover = True
+        if self.params_memory.get_int('DetectSpeedLimit') !=0 :
+          if self.params.get_bool("speedoverreminder") :
+            if self.params_memory.get_int('DetectSpeedLimit') <40:
+              self.params_memory.put_int('DetectSpeedLimit',40)
+            else:
+              self.params_memory.put_bool('SpeedLimitChanged', True)
+      else:
+        self.speedover = False
+    elif v_ego_kph <40 :
+      self.speedover = False
+      
+####################################################################################
+
   def publish(self, sm, pm):
     plan_send = messaging.new_message('longitudinalPlan')
 
     plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState'])
-    #####################################################
-    vegokph = sm['carState'].vEgo*3.6
-    # vrelkph = sm['radarState'].leadOne.vRel*3.6
-    #####################################################
+
     longitudinalPlan = plan_send.longitudinalPlan
     longitudinalPlan.modelMonoTime = sm.logMonoTime['modelV2']
     longitudinalPlan.processingDelay = (plan_send.logMonoTime / 1e9) - sm.logMonoTime['modelV2']
@@ -380,7 +482,7 @@ class LongitudinalPlanner:
     longitudinalPlan.slcOverridden = self.override_slc
     longitudinalPlan.slcSpeedLimit = SpeedLimitController.desired_speed_limit
     longitudinalPlan.slcSpeedLimitOffset = SpeedLimitController.offset
-    longitudinalPlan.vtscOffset = self.v_offset
+    longitudinalPlan.vtscOffset = max(self.m_offset, self.v_offset)
     # LongitudinalPlan variables for onroad driving insights
     longitudinalPlan.safeObstacleDistance = self.mpc.safe_obstacle_distance
     longitudinalPlan.stoppedEquivalenceFactor = self.mpc.stopped_equivalence_factor
@@ -388,19 +490,10 @@ class LongitudinalPlanner:
     longitudinalPlan.safeObstacleDistanceStock = self.mpc.safe_obstacle_distance_stock
     longitudinalPlan.stoppedEquivalenceFactorStock = self.mpc.stopped_equivalence_factor_stock
     #######################################################
-    # longitudinalPlan.carapproch = self.acarapproch 
-    # longitudinalPlan.carnotapproch = self.bcarapproch 
     longitudinalPlan.dspeedlimitu = self.slchangedu
     longitudinalPlan.dspeedlimitd = self.slchangedd
     longitudinalPlan.speedover = self.speedover 
-    have_lead = ConditionalExperimentalMode.detect_lead(sm['radarState'])
-    # if vegokph < 1 and vrelkph > 5 and have_lead :
-    #   longitudinalPlan.trafficState = 3
-
-    if vegokph < 1 and have_lead:
-      if self.params.get_int("leadspeeddiffProfile") > 5 :
-        longitudinalPlan.trafficState = 3
-
+    longitudinalPlan.carawayck = self.carawayck
     ########################################################
     pm.send('longitudinalPlan', plan_send)
     

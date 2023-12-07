@@ -506,7 +506,8 @@ AnnotatedCameraWidget::AnnotatedCameraWidget(VisionStreamType type, QWidget* par
   accprofile_data = {
     {QPixmap("../assets/aggressive.png"), "節能"},
     {QPixmap("../assets/standard.png"), "正常"},
-    {QPixmap("../assets/relaxed.png"), "快速"}
+    {QPixmap("../assets/relaxed.png"), "快速"},
+    {QPixmap("../assets/relaxed.png"), "超節"}
   };
 
   // Roadtype Profiles
@@ -559,7 +560,6 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
   buffer << std::ifstream("/sys/class/hwmon/hwmon1/in1_input").rdbuf();
   float voltage = (float)std::atoi(buffer.str().c_str()) / 1000.;
 
-
   int aprofile = params.getInt("AccelerationProfile");
   int vtscta = params.getInt("TurnAggressiveness");
   int vtsccs = params.getInt("CurveSensitivity");
@@ -591,6 +591,130 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
     speedLimit = std::round(speedLimit - (showSLCOffset ? slcSpeedLimitOffset : 0));
   }
 
+  // Show arrow with direction
+  QString primary_str = QString::fromStdString(nav_instruction.getManeuverPrimaryText());
+  QString secondary_str = QString::fromStdString(nav_instruction.getManeuverSecondaryText());
+  auto distance_str_pair = map_format_distance(nav_instruction.getManeuverDistance(), uiState()->scene.is_metric);
+  QString type = QString::fromStdString(nav_instruction.getManeuverType());
+  QString modifier = QString::fromStdString(nav_instruction.getManeuverModifier());
+  QString distance_str = distance_str_pair.first;
+  QString distance_unit = distance_str_pair.second;
+  
+  int distance_value = nav_instruction.getManeuverDistance();
+  QString fn;
+  if (nav_alive) {
+  fn += "於"+distance_str+distance_unit+"後  ";
+  if (!modifier.isEmpty()) {
+      QString moditext;
+      if (modifier == "uturn") {
+        moditext = "迴轉";
+      } else if (modifier == "sharp right") {
+        moditext = "向右急"; 
+      } else if (modifier == "right") {
+        moditext = "向右";
+      } else if (modifier == "slight right") {
+        moditext = "靠右";
+      } else if (modifier == "straight") {
+        moditext = "直行";
+      } else if (modifier == "slight left") {
+        moditext = "靠左";
+      } else if (modifier == "left") {
+        moditext = "向左";
+      } else if (modifier == "sharp left") {
+        moditext = "向左急";
+      } else {
+        moditext = modifier; 
+      }
+      fn += moditext;
+    }
+  if (!type.isEmpty()) {
+    QString typetext;
+    if (type == "turn") {
+      typetext = "轉彎";
+    } else if (type == "passNameChange") {
+      typetext = "新路";
+    } else if (type == "depart") {
+      typetext = "出發";
+    } else if (type == "arrive") {
+      typetext = "抵達"; 
+    } else if (type == "merge") {
+      typetext = "合併";
+    } else if (type == "takeOnRamp") {
+      typetext = "上坡";
+    } else if (type == "takeOffRamp") {
+      typetext = "下坡";  
+    } else if (type == "reachFork") {
+      typetext = "分岔";
+    } else if (type == "useLane") {
+      typetext = "線道";
+    } else if (type == "reachEnd") {
+      typetext = "抵達終點";  
+    } else if (type == "continue") {
+      typetext = "直行";
+    } else if (type == "turnAtRoundabout") {
+      typetext = "進入圓環";
+    } else if (type == "takeRoundabout") {
+      typetext = "圓環轉彎";
+    } else if (type == "exitRoundabout") {
+      typetext = "駛出圓環";
+    } else if (type == "exitRotary") {
+      typetext = "駛出圓環";  
+    } else if (type == "takeRotary") {
+      typetext = "進入圓環";
+    } else if (type == "heedWarning") {
+      typetext = "注意"; 
+    } else if (type == "turnAtRoundabout") {
+      typetext = "圓環轉彎";
+    } else if (type == "off_ramp") {
+      typetext = "下交流道";
+    } else if (type == "fork") {
+      typetext = "換道";      
+    } else {
+      typetext = type;
+    }    
+    fn += typetext;
+  } 
+  fn = fn.replace(' ', '_');
+  navBanner = fn + "\n" + primary_str + " " + secondary_str;
+  ////////////NAV語音////////////////////////   
+  if (type.contains("turn") && (distance_value >300 && distance_value < 500)) {
+    paramsMemory.putBool("navTurn", true);
+    } else {
+      paramsMemory.putBool("navTurn", false);
+      } 
+  if (modifier.contains("right") && distance_value < 200) {
+    paramsMemory.putBool("navturnRight", true);
+    } else {
+      paramsMemory.putBool("navturnRight", false);
+      } 
+  if (modifier.contains("sharp right") && distance_value < 200) {
+    paramsMemory.putBool("navSharpright", true);
+    } else {
+      paramsMemory.putBool("navSharpright", false);
+      } 
+  if (modifier.contains("left") && distance_value < 200) {
+    paramsMemory.putBool("navturnLeft", true);
+    } else {
+      paramsMemory.putBool("navturnLeft", false);
+      }
+  if (modifier.contains("sharp left") && distance_value < 200) {
+    paramsMemory.putBool("navSharpleft", true);
+    } else {
+      paramsMemory.putBool("navSharpleft", false);
+      }
+  if (modifier.contains("uturn") && distance_value < 200) {
+    paramsMemory.putBool("navUturn", true);
+    } else {
+      paramsMemory.putBool("navUturn", false);
+      }
+  if (type.contains("off_ramp") && distance_value < 500) {
+    paramsMemory.putBool("navOfframp", true);
+    } else {
+      paramsMemory.putBool("navOfframp", false);
+      }
+  }
+////////////NAV語音////////////////////////
+  
   has_us_speed_limit = (nav_alive && speed_limit_sign == cereal::NavInstruction::SpeedLimitSign::MUTCD) || slcSpeedLimit;
   has_eu_speed_limit = (nav_alive && speed_limit_sign == cereal::NavInstruction::SpeedLimitSign::VIENNA);
   is_metric = s.scene.is_metric;
@@ -861,7 +985,7 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
   p.drawText(ci_rect.adjusted(20, 10, 0, 0), Qt::AlignTop | Qt::AlignJustify, roadprofile_text);
   
   p.setFont(InterFont(40, QFont::Normal));
-    index = qBound(0, accProfile-1, 2);
+    index = qBound(0, accProfile-1, 3);
   QString accprofile_text = "駕駛  "+accprofile_data[index].second;
   p.drawText(ci_rect.adjusted(20, 65, 0, 0), Qt::AlignTop | Qt::AlignJustify, accprofile_text);
   
@@ -1376,14 +1500,16 @@ void AnnotatedCameraWidget::showEvent(QShowEvent *event) {
 Compass::Compass(QWidget *parent) : QWidget(parent) {
   setFixedSize(375, 325);
 
-  compassSize = 200;
+  compassSize = 250;
   circleOffset = compassSize / 2;
-  degreeLabelOffset = circleOffset + 20;
-  innerCompass = circleOffset / 1.25;
-  x = compassSize / 1.5 + 100;
-  y = compassSize / 1.5 + 50;
+  degreeLabelOffset = circleOffset + 25;
+  innerCompass = btn_size / 2;
+  x = compassSize / 1.5 + 50;
+  y = compassSize / 1.5 - 15;
 
-  compassInnerImg = loadPixmap("../assets/images/compass_inner.png", QSize(compassSize / 1.5, compassSize / 1.5));
+  compassInnerImg = loadPixmap("../assets/images/compass_inner.png", QSize(compassSize / 1.75, compassSize / 1.75));
+
+  initializeStaticElements();
 }
 
 void Compass::updateState(int bearing_deg) {
@@ -1421,8 +1547,8 @@ void Compass::initializeStaticElements() {
   // Draw the static degree lines
   for (int i = 0; i < 360; i += 15) {
     const bool isCardinalDirection = i % 90 == 0;
-    const int lineLength = isCardinalDirection ? 12 : 8;
-    p.setPen(QPen(Qt::white, isCardinalDirection ? 2 : 1));
+    const int lineLength = isCardinalDirection ? 15 : 10;
+    p.setPen(QPen(Qt::white, isCardinalDirection ? 3 : 1));
     p.save();
     p.translate(x, y);
     p.rotate(i);
@@ -1474,7 +1600,7 @@ void Compass::paintEvent(QPaintEvent *event) {
   const int angles[] = {0, 90, 180, 270};
   const int alignmentFlags[] = {Qt::AlignTop | Qt::AlignHCenter, Qt::AlignRight | Qt::AlignVCenter, Qt::AlignBottom | Qt::AlignHCenter, Qt::AlignLeft | Qt::AlignVCenter};
   for (int i = 0; i < 4; ++i) {
-    const int offset = (directions[i] == "E") ? -4 : (directions[i] == "W" ? 4 : 0);
+    const int offset = (directions[i] == "E") ? -5 : (directions[i] == "W" ? 5 : 0);
     p.setOpacity((bearingDeg >= angles[i] - 22 && bearingDeg < angles[i] + 23) ? 1.0 : 0.2);
     p.drawText(QRect(x - innerCompass + offset, y - innerCompass, innerCompass * 2, innerCompass * 2), alignmentFlags[i], directions[i]);
   }
@@ -1732,7 +1858,7 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
 
   // Draw status bar
   const QRect currentRect = rect();
-  const QRect statusBarRect(currentRect.left() - 1, currentRect.bottom() - 50, currentRect.width() + 2, 100);
+  const QRect statusBarRect(currentRect.left() - 1, currentRect.bottom() - 110, currentRect.width() + 2, 220);
   p.setBrush(QColor(0, 0, 0, 150));
   p.setOpacity(1.0);
   p.drawRoundedRect(statusBarRect, 30, 30);
@@ -1744,7 +1870,7 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
 
   // Draw the status text with the calculated opacity
   //p.setOpacity(statusTextOpacity);
-  QRect textRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignCenter | Qt::TextWordWrap, newStatus);
+  QRect textRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignLeft  | Qt::TextWordWrap, newStatus);
   textRect.moveBottom(statusBarRect.bottom() - 50);
   p.drawText(textRect, Qt::AlignCenter | Qt::TextWordWrap, newStatus);
 
@@ -1752,9 +1878,21 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
   if (!roadName.isEmpty()) {
     // p.setOpacity(roadNameOpacity);
     p.setFont(InterFont(70, QFont::Normal));
-    QRect roadNameRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
+    QRect roadNameRect = p.fontMetrics().boundingRect(statusBarRect, Qt::AlignRight  | Qt::TextWordWrap, roadName);
     roadNameRect.moveBottom(statusBarRect.bottom() - 105);  // Adjust the vertical position as needed
     p.drawText(roadNameRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
+  }
+  if (!navBanner.isEmpty()) {
+      p.setFont(InterFont(90, QFont::Normal));
+      QFontMetrics fm(p.font());
+      int bannerWidth = fm.boundingRect(navBanner).width();
+      int x = currentRect.x() + (currentRect.width() - bannerWidth) / 2;
+      QRect bannerRect(x, currentRect.bottom() - 1, bannerWidth, 220);
+      p.setBrush(QColor(0, 0, 0, 150));
+      p.setOpacity(1.0);
+      p.drawRoundedRect(bannerRect, 30, 30);
+      bannerRect.moveBottom(statusBarRect.bottom() - 145);  // Adjust the vertical position as needed
+      p.drawText(bannerRect, Qt::AlignCenter | Qt::TextWordWrap, navBanner);
   }
 
   p.restore();

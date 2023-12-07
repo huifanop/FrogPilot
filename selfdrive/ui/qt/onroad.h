@@ -11,7 +11,7 @@
 #include "selfdrive/ui/ui.h"
 #include "selfdrive/ui/qt/screenrecorder/screenrecorder.h"
 #include "selfdrive/ui/qt/widgets/cameraview.h"
-
+#include "selfdrive/ui/qt/maps/map_instructions.h"
 
 const int btn_size = 192;
 const int img_size = (btn_size / 4) * 3;
@@ -228,10 +228,12 @@ private:
   PersonalityButton *personality_btn;
   ScreenRecorder *recorder_btn;
 ////////////////////////////
+  MapInstructions *map_instructions;
   QVector<std::pair<QPixmap, QString>> profile_data;
   QVector<std::pair<QPixmap, QString>> accprofile_data;
   QVector<std::pair<QPixmap, QString>> roadprofile_data;
   QVector<std::pair<QPixmap, QString>> autoaccprofile_data;
+  QString navBanner;
 ////////////////////////////
   size_t animationFrameIndex;
   std::unordered_map<int, std::pair<QString, std::pair<QColor, std::map<double, QBrush>>>> themeConfiguration;
