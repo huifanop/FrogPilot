@@ -312,8 +312,8 @@ void MapWindow::initializeGL() {
   m_map->setMargins({0, 350, 0, 50});
   /////////////////////////////////////////////////
   m_map->setPitch(MAX_PITCH);
-  m_map->setStyleUrl("mapbox://styles/huifan/clobmb7yu00cr01r88f9shqk5");
-  //m_map->setStyleUrl("mapbox://styles/mapbox/navigation-day-v1");
+  //m_map->setStyleUrl("mapbox://styles/huifan/clobmb7yu00cr01r88f9shqk5");
+  m_map->setStyleUrl("mapbox://styles/mapbox/navigation-day-v1");
   /////////////////////////////////////////////////
 
   QObject::connect(m_map.data(), &QMapboxGL::mapChanged, [=](QMapboxGL::MapChange change) {
