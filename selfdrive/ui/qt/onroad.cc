@@ -627,11 +627,12 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
       }
       fn += moditext;
     }
+    type = type.trimmed();
   if (!type.isEmpty()) {
     QString typetext;
     if (type == "turn") {
       typetext = "轉彎";
-    } else if (type == "passNameChange") {
+    } else if (type == "new name") {
       typetext = "新路";
     } else if (type == "depart") {
       typetext = "出發";
@@ -639,79 +640,85 @@ void AnnotatedCameraWidget::updateState(const UIState &s) {
       typetext = "抵達"; 
     } else if (type == "merge") {
       typetext = "合併";
-    } else if (type == "takeOnRamp") {
-      typetext = "上坡";
-    } else if (type == "takeOffRamp") {
-      typetext = "下坡";  
-    } else if (type == "reachFork") {
-      typetext = "分岔";
-    } else if (type == "useLane") {
+    } else if (type == "on ramp") {
+      typetext = "進入交流道";
+    } else if (type == "off ramp") {
+      typetext = "駛出交流道";  
+    } else if (type == "fork") {
+      typetext = "換道";
+    } else if (type == "use lane") {
       typetext = "線道";
-    } else if (type == "reachEnd") {
+    } else if (type == "end off road") {
       typetext = "抵達終點";  
     } else if (type == "continue") {
       typetext = "直行";
-    } else if (type == "turnAtRoundabout") {
+    } else if (type == "roundabout") {
       typetext = "進入圓環";
     } else if (type == "takeRoundabout") {
       typetext = "圓環轉彎";
-    } else if (type == "exitRoundabout") {
+    } else if (type == "exit roundabout") {
       typetext = "駛出圓環";
-    } else if (type == "exitRotary") {
+    } else if (type == "exit rotary") {
       typetext = "駛出圓環";  
-    } else if (type == "takeRotary") {
+    } else if (type == "rotary") {
       typetext = "進入圓環";
-    } else if (type == "heedWarning") {
+    } else if (type == "notification") {
       typetext = "注意"; 
-    } else if (type == "turnAtRoundabout") {
+    } else if (type == "roundabout turn") {
       typetext = "圓環轉彎";
-    } else if (type == "off_ramp") {
-      typetext = "下交流道";
-    } else if (type == "fork") {
-      typetext = "換道";      
     } else {
       typetext = type;
     }    
     fn += typetext;
-  } 
-  fn = fn.replace(' ', '_');
+  }    
+  // fn = fn.replace(' ', '_');
+  
   navBanner = fn + "\n" + primary_str + " " + secondary_str;
+
   ////////////NAV語音////////////////////////   
-  if (type.contains("turn") && (distance_value >300 && distance_value < 500)) {
+  if (type.contains("turn") && (distance_value >200 && distance_value < 500)) {
     paramsMemory.putBool("navTurn", true);
     } else {
       paramsMemory.putBool("navTurn", false);
       } 
-  if (modifier.contains("right") && distance_value < 200) {
+  if (modifier.contains("right") &&  (distance_value >1 && distance_value < 200)) {
     paramsMemory.putBool("navturnRight", true);
     } else {
       paramsMemory.putBool("navturnRight", false);
       } 
-  if (modifier.contains("sharp right") && distance_value < 200) {
+  if (modifier.contains("sharp right") && (distance_value >1 && distance_value < 200)) {
     paramsMemory.putBool("navSharpright", true);
     } else {
       paramsMemory.putBool("navSharpright", false);
       } 
-  if (modifier.contains("left") && distance_value < 200) {
+  if (modifier.contains("left") && (distance_value >1 && distance_value < 200)) {
     paramsMemory.putBool("navturnLeft", true);
     } else {
       paramsMemory.putBool("navturnLeft", false);
       }
-  if (modifier.contains("sharp left") && distance_value < 200) {
+  if (modifier.contains("sharp left") && (distance_value >1 && distance_value < 200)) {
     paramsMemory.putBool("navSharpleft", true);
     } else {
       paramsMemory.putBool("navSharpleft", false);
       }
-  if (modifier.contains("uturn") && distance_value < 200) {
+  if (modifier.contains("uturn") && (distance_value >1 && distance_value < 200)) {
     paramsMemory.putBool("navUturn", true);
     } else {
       paramsMemory.putBool("navUturn", false);
       }
-  if (type.contains("off_ramp") && distance_value < 500) {
+  if (type.contains("off_ramp") && (distance_value >200 && distance_value < 500)) {
     paramsMemory.putBool("navOfframp", true);
     } else {
       paramsMemory.putBool("navOfframp", false);
       }
+  if (type.contains("reachEnd") && distance_value <1) {
+    params.remove("NavDestination");
+    } 
+  if (type.contains("arrive") && distance_value <1) {
+    params.remove("NavDestination");
+    }    
+  } else {
+    navBanner = "";
   }
 ////////////NAV語音////////////////////////
   
@@ -1883,15 +1890,15 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
     p.drawText(roadNameRect, Qt::AlignCenter | Qt::TextWordWrap, roadName);
   }
   if (!navBanner.isEmpty()) {
-      p.setFont(InterFont(90, QFont::Normal));
+      navBanner = navBanner.trimmed();
+      p.setFont(InterFont(80, QFont::Normal));
       QFontMetrics fm(p.font());
       int bannerWidth = fm.boundingRect(navBanner).width();
       int x = currentRect.x() + (currentRect.width() - bannerWidth) / 2;
-      QRect bannerRect(x, currentRect.bottom() - 1, bannerWidth, 220);
+      QRect bannerRect(x, currentRect.bottom() - 220, bannerWidth, 220);
       p.setBrush(QColor(0, 0, 0, 150));
       p.setOpacity(1.0);
-      p.drawRoundedRect(bannerRect, 30, 30);
-      bannerRect.moveBottom(statusBarRect.bottom() - 145);  // Adjust the vertical position as needed
+      p.drawRoundedRect(bannerRect, 10, 10);
       p.drawText(bannerRect, Qt::AlignCenter | Qt::TextWordWrap, navBanner);
   }
 

@@ -395,15 +395,15 @@ class LongitudinalPlanner:
     LongitudinalPersonalityck = self.params.get_int("LongitudinalPersonality")
     if Speed_distance :
       if SpeedLimitChangedck==True or KeyChangedck==True:
-        if v_ego_kph ==1 and v_ego_kph<5:
+        if  v_ego_kph < 60:
           if LongitudinalPersonalityck != 0 :
             self.params.put_int("LongitudinalPersonality", 0)
             self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
-        elif v_ego_kph == 60 and v_ego_kph < 65:
+        elif v_ego_kph == 60 and v_ego_kph < 90:
           if LongitudinalPersonalityck != 1 :
             self.params.put_int("LongitudinalPersonality",1)
             self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
-        elif v_ego_kph == 90 and v_ego_kph < 95:
+        elif v_ego_kph == 90 and v_ego_kph < 120:
           if LongitudinalPersonalityck != 2 :
               self.params.put_int("LongitudinalPersonality",2)
               self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
