@@ -422,7 +422,7 @@ ParamController(TurnAggressiveness, "TurnAggressiveness", "轉彎速度積極性
 ParamController(AutoACCspeed, "AutoACCspeed", "自動啟動ACC設定", "設定自動啟動ACC的時速條件設定.", "../assets/offroad/icon_blank.png",
   const int speed = params.getInt("AutoACCspeed");
   return speed == 0 ? "關閉" : QString::number(speed) + (isMetric ? " 公里" : " feet");,
-  return std::clamp(v, 0, isMetric ? 20 : 60);
+  return std::clamp(v, 0, isMetric ? 50 : 100);
 )
 
 ParamController(CarAwayspeed, "CarAwayspeed", "前車速度差設定", "設定前車時速大於多少公里時提醒.", "../assets/offroad/icon_blank.png",
