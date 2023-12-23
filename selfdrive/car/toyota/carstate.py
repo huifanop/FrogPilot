@@ -236,7 +236,7 @@ class CarState(CarStateBase):
 
     # Traffic signals for Speed Limit Controller - Credit goes to the DragonPilot team!
     self._update_traffic_signals(cp_cam)
-    ret.cruiseState.speedLimit = self._calculate_speed_limit()
+    self.params_memory.put_int("CarStateSpeedLimit", self._calculate_speed_limit())
 
     return ret
 

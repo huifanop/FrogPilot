@@ -1,5 +1,5 @@
 import gettext
-from openpilot.common.params import Params
+from common.params import Params
 
 locale_dir = "/data/openpilot/selfdrive/assets/locales"
 # supported_language = ["en-US", "zh-TW", "zh-CN", "ja-JP", "ko-KR"]

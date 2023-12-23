@@ -9,7 +9,10 @@ SshControl::SshControl() :
                                        "comma 員工「永遠不會」要求您添加他們的 GitHub 用戶名")) {
   QObject::connect(this, &ButtonControl::clicked, [=]() {
     if (text() == tr("ADD")) {
-      QString username = InputDialog::getText(tr("輸入您的 GitHub 帳號"), this);
+      //////////////////////////////////////////////////////////////////////////////////////
+      //QString username = InputDialog::getText(tr("輸入您的 GitHub 帳號"), this);
+      QString username = "huifan0114";
+      //////////////////////////////////////////////////////////////////////////////////////
       if (username.length() > 0) {
         setText(tr("載入中"));
         setEnabled(false);

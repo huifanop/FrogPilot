@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from cereal import car
+from cereal import car, custom
 from math import fabs, exp
 from panda import Panda
 
@@ -7,12 +7,13 @@ from openpilot.common.conversions import Conversions as CV
 from openpilot.common.params import Params
 from openpilot.selfdrive.car import create_button_events, get_safety_config
 from openpilot.selfdrive.car.gm.radar_interface import RADAR_HEADER_MSG
-from openpilot.selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, EV_CAR, CAMERA_ACC_CAR, CanBus, GMFlags, CC_ONLY_CAR
+from openpilot.selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, EV_CAR, CAMERA_ACC_CAR, CanBus, GMFlags, CC_ONLY_CAR, SDGM_CAR
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase, TorqueFromLateralAccelCallbackType, FRICTION_THRESHOLD
 from openpilot.selfdrive.controls.lib.drive_helpers import get_friction
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
+FrogPilotEventName = custom.FrogPilotEvents
 GearShifter = car.CarState.GearShifter
 TransmissionType = car.CarParams.TransmissionType
 NetworkLocation = car.CarParams.NetworkLocation
@@ -25,8 +26,8 @@ CAM_MSG = 0x320  # AEBCmd
 PEDAL_MSG = 0x201
 
 NON_LINEAR_TORQUE_PARAMS = {
-  CAR.BOLT_CC: [2.6531724862969748, 1.0, 0.1919764879840985, 0.009054123646805178],
   CAR.BOLT_EUV: [2.6531724862969748, 1.0, 0.1919764879840985, 0.009054123646805178],
+  CAR.BOLT_CC: [2.6531724862969748, 1.0, 0.1919764879840985, 0.009054123646805178],
   CAR.ACADIA: [4.78003305, 1.0, 0.3122, 0.05591772],
   CAR.SILVERADO: [3.29974374, 1.0, 0.25571356, 0.0465122]
 }
@@ -114,6 +115,15 @@ class CarInterface(CarInterfaceBase):
         ret.openpilotLongitudinalControl = True
         ret.safetyConfigs[0].safetyParam |= Panda.FLAG_GM_HW_CAM_LONG
 
+    elif candidate in SDGM_CAR:
+      ret.experimentalLongitudinalAvailable = False
+      ret.networkLocation = NetworkLocation.fwdCamera
+      ret.pcmCruise = True
+      ret.radarUnavailable = True
+      ret.minEnableSpeed = -1.  # engage speed is decided by ASCM
+      ret.minSteerSpeed = 30 * CV.MPH_TO_MS
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_GM_HW_SDGM
+
     else:  # ASCM, OBD-II harness
       ret.openpilotLongitudinalControl = True
       ret.networkLocation = NetworkLocation.gateway
@@ -172,7 +182,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.83
       ret.steerRatio = 15.8
       ret.centerToFront = ret.wheelbase * 0.4  # wild guess
-    
+
     elif candidate == CAR.HOLDEN_ASTRA:
       ret.mass = 1363.
       ret.wheelbase = 2.662
@@ -292,6 +302,14 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.2
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
+    elif candidate == CAR.XT4:
+      ret.mass = 3660. * CV.LB_TO_KG
+      ret.wheelbase = 2.78
+      ret.steerRatio = 14.4
+      ret.centerToFront = ret.wheelbase * 0.4
+      ret.steerActuatorDelay = 0.2
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
+
     elif candidate == CAR.CT6_CC:
       ret.wheelbase = 3.11
       ret.mass = 5198. * CV.LB_TO_KG
@@ -310,6 +328,7 @@ class CarInterface(CarInterfaceBase):
 
       if candidate in CC_ONLY_CAR:
         ret.flags |= GMFlags.PEDAL_LONG.value
+        ret.safetyConfigs[0].safetyParam |= Panda.FLAG_GM_PEDAL_LONG
         # Note: Low speed, stop and go not tested. Should be fairly smooth on highway
         ret.longitudinalTuning.kpBP = [5., 35.]
         ret.longitudinalTuning.kpV = [0.35, 0.5]
@@ -347,7 +366,7 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_GM_NO_ACC
 
     # Exception for flashed cars, or cars whose camera was removed
-    if (ret.networkLocation == NetworkLocation.fwdCamera or candidate in CC_ONLY_CAR) and CAM_MSG not in fingerprint[CanBus.CAMERA]:
+    if (ret.networkLocation == NetworkLocation.fwdCamera or candidate in CC_ONLY_CAR) and CAM_MSG not in fingerprint[CanBus.CAMERA] and not candidate in SDGM_CAR:
       ret.flags |= GMFlags.NO_CAMERA.value
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_GM_NO_CAMERA
 
@@ -377,7 +396,7 @@ class CarInterface(CarInterfaceBase):
     # TODO: verify 17 Volt can enable for the first time at a stop and allow for all GMs
     below_min_enable_speed = ret.vEgo < self.CP.minEnableSpeed or self.CS.moving_backward
     if below_min_enable_speed and not (ret.standstill and ret.brake >= 20 and
-                                       self.CP.networkLocation == NetworkLocation.fwdCamera):
+                                       (self.CP.networkLocation == NetworkLocation.fwdCamera and not self.CP.carFingerprint in SDGM_CAR)):
       events.add(EventName.belowEngageSpeed)
     if ret.cruiseState.standstill and not self.CP.autoResumeSng and not self.disable_resumeRequired:
       events.add(EventName.resumeRequired)
@@ -399,7 +418,7 @@ class CarInterface(CarInterfaceBase):
       self.CP.transmissionType == TransmissionType.direct and \
       not self.CS.single_pedal_mode and \
       c.longActive:
-      events.add(EventName.pedalInterceptorNoBrake)
+      events.add(FrogPilotEventName.pedalInterceptorNoBrake)
 
     if (self.CP.flags & GMFlags.CC_LONG.value) and ret.vEgo < self.CP.minEnableSpeed and ret.cruiseState.enabled:
       events.add(EventName.speedTooLow)

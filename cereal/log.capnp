@@ -166,6 +166,7 @@ struct FrameData {
     unknown @0;
     ar0231 @1;
     ox03c10 @2;
+    os04c10 @3;
   }
 
   frameLengthDEPRECATED @3 :Int32;
@@ -320,8 +321,6 @@ struct DeviceState @0xa4d8b5af2aa492eb {
   memoryUsagePercent @19 :Int8;
   gpuUsagePercent @33 :Int8;
   cpuUsagePercent @34 :List(Int8);  # per-core cpu usage
-  freeSpace @45 :Int16;
-  usedSpace @46 :Int16;
 
   # power
   offroadPowerUsageUwh @23 :UInt32;
@@ -1015,31 +1014,10 @@ struct LongitudinalPlan @0xe00b5b3eba12876c {
   accels @32 :List(Float32);
   speeds @33 :List(Float32);
   jerks @34 :List(Float32);
-  distances @37 :List(Float32);
 
   solverExecutionTime @35 :Float32;
   personality @36 :LongitudinalPersonality;
 
-  # FrogPilot LongitudinalPlans
-  conditionalExperimental @38 :Bool;
-  desiredFollowDistance @39 :Float32;
-  greenLight @40 :Bool;
-  safeObstacleDistance @41 :Float32;
-  stoppedEquivalenceFactor @42 :Float32;
-  safeObstacleDistanceStock @43 :Float32;
-  slcOverridden @44 :Bool;
-  slcSpeedLimit @45 :Float32;
-  slcSpeedLimitOffset @46 :Float32;
-  stoppedEquivalenceFactorStock @47 :Float32;
-  vtscOffset @48 :Float32;
-  #########################
-  carawayck @49 : Bool;
-  carapproch @50 :Bool;
-  carnotapproch @51 :Bool;
-  dspeedlimitu @52 :Bool;
-  dspeedlimitd @53 :Bool;
-  speedover @54 :Bool;
-  #############################
   enum LongitudinalPlanSource {
     cruise @0;
     lead0 @1;
@@ -1110,10 +1088,6 @@ struct LateralPlan @0xe1e9318e2ae8b51e {
   solverExecutionTime @30 :Float32;
   solverCost @32 :Float32;
   solverState @33 :SolverState;
-
-  # FrogPilot LateralPlans
-  laneWidthLeft @34 :Float32;
-  laneWidthRight @35 :Float32;
 
   struct SolverState {
     x @0 :List(List(Float32));
@@ -2255,7 +2229,7 @@ struct Event {
     liveTorqueParameters @94 :LiveTorqueParametersData;
     cameraOdometry @63 :CameraOdometry;
     thumbnail @66: Thumbnail;
-    carEvents @68: List(Car.CarEvent);
+    onroadEvents @68: List(Car.CarEvent);
     carParams @69: Car.CarParams;
     driverMonitoringState @71: DriverMonitoringState;
     liveLocationKalman @72 :LiveLocationKalman;
@@ -2315,12 +2289,12 @@ struct Event {
     customReservedRawData2 @126 :Data;
 
     # *********** Custom: reserved for forks ***********
-    customReserved0 @107 :Custom.CustomReserved0;
-    customReserved1 @108 :Custom.CustomReserved1;
-    customReserved2 @109 :Custom.CustomReserved2;
-    customReserved3 @110 :Custom.CustomReserved3;
-    customReserved4 @111 :Custom.CustomReserved4;
-    customReserved5 @112 :Custom.CustomReserved5;
+    frogpilotCarControl @107 :Custom.FrogPilotCarControl;
+    frogpilotDeviceState @108 :Custom.FrogPilotDeviceState;
+    frogpilotEvents @109 :Custom.FrogPilotEvents;
+    frogpilotLateralPlan @110 :Custom.FrogPilotLateralPlan;
+    frogpilotLongitudinalPlan @111 :Custom.FrogPilotLongitudinalPlan;
+    frogpilotNavigation @112 :Custom.FrogPilotNavigation;
     customReserved6 @113 :Custom.CustomReserved6;
     customReserved7 @114 :Custom.CustomReserved7;
     customReserved8 @115 :Custom.CustomReserved8;

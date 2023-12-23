@@ -57,14 +57,18 @@ class DesireHelper:
   # Lane detection
   def calculate_lane_width(self, lane, current_lane, road_edge):
     # Interpolate lane values at current_lane.x positions
-    sorted_lane_indices = np.argsort(lane.x)
-    lane_y = np.interp(current_lane.x, np.array(lane.x)[sorted_lane_indices], np.array(lane.y)[sorted_lane_indices])
-    # Interpolate road_edge values at current_lane.x positions
-    sorted_edge_indices = np.argsort(road_edge.x)
-    road_edge_y = np.interp(current_lane.x, np.array(road_edge.x)[sorted_edge_indices], np.array(road_edge.y)[sorted_edge_indices])
-    # Calculate the absolute mean distances between both
-    distance_to_lane = np.mean(np.abs(current_lane.y - lane_y))
-    distance_to_road_edge = np.mean(np.abs(current_lane.y - road_edge_y))
+    lane_x, lane_y = np.array(lane.x), np.array(lane.y)
+    edge_x, edge_y = np.array(road_edge.x), np.array(road_edge.y)
+    current_x, current_y = np.array(current_lane.x), np.array(current_lane.y)
+
+    # Interpolate lane and road edge values at current_lane.x positions
+    lane_y_interp = np.interp(current_x, lane_x[lane_x.argsort()], lane_y[lane_x.argsort()])
+    road_edge_y_interp = np.interp(current_x, edge_x[edge_x.argsort()], edge_y[edge_x.argsort()])
+
+    # Calculate the mean absolute distances
+    distance_to_lane = np.mean(np.abs(current_y - lane_y_interp))
+    distance_to_road_edge = np.mean(np.abs(current_y - road_edge_y_interp))
+
     # Return the smallest between the two
     return min(distance_to_lane, distance_to_road_edge)
 

@@ -19,7 +19,7 @@ from openpilot.selfdrive.manager.helpers import unblock_stdout, write_onroad_par
 from openpilot.selfdrive.manager.process import ensure_running
 from openpilot.selfdrive.manager.process_config import managed_processes
 from openpilot.selfdrive.athena.registration import register, UNREGISTERED_DONGLE_ID
-from openpilot.system.swaglog import cloudlog, add_file_handler
+from openpilot.common.swaglog import cloudlog, add_file_handler
 from openpilot.system.version import is_dirty, get_commit, get_version, get_origin, get_short_branch, \
                            get_normalized_origin, terms_version, training_version, \
                            is_tested_branch, is_release_branch
@@ -37,6 +37,8 @@ def manager_init() -> None:
   params.clear_all(ParamKeyType.CLEAR_ON_MANAGER_START)
   params.clear_all(ParamKeyType.CLEAR_ON_ONROAD_TRANSITION)
   params.clear_all(ParamKeyType.CLEAR_ON_OFFROAD_TRANSITION)
+  if is_release_branch():
+    params.clear_all(ParamKeyType.DEVELOPMENT_ONLY)
 
   default_params: List[Tuple[str, Union[str, bytes]]] = [
     ("CompletedTrainingVersion", "0"),
@@ -55,6 +57,7 @@ def manager_init() -> None:
     ("SshEnabled","1"),
     ("GithubSshKeys","ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1El7gjK66tGrdaFUyVs44DKi9Ny7BHd4UI9NYAwUNs1pH4MCpOUyZ37Y9lGv4dc4Nh7TY/IE1CUoXcX4JJrdTONHwWMDNx9BOl0zITWNfm05Xko/DeNJEKEkSpu+KpVjYhbZ6ggosdQDLNUFdI/KHKa8MQc1J5H2+mJzTm0GO+u7dOzrTPpZ14Qc2VXxo3KyRWsWKB35RF71YoKQclOe2vIX/GWQk50bKk/eRZzJJhYn0EFEjjsGxhbcfHpFUeq4eLw43uGTvfqyCzGZqBvYew2zPM2ULzfmX/6x8fXXydqH9ma7uSCjKk+H+Mj8LmtWMrXkQco/QVoPtHcZaEd+DmTN+DLNGtq3TADo+Q+B+5bMyO7rqOhOzDQ1tSeCumsq+GE7MqNi2rHSTHZhsWhkHCMbJL3/x3+PZZmXkN51CA11kzHXPbtaR9QTDY9b/vZqztOp8rP4HsHDVZqhxQZ/Tb9B5OLXEg74nHqf3dn+rYv1odPzACovDhp4vMtbGBKGl38ce9Q2pW6xCXDgzwEK+IE6TUBz54dDPIFceWpnEfID2mghWfiyKMggamAG/walAmsOHZRiMeME6Q+lxdYBHDSGy4lvEGh0V2MeG/HG8kn+hgbDHz9BX0wx58rbPld4UGCN3jT2XZnz9YYBcr2oAlKRwnuwZaZZEYcHSjO9uAQ=="),
     ("GithubUsername", "huifan0114"),
+    ("NavEnable", "1"),
 ##############################################
   ]
   if not PC:
@@ -115,6 +118,7 @@ def manager_init() -> None:
                        dirty=is_dirty(),
                        device=HARDWARE.get_device_type())
 
+  # Remove the error log on boot to prevent old errors from hanging around
   if os.path.isfile(os.path.join(sentry.CRASHES_DIR, 'error.txt')):
     os.remove(os.path.join(sentry.CRASHES_DIR, 'error.txt'))
 
@@ -181,7 +185,7 @@ def manager_thread() -> None:
     cloudlog.debug(running)
 
     # send managerState
-    msg = messaging.new_message('managerState')
+    msg = messaging.new_message('managerState', valid=True)
     msg.managerState.processes = [p.get_process_state_msg() for p in managed_processes.values()]
     pm.send('managerState', msg)
 
@@ -207,7 +211,7 @@ def main() -> None:
     os.remove("/data/openpilot/prebuilt")
 
   # Set the desired model on boot
-  subprocess.run(["python3", "/data/openpilot/selfdrive/modeld/model_switcher.py"])
+  subprocess.run(["python3", "/data/openpilot/selfdrive/frogpilot/functions/model_switcher.py"])
 
   # Start UI early so prepare can happen in the background
   if not prepare_only:

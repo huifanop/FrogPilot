@@ -85,12 +85,26 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
   addItem(uninstallBtn);
 
   // error log button
-  errorLogBtn = new ButtonControl(tr("錯誤資訊"), tr("查看"), "View the error log for debugging purposes when openpilot crashes.");
+  errorLogBtn = new ButtonControl(tr("錯誤資訊"), tr("查看"), "查看錯誤訊息.");
   connect(errorLogBtn, &ButtonControl::clicked, [=]() {
     const std::string txt = util::read_file("/data/community/crashes/error.txt");
     ConfirmationDialog::rich(QString::fromStdString(txt), this);
   });
   addItem(errorLogBtn);
+
+  delLogBtn = new ButtonControl(tr("刪除訊息"), tr("刪除"), "刪除訊息.");
+  connect(delLogBtn, &ButtonControl::clicked, [=]() {
+    std::system("rm -r /data/community/crashes && mkdir -p /data/community/crashes/");
+  });
+  addItem(delLogBtn);
+
+  fastinstallBtn = new ButtonControl(tr("快速更新"), tr("更新"), "立刻進行更新並重啟機器.");
+  connect(fastinstallBtn, &ButtonControl::clicked, [=]() {
+    std::system("git pull");
+    Hardware::reboot();
+  });
+  addItem(fastinstallBtn);
+  
 
   fs_watch = new ParamWatcher(this);
   QObject::connect(fs_watch, &ParamWatcher::paramChanged, [=](const QString &param_name, const QString &param_value) {

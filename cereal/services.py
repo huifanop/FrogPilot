@@ -60,7 +60,7 @@ services: dict[str, tuple] = {
   "cameraOdometry": (True, 20., 5),
   "lateralPlan": (True, 20., 5),
   "thumbnail": (True, 0.2, 1),
-  "carEvents": (True, 1., 1),
+  "onroadEvents": (True, 1., 1),
   "carParams": (True, 0.02, 1),
   "roadCameraState": (True, 20., 20),
   "driverCameraState": (True, 20., 20),
@@ -81,6 +81,14 @@ services: dict[str, tuple] = {
   "qRoadEncodeIdx": (False, 20.),
   "userFlag": (True, 0., 1),
   "microphone": (True, 10., 10),
+
+  # FrogPilot
+  "frogpilotCarControl": (True, 100., 10),
+  "frogpilotDeviceState": (True, 2., 1),
+  "frogpilotEvents": (True, 1., 1),
+  "frogpilotLateralPlan": (True, 20., 5),
+  "frogpilotLongitudinalPlan": (True, 20., 5),
+  "frogpilotNavigation": (True, 1., 10),
 
   # debug
   "uiDebug": (True, 0., 1),

@@ -14,8 +14,6 @@
 #include "common/watchdog.h"
 #include "common/util.h"
 #include "system/hardware/hw.h"
-#include "selfdrive/ui/qt/frogpilot/frogpilot_navigation_settings.h"
-#include "selfdrive/ui/qt/offroad/frogpilot_settings.h"
 #include "selfdrive/ui/qt/widgets/controls.h"
 #include "selfdrive/ui/qt/widgets/input.h"
 #include "selfdrive/ui/qt/widgets/scrollview.h"
@@ -24,6 +22,10 @@
 #include "selfdrive/ui/ui.h"
 #include "selfdrive/ui/qt/util.h"
 #include "selfdrive/ui/qt/qt_window.h"
+
+#include "selfdrive/frogpilot/ui/frogpilot_settings.h"
+#include "selfdrive/frogpilot/ui/vehicle_settings.h"
+#include "selfdrive/frogpilot/navigation/ui/navigation_settings.h"
 
 TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
   // param, title, desc, icon
@@ -104,7 +106,7 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
     toggles[param.toStdString()] = toggle;
 
     // insert longitudinal personality after NDOG toggle
-    if (param == "DisengageOnAccelerator" && !params.getInt("PersonalitiesViaWheel")) {
+    if (param == "DisengageOnAccelerator" && !params.getInt("AdjustablePersonalities")) {
       addItem(long_personality_setting);
     }
   }
@@ -410,7 +412,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
     {tr("軟體資訊"), new SoftwarePanel(this)},
     {tr("控制設定"), new FrogPilotControlsPanel(this)},
     {tr("導航設定"), new FrogPilotNavigationPanel(this)},
-    // {tr("車輛設定"), new FrogPilotVehiclesPanel(this)},
+    {tr("車輛設定"), new FrogPilotVehiclesPanel(this)},
     {tr("介面設定"), new FrogPilotVisualsPanel(this)},
     {tr("H F O P"), new HFOPControlsPanel(this)},
   };
@@ -425,7 +427,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
         color: grey;
         border: none;
         background: none;
-        font-size: 65px;
+        font-size: 55px;
         font-weight: 500;
       }
       QPushButton:checked {
@@ -437,7 +439,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
     )");
     btn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     nav_btns->addButton(btn);
-    sidebar_layout->addWidget(btn, 0, Qt::AlignRight);
+    sidebar_layout->addWidget(btn, 0, Qt::AlignHCenter);
 
     const int lr_margin = name != tr("網路") ? 50 : 0;  // Network panel handles its own margins
     panel->setContentsMargins(lr_margin, 25, lr_margin, 25);

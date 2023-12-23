@@ -63,17 +63,15 @@ void hyundai_common_cruise_state_check(const int cruise_engaged) {
 }
 
 void hyundai_common_cruise_buttons_check(const int cruise_button, const int main_button) {
+  if (main_button != 0 && main_button != cruise_main_prev) {
+    acc_main_on = !acc_main_on;
+  }
+  cruise_main_prev = main_button;
   if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) ||
       (main_button != 0)) {
     hyundai_last_button_interaction = 0U;
   } else {
     hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
-  }
-
-  // main_button was pressed
-  if (main_button != 0 && main_button_prev == 0) {
-    // toggle
-    lateral_controls_allowed = (lateral_controls_allowed + 1) % 2;
   }
 
   if (hyundai_longitudinal) {
@@ -90,7 +88,6 @@ void hyundai_common_cruise_buttons_check(const int cruise_button, const int main
     }
 
     cruise_button_prev = cruise_button;
-    main_button_prev = main_button;
   }
 }
 

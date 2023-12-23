@@ -126,9 +126,16 @@ AdvancedNetworking::AdvancedNetworking(QWidget* parent, WifiManager* wifi): QWid
 
   ListWidget *list = new ListWidget(this);
   // Enable tethering layout
-  tetheringToggle = new ToggleControl(tr("開啟網路分享"), "", "", wifi->isTetheringEnabled());
+//////////////////////////////////////////////////////////////////////////////
+   tetheringToggle = new ToggleControl(tr("開啟網路分享"), "", "", wifi->isTetheringEnabled());
+  //  tetheringToggle = new ToggleControl(tr("開啟網路分享"), "", "", true);
+//////////////////////////////////////////////////////////////////////////////
   list->addItem(tetheringToggle);
   QObject::connect(tetheringToggle, &ToggleControl::toggleFlipped, this, &AdvancedNetworking::toggleTethering);
+  if (params.getBool("TetheringEnabled")) {
+    tetheringToggle->setVisualOn();
+    uiState()->scene.tethering_enabled = true;
+  }
 
   // Change tethering password
   ButtonControl *editPasswordButton = new ButtonControl(tr("網路分享密碼"), tr("編輯"));
@@ -211,7 +218,11 @@ void AdvancedNetworking::refresh() {
 
 void AdvancedNetworking::toggleTethering(bool enabled) {
   wifi->setTetheringEnabled(enabled);
-  tetheringToggle->setEnabled(false);
+//////////////////////////////////////////////////////////////////////////////
+  tetheringToggle->setEnabled(true);
+//////////////////////////////////////////////////////////////////////////////
+  params.putBool("TetheringEnabled", enabled);
+  uiState()->scene.tethering_enabled = enabled;
 }
 
 // WifiUI functions

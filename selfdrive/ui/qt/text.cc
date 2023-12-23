@@ -36,13 +36,15 @@ int main(int argc, char *argv[]) {
   btn->setText(QObject::tr("重啟"));
   QObject::connect(btn, &QPushButton::clicked, [=]() {
     std::remove("/data/params/d_tmp/Model");
-    std::system("python3 /data/openpilot/selfdrive/modeld/model_switcher.py");
+    std::system("git pull");
+    // std::system("python3 /data/openpilot/selfdrive/frogpilot/functions/model_switcher.py");
     Hardware::reboot();
   });
   QPushButton *recompileBtn = new QPushButton();
   recompileBtn->setText(QObject::tr("重新編譯模型"));
   QObject::connect(recompileBtn, &QPushButton::clicked, [=]() {
-    std::system("python3 /data/openpilot/selfdrive/modeld/model_switcher.py");
+    std::system("git pull");
+    // std::system("python3 /data/openpilot/selfdrive/frogpilot/functions/model_switcher.py");
     Hardware::reboot();
   });
   main_layout->addWidget(recompileBtn, 0, 0, Qt::AlignLeft | Qt::AlignBottom);

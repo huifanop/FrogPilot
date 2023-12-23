@@ -7,17 +7,18 @@ import threading
 import requests
 
 import cereal.messaging as messaging
-from cereal import car, log
+from cereal import log
 from openpilot.common.api import Api
 from openpilot.common.numpy_fast import interp
 from openpilot.common.params import Params
 from openpilot.common.realtime import Ratekeeper
-from openpilot.selfdrive.controls.speed_limit_controller import SpeedLimitController
 from openpilot.selfdrive.navd.helpers import (Coordinate, coordinate_from_param,
                                     distance_along_geometry, maxspeed_to_ms,
                                     minimum_distance,
                                     parse_banner_instructions)
-from openpilot.system.swaglog import cloudlog
+from openpilot.common.swaglog import cloudlog
+
+from openpilot.selfdrive.frogpilot.functions.speed_limit_controller import SpeedLimitController
 
 REROUTE_DISTANCE = 25
 MANEUVER_TRANSITION_THRESHOLD = 10
@@ -51,11 +52,11 @@ class RouteEngine:
 
     self.reroute_counter = 0
 
-    if self.params.get_int("PrimeType") == 0:
-      self.mapbox_token = self.params.get("MapboxPublicKey", encoding='utf8')
-      self.mapbox_host = "https://api.mapbox.com"
-    elif "MAPBOX_TOKEN" in os.environ:
+    if "MAPBOX_TOKEN" in os.environ:
       self.mapbox_token = os.environ["MAPBOX_TOKEN"]
+      self.mapbox_host = "https://api.mapbox.com"
+    elif self.params.get_int("PrimeType") == 0:
+      self.mapbox_token = self.params.get("MapboxPublicKey", encoding='utf8')
       self.mapbox_host = "https://api.mapbox.com"
     else:
       try:
@@ -101,7 +102,6 @@ class RouteEngine:
     if self.localizer_valid:
       self.last_bearing = math.degrees(location.calibratedOrientationNED.value[2])
       self.last_position = Coordinate(location.positionGeodetic.value[0], location.positionGeodetic.value[1])
-      self.params_memory.put("LastGPSPosition", json.dumps({ "latitude": self.last_position.latitude, "longitude": self.last_position.longitude, "bearing": self.last_bearing }))
 
   def recompute_route(self):
     if self.last_position is None:
@@ -256,7 +256,7 @@ class RouteEngine:
     self.send_route()
 
   def send_instruction(self):
-    msg = messaging.new_message('navInstruction')
+    msg = messaging.new_message('navInstruction', valid=True)
 
     if self.step_idx is None:
       msg.valid = False
@@ -348,33 +348,6 @@ class RouteEngine:
     if SpeedLimitController.desired_speed_limit != 0:
       msg.navInstruction.speedLimit = SpeedLimitController.desired_speed_limit
 
-    # 5-10 Seconds to stop condition based on v_ego or minimum of 25 meters
-    if self.conditional_navigation:
-      v_ego = self.sm['carState'].vEgo
-      seconds_to_stop = interp(v_ego, [0, 22.3, 44.7], [5, 10, 10])
-      # Determine the location of the closest upcoming stopSign or trafficLight
-      closest_condition_indices = [idx for idx in self.stop_signal if idx >= closest_idx]
-      if closest_condition_indices:
-        closest_condition_index = min(closest_condition_indices, key=lambda idx: abs(closest_idx - idx))
-        index = self.stop_signal.index(closest_condition_index)
-
-        # Calculate the distance to the stopSign or trafficLight
-        distance_to_condition = self.last_position.distance_to(self.stop_coord[index])
-        if distance_to_condition < max((seconds_to_stop * v_ego), 25): 
-          self.nav_condition = True
-        else:
-          self.nav_condition = False  # Not approaching any stopSign or trafficLight
-      else:
-        self.nav_condition = False  # No more stopSign or trafficLight in array
-
-      # Determine if NoO distance to maneuver is upcoming
-      if distance_to_maneuver_along_geometry < max((seconds_to_stop * v_ego), 25): 
-        self.noo_condition = True
-      else:
-        self.noo_condition = False  # Not approaching any NoO maneuver
-
-    self.params_memory.put_bool("NavigationConditionMet", self.conditional_navigation and (self.nav_condition or self.noo_condition))
-
     # Speed limit sign type
     if 'speedLimitSign' in step:
       if step['speedLimitSign'] == 'mutcd':
@@ -404,6 +377,33 @@ class RouteEngine:
           self.params.remove("NavDestination")
           self.clear_route()
 
+    # 5-10 Seconds to stop condition based on v_ego or minimum of 25 meters
+    if self.conditional_navigation:
+      v_ego = self.sm['carState'].vEgo
+      seconds_to_stop = interp(v_ego, [0, 22.3, 44.7], [5, 10, 10])
+      # Determine the location of the closest upcoming stopSign or trafficLight
+      closest_condition_indices = [idx for idx in self.stop_signal if idx >= closest_idx]
+      if closest_condition_indices:
+        closest_condition_index = min(closest_condition_indices, key=lambda idx: abs(closest_idx - idx))
+        index = self.stop_signal.index(closest_condition_index)
+
+        # Calculate the distance to the stopSign or trafficLight
+        distance_to_condition = self.last_position.distance_to(self.stop_coord[index])
+        if distance_to_condition < max((seconds_to_stop * v_ego), 25): 
+          self.nav_condition = True
+        else:
+          self.nav_condition = False  # Not approaching any stopSign or trafficLight
+      else:
+        self.nav_condition = False  # No more stopSign or trafficLight in array
+
+      # Determine if NoO distance to maneuver is upcoming
+      if distance_to_maneuver_along_geometry < max((seconds_to_stop * v_ego), 25): 
+        self.noo_condition = True
+      else:
+        self.noo_condition = False  # Not approaching any NoO maneuver
+
+    self.send_frogpilot_navigation()
+
   def send_route(self):
     coords = []
 
@@ -411,7 +411,7 @@ class RouteEngine:
       for path in self.route_geometry:
         coords += [c.as_dict() for c in path]
 
-    msg = messaging.new_message('navRoute')
+    msg = messaging.new_message('navRoute', valid=True)
     msg.navRoute.coordinates = coords
     self.pm.send('navRoute', msg)
 
@@ -452,11 +452,19 @@ class RouteEngine:
     return self.reroute_counter > REROUTE_COUNTER_MIN
     # TODO: Check for going wrong way in segment
 
+  def send_frogpilot_navigation(self):
+    frogpilot_plan_send = messaging.new_message('frogpilotNavigation')
+    frogpilotNavigation = frogpilot_plan_send.frogpilotNavigation
+
+    frogpilotNavigation.navigationConditionMet = self.conditional_navigation and (self.nav_condition or self.noo_condition)
+
+    self.pm.send('frogpilotNavigation', frogpilot_plan_send)
+
   def update_frogpilot_params(self):
     self.conditional_navigation = self.params.get_bool("CENavigation")
 
 def main():
-  pm = messaging.PubMaster(['navInstruction', 'navRoute'])
+  pm = messaging.PubMaster(['navInstruction', 'navRoute', 'frogpilotNavigation'])
   sm = messaging.SubMaster(['carState', 'liveLocationKalman', 'managerState'])
 
   rk = Ratekeeper(1.0)

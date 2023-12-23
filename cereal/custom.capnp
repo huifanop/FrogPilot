@@ -8,22 +8,70 @@ $Cxx.namespace("cereal");
 # cereal, so use these if you want custom events in your fork.
 
 # you can rename the struct, but don't change the identifier
-struct CustomReserved0 @0x81c2f05a394cf4af {
+struct FrogPilotCarControl @0x81c2f05a394cf4af {
+  alwaysOnLateral @0: Bool;
+  drivingGear @1: Bool;
 }
 
-struct CustomReserved1 @0xaedffd8f31e7b55d {
+struct FrogPilotDeviceState @0xaedffd8f31e7b55d {
+  freeSpace @0 :Int16;
+  usedSpace @1 :Int16;
 }
 
-struct CustomReserved2 @0xf35cc4560bbf6ec2 {
+enum FrogPilotEvents @0xf35cc4560bbf6ec2 {
+  frogSteerSaturated @0;
+  greenLight @1;
+  pedalInterceptorNoBrake @2;
+  torqueNNLoad @3;
+  turningLeft @4;
+  turningRight @5;
+  #######################
+  carAwayed @6;
+  carApproaching @7;
+  detectSpeedLimitu @8;
+  detectSpeedLimitd @9;
+  speedOver @10;
+  ######NAV語音######
+  navTurn @11;
+  navUturn @12;
+  navturnLeft @13;
+  navturnRight @14;
+  navSharpright @15;
+  navSharpleft @16;
+  navOfframp @17;
+  #######################
 }
 
-struct CustomReserved3 @0xda96579883444c35 {
+struct FrogPilotLateralPlan @0xda96579883444c35 {
+  laneWidthLeft @0 :Float32;
+  laneWidthRight @1 :Float32;
 }
 
-struct CustomReserved4 @0x80ae746ee2596b11 {
+struct FrogPilotLongitudinalPlan @0x80ae746ee2596b11 {
+  conditionalExperimental @0 :Bool;
+  desiredFollowDistance @1 :Float32;
+  distances @2 :List(Float32);
+  greenLight @3 :Bool;
+  safeObstacleDistance @4 :Float32;
+  safeObstacleDistanceStock @5 :Float32;
+  slcOverridden @6 :Bool;
+  slcSpeedLimit @7 :Float32;
+  slcSpeedLimitOffset @8 :Float32;
+  stoppedEquivalenceFactor @9 :Float32;
+  stoppedEquivalenceFactorStock @10 :Float32;
+  vtscOffset @11 :Float32;
+  #########################
+  carawayck @12 : Bool;
+  carapproch @13 :Bool;
+  carnotapproch @14 :Bool;
+  dspeedlimitu @15 :Bool;
+  dspeedlimitd @16 :Bool;
+  speedover @17 :Bool;
+  #############################
 }
 
-struct CustomReserved5 @0xa5cd762cd951a455 {
+struct FrogPilotNavigation @0xa5cd762cd951a455 {
+  navigationConditionMet @0 :Bool;
 }
 
 struct CustomReserved6 @0xf98d843bfd7004a3 {

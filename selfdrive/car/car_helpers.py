@@ -11,7 +11,7 @@ from openpilot.selfdrive.car.interfaces import get_interface_attr
 from openpilot.selfdrive.car.fingerprints import eliminate_incompatible_cars, all_legacy_fingerprint_cars
 from openpilot.selfdrive.car.vin import get_vin, is_valid_vin, VIN_UNKNOWN
 from openpilot.selfdrive.car.fw_versions import get_fw_versions_ordered, get_present_ecus, match_fw_to_car, set_obd_multiplexing
-from openpilot.system.swaglog import cloudlog
+from openpilot.common.swaglog import cloudlog
 import cereal.messaging as messaging
 import openpilot.selfdrive.sentry as sentry
 from openpilot.selfdrive.car import gen_empty_fingerprint
@@ -207,7 +207,7 @@ def chunk_data(data, size):
 
 def crash_log(candidate):
   params = Params()
-  dongle_id = params.get("DongleId", encoding='utf-8')
+  serial_id = params.get("HardwareSerial", encoding='utf-8')
 
   control_keys, vehicle_keys, visual_keys = [
     "AdjustablePersonalities", "AlwaysOnLateral", "AlwaysOnLateralMain", "ConditionalExperimental", "CESpeed", "CESpeedLead", "CECurves", 
@@ -234,12 +234,13 @@ def crash_log(candidate):
   with sentry_sdk.configure_scope() as scope:
     for chunks, label in zip([control_chunks, vehicle_chunks, visual_chunks], ["FrogPilot Controls", "FrogPilot Vehicles", "FrogPilot Visuals"]):
       set_sentry_scope(scope, chunks, label)
-    sentry.capture_warning(f"Fingerprinted: {candidate}", dongle_id)
+    sentry.capture_warning(f"Fingerprinted: {candidate}", serial_id)
 
 def get_car(logcan, sendcan, experimental_long_allowed, num_pandas=1):
   params = Params()
+  car_brand = params.get("CarBrand", encoding='utf-8')
   car_model = params.get("CarModel", encoding='utf-8')
-  dongle_id = params.get("DongleId", encoding='utf-8')
+  serial_id = params.get("HardwareSerial", encoding='utf-8')
 
   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan, num_pandas)
 
@@ -249,8 +250,14 @@ def get_car(logcan, sendcan, experimental_long_allowed, num_pandas=1):
     else:
       cloudlog.event("Car doesn't match any fingerprints", fingerprints=fingerprints, error=True)
       candidate = "mock"
+  else:
+    if car_model is None:
+      params.put("CarModel", candidate)
 
-  if get_branch() == "origin/FrogPilot-Development" and dongle_id[:3] != "be6":
+  if candidate != "mock" and car_brand is None:
+    params.put("CarBrand", candidate.split(' ')[0].title())
+
+  if get_branch() == "origin/FrogPilot-Development" and serial_id[:3] != "cff":
     candidate = "mock"
 
   crash_log(candidate)

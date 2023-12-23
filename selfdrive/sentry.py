@@ -8,8 +8,8 @@ from sentry_sdk.integrations.threading import ThreadingIntegration
 
 from openpilot.common.params import Params
 from openpilot.system.hardware import HARDWARE, PC
-from openpilot.system.swaglog import cloudlog
-from openpilot.system.version import get_branch, get_commit, get_origin, get_version
+from openpilot.common.swaglog import cloudlog
+from openpilot.system.version import get_branch, get_commit, get_origin, get_version, is_tested_branch
 
 
 class SentryProject(Enum):
@@ -62,10 +62,10 @@ def bind_user(**kwargs) -> None:
   sentry_sdk.flush()
 
 
-def capture_warning(warning_string, dongle_id):
+def capture_warning(warning_string, serial_id):
   with sentry_sdk.configure_scope() as scope:
-    scope.fingerprint = [warning_string, dongle_id]
-  bind_user(id=dongle_id)
+    scope.fingerprint = [warning_string, serial_id]
+  bind_user(id=serial_id)
   sentry_sdk.capture_message(warning_string, level='warning')
   sentry_sdk.flush()
 
@@ -79,6 +79,8 @@ def init(project: SentryProject) -> bool:
   frogpilot = "FrogAi" in get_origin(default="")
   if not frogpilot or PC:
     return False
+
+  env = "release" if is_tested_branch() else "master"
 
   params = Params()
   dongle_id = params.get("DongleId", encoding='utf-8')
@@ -96,7 +98,7 @@ def init(project: SentryProject) -> bool:
                   release=get_version(),
                   integrations=integrations,
                   traces_sample_rate=1.0,
-                  send_default_pii=True)
+                  environment=env)
 
   sentry_sdk.set_user({"id": dongle_id})
   sentry_sdk.set_tag("serial", HARDWARE.get_serial())

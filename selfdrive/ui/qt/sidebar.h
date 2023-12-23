@@ -79,8 +79,9 @@ private:
   bool isStorageUsed;
   int customColors;
   int customIcons;
+
   ItemStatus cpu_status, memory_status, storage_status;
-  Params params;
+
   std::unordered_map<int, std::pair<QString, std::vector<QColor>>> themeConfiguration;
   std::unordered_map<int, QPixmap> flag_imgs;
   std::unordered_map<int, QPixmap> home_imgs;

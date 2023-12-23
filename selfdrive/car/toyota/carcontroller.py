@@ -21,8 +21,8 @@ MAX_USER_TORQUE = 500
 
 # LTA limits
 # EPS ignores commands above this angle and causes PCS to fault
-MAX_STEER_ANGLE = 94.9461  # deg
-MAX_DRIVER_TORQUE_ALLOWANCE = 150  # slightly above steering pressed allows some resistance when changing lanes
+MAX_LTA_ANGLE = 94.9461  # deg
+MAX_LTA_DRIVER_TORQUE_ALLOWANCE = 150  # slightly above steering pressed allows some resistance when changing lanes
 
 # Lock / unlock door commands - Credit goes to AlexandreSato!
 LOCK_CMD = b'\x40\x05\x30\x11\x00\x80\x00\x00'
@@ -48,12 +48,15 @@ class CarController:
 
     # FrogPilot variables
     self.lock_doors = False
+    self.reverse_cruise_increase = False
     self.sng_hack = False
+
     self.doors_locked = False
     self.doors_unlocked = True
 
   def update_frogpilot_variables(self, params):
     self.lock_doors = params.get_bool("LockDoors")
+    self.reverse_cruise_increase = params.get_bool("ReverseCruise")
     self.sng_hack = params.get_bool("SNGHack")
 
   def update(self, CC, CS, now_nanos):
@@ -86,25 +89,32 @@ class CarController:
         apply_angle = actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
 
         # Angular rate limit based on speed
-        apply_angle = apply_std_steer_angle_limits(apply_angle, self.last_angle, CS.out.vEgo, self.params)
+        apply_angle = apply_std_steer_angle_limits(apply_angle, self.last_angle, CS.out.vEgoRaw, self.params)
 
         if not lat_active:
           apply_angle = CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
 
-        self.last_angle = clip(apply_angle, -MAX_STEER_ANGLE, MAX_STEER_ANGLE)
+        self.last_angle = clip(apply_angle, -MAX_LTA_ANGLE, MAX_LTA_ANGLE)
 
     self.last_steer = apply_steer
 
-    # toyota can trace shows this message at 42Hz, with counter adding alternatively 1 and 2;
+    # toyota can trace shows STEERING_LKA at 42Hz, with counter adding alternatively 1 and 2;
     # sending it at 100Hz seem to allow a higher rate limit, as the rate limit seems imposed
     # on consecutive messages
     can_sends.append(toyotacan.create_steer_command(self.packer, apply_steer, apply_steer_req))
+
+    # STEERING_LTA does not seem to allow more rate by sending faster, and may wind up easier
     if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
       lta_active = lat_active and self.CP.steerControlType == SteerControlType.angle
+      # cut steering torque with TORQUE_WIND_DOWN when either EPS torque or driver torque is above
+      # the threshold, to limit max lateral acceleration and for driver torque blending respectively.
       full_torque_condition = (abs(CS.out.steeringTorqueEps) < self.params.STEER_MAX and
-                               abs(CS.out.steeringTorque) < MAX_DRIVER_TORQUE_ALLOWANCE)
-      setme_x64 = 100 if lta_active and full_torque_condition else 0
-      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.last_angle, lta_active, self.frame // 2, setme_x64))
+                               abs(CS.out.steeringTorque) < MAX_LTA_DRIVER_TORQUE_ALLOWANCE)
+
+      # TORQUE_WIND_DOWN at 0 ramps down torque at roughly the max down rate of 1500 units/sec
+      torque_wind_down = 100 if lta_active and full_torque_condition else 0
+      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.CP.steerControlType, self.last_angle,
+                                                          lta_active, self.frame // 2, torque_wind_down))
 
     # *** gas and brake ***
     if self.CP.enableGasInterceptor and CC.longActive:
@@ -150,10 +160,10 @@ class CarController:
       if pcm_cancel_cmd and self.CP.carFingerprint in UNSUPPORTED_DSU_CAR:
         can_sends.append(toyotacan.create_acc_cancel_command(self.packer))
       elif self.CP.openpilotLongitudinalControl:
-        can_sends.append(toyotacan.create_accel_command(self.packer, pcm_accel_cmd, pcm_cancel_cmd, self.standstill_req, lead, CS.acc_type, fcw_alert, CC.reverseCruise, CS.distance_button))
+        can_sends.append(toyotacan.create_accel_command(self.packer, pcm_accel_cmd, pcm_cancel_cmd, self.standstill_req, lead, CS.acc_type, fcw_alert, self.reverse_cruise_increase, CS.distance_button))
         self.accel = pcm_accel_cmd
       else:
-        can_sends.append(toyotacan.create_accel_command(self.packer, 0, pcm_cancel_cmd, False, lead, CS.acc_type, False, CC.reverseCruise, CS.distance_button))
+        can_sends.append(toyotacan.create_accel_command(self.packer, 0, pcm_cancel_cmd, False, lead, CS.acc_type, False, self.reverse_cruise_increase, CS.distance_button))
 
     if self.frame % 2 == 0 and self.CP.enableGasInterceptor and self.CP.openpilotLongitudinalControl:
       # send exactly zero if gas cmd is zero. Interceptor will send the max between read value and gas cmd.

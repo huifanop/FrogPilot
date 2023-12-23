@@ -27,7 +27,8 @@ widgets_src = ["ui.cc", "qt/widgets/input.cc", "qt/widgets/drive_stats.cc", "qt/
                "qt/widgets/offroad_alerts.cc", "qt/widgets/prime.cc", "qt/widgets/keyboard.cc",
                "qt/widgets/scrollview.cc", "qt/widgets/cameraview.cc", "#third_party/qrcode/QrCode.cc",
                "qt/request_repeater.cc", "qt/qt_window.cc", "qt/network/networking.cc", "qt/network/wifi_manager.cc",
-               "qt/offroad/frogpilot_settings.cc", "qt/frogpilot/frogpilot_navigation_settings.cc"]
+               "../frogpilot/ui/frogpilot_settings.cc", "../frogpilot/navigation/ui/navigation_settings.cc",
+               "../frogpilot/ui/vehicle_settings.cc"]
 
 qt_env['CPPDEFINES'] = []
 if maps:
@@ -44,7 +45,7 @@ qt_src = ["main.cc", "qt/sidebar.cc", "qt/onroad.cc", "qt/body.cc",
           "qt/window.cc", "qt/home.cc", "qt/offroad/settings.cc",
           "qt/offroad/software_settings.cc", "qt/offroad/onboarding.cc",
           "qt/offroad/driverview.cc", "qt/offroad/experimental_mode.cc",
-          "qt/screenrecorder/omx_encoder.cc", "qt/screenrecorder/screenrecorder.cc"]
+          "../frogpilot/screenrecorder/omx_encoder.cc", "../frogpilot/screenrecorder/screenrecorder.cc"]
 
 def is_running_on_wsl2():
   try:
@@ -57,8 +58,8 @@ if is_running_on_wsl2():
   qt_env.Append(CXXFLAGS=['-DWSL2'])
   base_libs.remove('OmxCore')
   qt_libs.remove('OmxCore')
-  qt_src.remove("qt/screenrecorder/screenrecorder.cc")
-  qt_src.remove("qt/screenrecorder/omx_encoder.cc")
+  qt_src.remove("../frogpilot/screenrecorder/screenrecorder.cc")
+  qt_src.remove("../frogpilot/screenrecorder/omx_encoder.cc")
   print("Building for WSL2. Removing Screen Recorder")
 
 # build translation files
@@ -89,12 +90,6 @@ qt_env.Command(assets, [assets_src, translations_assets_src], f"rcc $SOURCES -o 
 qt_env.Depends(assets, Glob('#selfdrive/assets/*', exclude=[assets, assets_src, translations_assets_src, "#selfdrive/assets/assets.o"]) + [lrelease])
 asset_obj = qt_env.Object("assets", assets)
 
-# build soundd
-qt_env.Program("soundd/_soundd", ["soundd/main.cc", "soundd/sound.cc"], LIBS=qt_libs)
-if GetOption('extras'):
-  qt_env.Program("tests/playsound", "tests/playsound.cc", LIBS=base_libs)
-  qt_env.Program('tests/test_sound', ['tests/test_runner.cc', 'soundd/sound.cc', 'tests/test_sound.cc'], LIBS=qt_libs)
-
 qt_env.SharedLibrary("qt/python_helpers", ["qt/qt_window.cc"], LIBS=qt_libs)
 
 # spinner and text window
@@ -102,13 +97,13 @@ qt_env.Program("qt/text", ["qt/text.cc"], LIBS=qt_libs)
 qt_env.Program("qt/spinner", ["qt/spinner.cc"], LIBS=qt_libs)
 
 # build main UI
-qt_env.Program("_ui", qt_src + [asset_obj], LIBS=qt_libs)
+qt_env.Program("ui", qt_src + [asset_obj], LIBS=qt_libs)
 if GetOption('extras'):
   qt_src.remove("main.cc")  # replaced by test_runner
   qt_env.Program('tests/test_translations', [asset_obj, 'tests/test_runner.cc', 'tests/test_translations.cc'] + qt_src, LIBS=qt_libs)
   qt_env.Program('tests/ui_snapshot', [asset_obj, "tests/ui_snapshot.cc"] + qt_src, LIBS=qt_libs)
 
-qt_env['CPPPATH'] += ["qt/screenrecorder/openmax/include/"]
+qt_env['CPPPATH'] += ["../frogpilot/screenrecorder/openmax/include/"]
 
 if GetOption('extras') and arch != "Darwin":
   # setup and factory resetter

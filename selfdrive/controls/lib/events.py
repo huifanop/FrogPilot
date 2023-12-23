@@ -4,9 +4,10 @@ import os
 from enum import IntEnum
 from typing import Dict, Union, Callable, List, Optional
 
-from cereal import log, car
+from cereal import log, car, custom
 import cereal.messaging as messaging
 from openpilot.common.conversions import Conversions as CV
+from openpilot.common.params import Params
 from openpilot.common.realtime import DT_CTRL
 from openpilot.selfdrive.locationd.calibrationd import MIN_SPEED_FILTER
 from openpilot.system.version import get_short_branch
@@ -16,6 +17,7 @@ AlertStatus = log.ControlsState.AlertStatus
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 AudibleAlert = car.CarControl.HUDControl.AudibleAlert
 EventName = car.CarEvent.EventName
+FrogPilotEventName = custom.FrogPilotEvents
 
 
 # Alert priorities
@@ -44,6 +46,7 @@ class ET:
 
 # get event name from enum
 EVENT_NAME = {v: k for k, v in EventName.schema.enumerants.items()}
+EVENT_NAME.update({v: k for k, v in FrogPilotEventName.schema.enumerants.items()})
 
 
 class Events:
@@ -260,7 +263,7 @@ def no_gps_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.SubMaster, m
 
 
 def torque_nn_load_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.SubMaster, metric: bool, soft_disable_time: int) -> Alert:
-  model_name = CP.lateralTuning.torque.nnModelName
+  model_name = Params("/dev/shm/params").get("NNFFModelName")
   if model_name == "":
     return Alert(
       "NNFF 扭矩控制無法載入",
@@ -438,71 +441,79 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       Priority.LOW, VisualAlert.ldw, AudibleAlert.prompt, 3.),
   },
 
-  EventName.carAwayed: {
+  EventName.carawayed: {
     ET.WARNING: Alert(
       "前車遠離!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.carAwayed, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.carawayed, 1.),
+  },
+
+    EventName.fantest: {
+    ET.WARNING: Alert(
+      "盲點功能測試!!",
+      "",
+      AlertStatus.userPrompt, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, 1.),
   },
   ##################NAV語音#####################################################
-  EventName.navTurn: {
+  EventName.navturn: {
     ET.WARNING: Alert(
       "準備轉彎!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navTurn, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navturn, 1.),
   },
 
-  EventName.navUturn: {
+  EventName.navuturn: {
     ET.WARNING: Alert(
       "準備迴轉!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navUturn, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navuturn, 1.),
   },
 
-  EventName.navturnLeft: {
+  EventName.navturnleft: {
     ET.WARNING: Alert(
       "準備左轉!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navturnLeft, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navturnleft, 1.),
   },
 
-  EventName.navturnRight: {
+  EventName.navturnright: {
     ET.WARNING: Alert(
       "準備右轉!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navturnRight, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navturnright, 1.),
   },
 
-  EventName.navSharpleft: {
+  EventName.navsharpleft: {
     ET.WARNING: Alert(
       "準備緊急左轉!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navSharpleft, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navsharpleft, 1.),
   },
 
-  EventName.navSharpright: {
+  EventName.navsharpright: {
     ET.WARNING: Alert(
       "準備緊急右轉!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navSharpright, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navsharpright, 1.),
   },
 
-  EventName.navOfframp: {
+  EventName.navofframp: {
     ET.WARNING: Alert(
       "準備下交流道!!",
       "",
       AlertStatus.userPrompt, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.navOfframp, 1.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.navofframp, 1.),
   },
   ##################NAV語音#####################################################
-  EventName.speedOver: {
+  EventName.speedover: {
     ET.WARNING: Alert(
       "注意!!   超速了!!!",
       "",
@@ -510,12 +521,12 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       Priority.LOW, VisualAlert.none, AudibleAlert.prompt, 1.),
   },
 
-  EventName.carApproaching: {
+  EventName.carapproaching: {
       ET.WARNING: Alert(
         "前車急煞",  
         "",
         AlertStatus.critical, AlertSize.full,
-        Priority.HIGHEST, VisualAlert.steerRequired, AudibleAlert.carApproaching, .5),
+        Priority.HIGHEST, VisualAlert.steerRequired, AudibleAlert.carapproaching, .5),
     },
 
   EventName.detectSpeedLimitu: {
@@ -523,7 +534,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
         "速限變更",  
         "",
         AlertStatus.userPrompt, AlertSize.none,
-        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectSpeedu, 1.),
+        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectspeedu, 1.),
     },
 
   EventName.detectSpeedLimitd: {
@@ -531,7 +542,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
         "速限解除",  
         "",
         AlertStatus.userPrompt, AlertSize.small,
-        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectSpeedd, 1.),
+        Priority.HIGHEST, VisualAlert.none, AudibleAlert.detectspeedd, 1.),
     },
 
  # ********** events only containing alerts that display while engaged **********
@@ -633,7 +644,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       "盲點偵測到車輛暫停變換車道",
       "",
       AlertStatus.userPrompt, AlertSize.small,
-      Priority.LOW, VisualAlert.none, AudibleAlert.lanechangeBlockedsound, .1),
+      Priority.LOW, VisualAlert.none, AudibleAlert.lanechangeblockedsound, .1),
   },
 
   EventName.laneChange: {
@@ -641,7 +652,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       "變換車道中",
       "",
       AlertStatus.normal, AlertSize.none,
-      Priority.LOW, VisualAlert.none, AudibleAlert.lanechangeSound, .1),
+      Priority.LOW, VisualAlert.none, AudibleAlert.lanechangesound, .1),
   },
 
   EventName.steerSaturated: {
@@ -1077,7 +1088,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
   },
 
   # FrogPilot Events
-  EventName.frogSteerSaturated: {
+  FrogPilotEventName.frogSteerSaturated: {
     ET.WARNING: Alert(
       "Turn Exceeds Steering Limit",
       "JESUS TAKE THE WHEEL!!",
@@ -1085,7 +1096,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       Priority.LOW, VisualAlert.steerRequired, AudibleAlert.warningSoft, 2.),
   },
 
-  EventName.greenLight: {
+  FrogPilotEventName.greenLight: {
     ET.PERMANENT: Alert(
       "綠燈 GO!!",
       "",
@@ -1093,7 +1104,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       Priority.LOW, VisualAlert.none, AudibleAlert.greenLight, 3.),
   },
 
-  EventName.pedalInterceptorNoBrake: {
+  FrogPilotEventName.pedalInterceptorNoBrake: {
     ET.WARNING: Alert(
       "Braking Unavailable",
       "Shift to L",
@@ -1101,11 +1112,11 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       Priority.HIGH, VisualAlert.wrongGear, AudibleAlert.promptRepeat, 4.),
   },
 
-  EventName.torqueNNLoad: {
+  FrogPilotEventName.torqueNNLoad: {
     ET.PERMANENT: torque_nn_load_alert,
   },
 
-  EventName.turningLeft: {
+  FrogPilotEventName.turningLeft: {
     ET.WARNING: Alert(
       "左轉",
       "",
@@ -1113,7 +1124,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
       Priority.LOW, VisualAlert.none, AudibleAlert.none, .1, alert_rate=0.75),
   },
 
-  EventName.turningRight: {
+  FrogPilotEventName.turningRight: {
     ET.WARNING: Alert(
       "右轉",
       "",

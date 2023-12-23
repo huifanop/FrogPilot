@@ -118,28 +118,23 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     paramsdTemporaryError @50;
     paramsdPermanentError @119;
 
-    # FrogPilot Events
-    frogSteerSaturated @120;
-    greenLight @121;
-    pedalInterceptorNoBrake @122;
-    torqueNNLoad @123;
-    turningLeft @124;
-    turningRight @125;
     #######################
-    carAwayed @126;
-    carApproaching @127;
-    detectSpeedLimitu @128;
-    detectSpeedLimitd @129;
-    speedOver @130;
+    carawayed @120;
+    carapproaching @121;
+    detectSpeedLimitu @122;
+    detectSpeedLimitd @123;
+    speedover @124;
     ######NAV語音######
-    navTurn @131;
-    navUturn @132;
-    navturnLeft @133;
-    navturnRight @134;
-    navSharpright @135;
-    navSharpleft @136;
-    navOfframp @137;
+    navturn @125;
+    navuturn @126;
+    navturnleft @127;
+    navturnright @128;
+    navsharpright @129;
+    navsharpleft @130;
+    navofframp @131;
+    fantest @132;
     #######################
+
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
     radarCommIssueDEPRECATED @67;
@@ -257,7 +252,9 @@ struct CarState {
     speedOffset @3 :Float32;
     standstill @4 :Bool;
     nonAdaptive @5 :Bool;
+    #############################
     speedLimit @7 :Float32;
+    #############################
   }
 
   enum GearShifter {
@@ -349,11 +346,6 @@ struct CarControl {
   leftBlinker @15: Bool;
   rightBlinker @16: Bool;
 
-  # FrogPilot CarControls
-  alwaysOnLateral @17: Bool;
-  drivingGear @18: Bool;
-  reverseCruise @19: Bool;
-
   # Any car specific rate limits or quirks applied by
   # the CarController are reflected in actuatorsOutput
   # and matches what is sent to the car
@@ -436,22 +428,21 @@ struct CarControl {
       promptRepeat @7;
       promptDistracted @8;
       ###########################
-      lanechangeSound @9;
-      lanechangeBlockedsound @10;
+      lanechangesound @9;
+      lanechangeblockedsound @10;
       greenLight @11;
-      carAwayed @12;
-      carApproaching @13;
-      detectSpeedu @14;
-      detectSpeedd @15;
-      speedOver @16;
+      carawayed @12;
+      carapproaching @13;
+      detectspeedu @14;
+      detectspeedd @15;
       ######NAV語音######
-      navTurn @17;
-      navUturn @18;
-      navturnRight @19;
-      navturnLeft @20;
-      navSharpright @21;
-      navSharpleft @22;
-      navOfframp @23;
+      navturn @16;
+      navuturn @17;
+      navturnright @18;
+      navturnleft @19;
+      navsharpright @20;
+      navsharpleft @21;
+      navofframp @22;
       ############################
     }
   }
@@ -530,6 +521,7 @@ struct CarParams {
   openpilotLongitudinalControl @37 :Bool; # is openpilot doing the longitudinal control?
   carVin @38 :Text; # VIN number queried during fingerprinting
   dashcamOnly @41: Bool;
+  passive @73: Bool;   # is openpilot in control?
   transmissionType @43 :TransmissionType;
   carFw @44 :List(CarFw);
 
@@ -568,8 +560,6 @@ struct CarParams {
     steeringAngleDeadzoneDeg @5 :Float32;
     latAccelFactor @6 :Float32;
     latAccelOffset @7 :Float32;
-    nnModelName @8 :Text;
-    nnModelFuzzyMatch @9 :Bool;
   }
 
   struct LongitudinalPIDTuning {

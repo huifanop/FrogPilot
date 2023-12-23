@@ -405,8 +405,9 @@ void WifiManager::addTetheringConnection() {
   connection["connection"]["uuid"] = QUuid::createUuid().toString().remove('{').remove('}');
   connection["connection"]["type"] = "802-11-wireless";
   connection["connection"]["interface-name"] = "wlan0";
-  connection["connection"]["autoconnect"] = false;
-
+//////////////////////////////////////////////////////////////////////////////
+  connection["connection"]["autoconnect"] = true;
+//////////////////////////////////////////////////////////////////////////////
   connection["802-11-wireless"]["band"] = "bg";
   connection["802-11-wireless"]["mode"] = "ap";
   connection["802-11-wireless"]["ssid"] = tethering_ssid.toUtf8();
@@ -441,8 +442,9 @@ void WifiManager::tetheringActivated(QDBusPendingCallWatcher *call) {
   }
   call->deleteLater();
 }
-
-void WifiManager::setTetheringEnabled(bool enabled) {
+//////////////////////////////////////////////////////////////////////////////
+void WifiManager::setTetheringEnabled(bool enabled=true) {
+//////////////////////////////////////////////////////////////////////////////
   if (enabled) {
     if (!isKnownConnection(tethering_ssid)) {
       addTetheringConnection();

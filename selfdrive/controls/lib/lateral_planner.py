@@ -76,11 +76,17 @@ class LateralPlanner:
     lateralPlan.laneChangeState = self.DH.lane_change_state
     lateralPlan.laneChangeDirection = self.DH.lane_change_direction
 
-    # FrogPilot lateral variables
-    lateralPlan.laneWidthLeft = float(self.DH.lane_width_left)
-    lateralPlan.laneWidthRight = float(self.DH.lane_width_right)
-
     pm.send('lateralPlan', plan_send)
+
+    # FrogPilot lateral variables
+    frogpilot_plan_send = messaging.new_message('frogpilotLateralPlan')
+    frogpilot_plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState', 'modelV2'])
+    frogpilotLateralPlan = frogpilot_plan_send.frogpilotLateralPlan
+
+    frogpilotLateralPlan.laneWidthLeft = float(self.DH.lane_width_left)
+    frogpilotLateralPlan.laneWidthRight = float(self.DH.lane_width_right)
+
+    pm.send('frogpilotLateralPlan', frogpilot_plan_send)
 
   def update_frogpilot_params(self, params):
     self.DH.update_frogpilot_params(params)
