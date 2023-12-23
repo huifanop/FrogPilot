@@ -82,6 +82,7 @@ void HomeWindow::offroadTransition(bool offroad) {
   } else {
     slayout->setCurrentWidget(onroad);
   }
+}
 
 void HomeWindow::showDriverView(bool show) {
   if (show) {
