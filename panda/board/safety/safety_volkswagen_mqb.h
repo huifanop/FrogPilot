@@ -3,9 +3,9 @@
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
   .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
-  .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+  .max_rt_delta = 188,           // 10 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 125 ; 125 * 1.5 for safety pad = 187.5
   .max_rt_interval = 250000,     // 250ms between real time checks
-  .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+  .max_rate_up = 10,             // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .driver_torque_allowance = 80,
   .driver_torque_factor = 3,
@@ -34,8 +34,9 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8},
+const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8},
+                                               {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8},
                                               {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}};
 
 RxCheck volkswagen_mqb_rx_checks[] = {
@@ -256,8 +257,13 @@ static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
 
   switch (bus_num) {
     case 0:
-      // Forward all traffic from the Extended CAN onward
-      bus_fwd = 2;
+      if (addr == MSG_LH_EPS_03) {
+        // openpilot needs to replace apparent driver steering input torque to pacify VW Emergency Assist
+        bus_fwd = -1;
+      } else {
+        // Forward all remaining traffic from Extended CAN onward
+        bus_fwd = 2;
+      }
       break;
     case 2:
       if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {

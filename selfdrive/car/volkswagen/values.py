@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum
+from enum import Enum, IntFlag, StrEnum
 from typing import Dict, List, Union
 
 from cereal import car
@@ -80,7 +80,7 @@ class CarControllerParams:
       self.LDW_STEP = 10                  # LDW_02 message frequency 10Hz
       self.ACC_HUD_STEP = 6               # ACC_02 message frequency 16Hz
       self.STEER_DRIVER_ALLOWANCE = 80    # Driver intervention threshold 0.8 Nm
-      self.STEER_DELTA_UP = 4             # Max HCA reached in 1.50s (STEER_MAX / (50Hz * 1.50))
+      self.STEER_DELTA_UP = 10            # Max HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
       self.STEER_DELTA_DOWN = 10          # Min HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
 
       if CP.transmissionType == TransmissionType.automatic:
@@ -136,6 +136,10 @@ class CarControllerParams:
 class CANBUS:
   pt = 0
   cam = 2
+
+
+class VolkswagenFlags(IntFlag):
+  STOCK_HCA_PRESENT = 1
 
 
 # Check the 7th and 8th characters of the VIN before adding a new CAR. If the
@@ -696,6 +700,7 @@ FW_VERSIONS = {
       b'\xf1\x8704L906026GA\xf1\x892013',
       b'\xf1\x8704L906026KD\xf1\x894798',
       b'\xf1\x873G0906259B \xf1\x890002',
+      b'\xf1\x873G0906259  \xf1\x890004',
       b'\xf1\x873G0906264  \xf1\x890004',
     ],
     (Ecu.transmission, 0x7e1, None): [
@@ -711,6 +716,7 @@ FW_VERSIONS = {
       b'\xf1\x870CW300042H \xf1\x891607',
       b'\xf1\x870GC300042H \xf1\x891404',
       b'\xf1\x870D9300018C \xf1\x895297',
+      b'\xf1\x870D9300042H \xf1\x894901',
       b'\xf1\x870GC300043  \xf1\x892301',
     ],
     (Ecu.srs, 0x715, None): [
@@ -725,6 +731,7 @@ FW_VERSIONS = {
       b'\xf1\x873Q0959655BK\xf1\x890703\xf1\x82\0165915005914001344701311442900',
       b'\xf1\x873Q0959655BK\xf1\x890703\xf1\x82\x0e5915005914001354701311542900',
       b'\xf1\x873Q0959655CN\xf1\x890720\xf1\x82\x0e5915005914001305701311052900',
+      b'\xf1\x873Q0959655BA\xf1\x890195\xf1\x82\r56140056130012416612124111',
       b'\xf1\x875Q0959655S \xf1\x890870\xf1\x82\02315120011111200631145171716121691132111',
     ],
     (Ecu.eps, 0x712, None): [
@@ -738,6 +745,7 @@ FW_VERSIONS = {
       b'\xf1\x875Q0909144S \xf1\x891063\xf1\x82\00516B00501A1',
       b'\xf1\x875Q0909144T \xf1\x891072\xf1\x82\00521B00703A1',
       b'\xf1\x875Q0910143B \xf1\x892201\xf1\x82\x0563B0000600',
+      b'\xf1\x875Q0909144T \xf1\x891072\xf1\x82\x0521B00603A1',
       b'\xf1\x875Q0910143C \xf1\x892211\xf1\x82\x0567B0020600',
     ],
     (Ecu.fwdRadar, 0x757, None): [
@@ -747,6 +755,7 @@ FW_VERSIONS = {
       b'\xf1\x873Q0907572C \xf1\x890195',
       b'\xf1\x873Q0907572C \xf1\x890196',
       b'\xf1\x875Q0907572P \xf1\x890682',
+      b'\xf1\x873Q0907572B \xf1\x890194',
       b'\xf1\x875Q0907572R \xf1\x890771',
     ],
   },
@@ -1418,6 +1427,7 @@ FW_VERSIONS = {
       b'\xf1\x8704L906026KB\xf1\x894071',
       b'\xf1\x8704L906026KD\xf1\x894798',
       b'\xf1\x8704L906026MT\xf1\x893076',
+      b'\xf1\x8705L906022BK\xf1\x899971',
       b'\xf1\x873G0906259  \xf1\x890004',
       b'\xf1\x873G0906259B \xf1\x890002',
       b'\xf1\x873G0906259L \xf1\x890003',
@@ -1438,6 +1448,7 @@ FW_VERSIONS = {
       b'\xf1\x870GC300014M \xf1\x892801',
       b'\xf1\x870GC300019G \xf1\x892803',
       b'\xf1\x870GC300043  \xf1\x892301',
+      b'\xf1\x870GC300046D \xf1\x892402',
     ],
     (Ecu.srs, 0x715, None): [
       b'\xf1\x875Q0959655AE\xf1\x890130\xf1\x82\x12111200111121001121110012211292221111',
@@ -1447,6 +1458,7 @@ FW_VERSIONS = {
       b'\xf1\x875Q0959655AT\xf1\x890317\xf1\x82\x1331310031313100313131013131319331313100',
       b'\xf1\x875Q0959655BH\xf1\x890336\xf1\x82\02331310031313100313131013141319331413100',
       b'\xf1\x875Q0959655BK\xf1\x890336\xf1\x82\x1331310031313100313131013141319331413100',
+      b'\xf1\x875Q0959655BS\xf1\x890403\xf1\x82\x1333310031313100313152015351539331423100',
       b'\xf1\x875Q0959655CA\xf1\x890403\xf1\x82\x1331310031313100313151013141319331423100',
       b'\xf1\x875Q0959655CA\xf1\x890403\xf1\x82\x1331310031313100313151823143319331423100',
       b'\xf1\x875Q0959655CH\xf1\x890421\xf1\x82\x1333310031313100313152025350539331463100',
