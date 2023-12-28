@@ -230,6 +230,7 @@ HFOPControlsPanel::HFOPControlsPanel(QWidget *parent) : FrogPilotPanel(parent) {
 
 
   static const std::vector<std::tuple<QString, QString, QString, QString>> toggles = {
+    {"VagSpeed", "時速差調整", "VAG專用。調整車錶速度與C3定速設定不同步的問題。", "../assets/offroad/icon_openpilot.png"},
     {"AutoACC", "自動啟動ACC", "啟用後當速度大於設定，會自動啟動ACC，低於於10公里煞車會解除ACC.", "../assets/offroad/icon_conditional.png"},
     {"CarAway", "前車遠離偵測", "啟用後當前車速度改變時會有提醒.", "../assets/offroad/icon_warning.png"},
     {"Roadtype", "道路種類設定", "開啟後可依道路種類在特定條件下預設時速", "../assets/offroad/icon_road.png"},
@@ -281,6 +282,10 @@ HFOPControlsPanel::HFOPControlsPanel(QWidget *parent) : FrogPilotPanel(parent) {
         {"speedoverreminder", "超速提醒與重設速限"},
         {"SpeedlimituReminder", "速限變更提醒"}
       }, mainLayout);
+    } else if (key == "VagSpeed") {
+      createSubControl(key, label, desc, icon, {
+        new VagSpeedFactor(),
+      });
     } else {
       mainLayout->addWidget(control);
       if (key != std::get<0>(toggles.back())) mainLayout->addWidget(horizontalLine());
@@ -571,6 +576,8 @@ void FrogPilotPanel::setParams() {
     {"RoadtypeProfile", "1"},
     {"speedoverreminder", "1"},
     {"Speeddistance", "1"},
+    {"VagSpeed", "1"},
+    {"VagSpeedFactor", "110"},
     {"Voicereminder", "1"}    
     ////////////////////////
   };

@@ -164,7 +164,7 @@ public: \
     if (std::string(#className) == "AdjustablePersonalities") { \
       label.setFixedWidth(300); \
     } \
-    if (std::string(#className) == "CameraView" || std::string(#className) == "DeviceShutdown" || std::string(#className) == "RouteInput" || std::string(#className) == "StoppingDistance" || std::string(#className) == "WheelIcon") { \
+    if (std::string(#className) == "CameraView" || std::string(#className) == "DeviceShutdown" || std::string(#className) == "RouteInput" || std::string(#className) == "StoppingDistance" || std::string(#className) == "WheelIcon" || std::string(#className) == "VagSpeedFactor") { \
       label.setFixedWidth(225); \
     } \
     if (std::string(#className) == "CESpeed" || std::string(#className) == "CESpeedLead" || std::string(#className) == "Offset1" || std::string(#className) == "Offset2" || std::string(#className) == "Offset3" || std::string(#className) == "Offset4") { \
@@ -432,5 +432,11 @@ ParamController(RoadtypeProfile, "RoadtypeProfile", "選擇行駛的道路種類
   const int roadtype = params.getInt("RoadtypeProfile");
   return roadtype == 0 ? "關閉" :roadtype == 1 ? "平面" : roadtype == 2 ? "快速" : "高速";,
   return std::clamp(v, 0, 3);
+)
+
+ParamController(VagSpeedFactor, "VagSpeedFactor", "時速差調整", "請輸入OP定速為110時儀表板的速度", "../assets/offroad/icon_blank.png",
+  const int VagSpeed = params.getInt("VagSpeedFactor");
+  return VagSpeed == 0 ? "關閉" : QString::number(VagSpeed) + (isMetric ? " 公里" : " feet");,
+  return std::clamp(v, 110, isMetric ? 120 : 120);
 )
 ////////////////////////////////////////////////////////////////////////////////////////////////////
