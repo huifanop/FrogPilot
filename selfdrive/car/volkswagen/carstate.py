@@ -16,10 +16,10 @@ class CarState(CarStateBase):
     self.upscale_lead_car_signal = False
     self.eps_stock_values = False
 
-    vsf= self.param.get_int("VagSpeedFactor")
+    vsf= self.params.get_int("VagSpeedFactor")
     if vsf < 110:
       vsf = 110
-      self.param.put_int("VagSpeedFactor", vsf)
+      self.params.put_int("VagSpeedFactor", vsf)
     self.vagspeedfactor=vsf/110
 
 
