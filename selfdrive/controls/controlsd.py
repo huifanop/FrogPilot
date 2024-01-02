@@ -246,10 +246,10 @@ class Controls:
 
     self.events.clear()
     ##############################
-    CarAway_Reminder_status = 0
-    speedover_reminder_status = 0
-    NavReminder_status = 0
-    GreenLight_Reminder_status = 0
+    CarAway_Reminder_status = self.params_memory.get_int("CarAwayReminderstatus")
+    speedover_reminder_status = self.params_memory.get_int("speedoverreminderstatus")
+    NavReminder_status = self.params_memory.get_int("NavReminderstatus")
+    GreenLight_Reminder_status = self.params_memory.get_int("GreenLightReminderstatus")
     ##############################
     
     # Add startup event

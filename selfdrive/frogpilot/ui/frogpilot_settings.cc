@@ -270,10 +270,6 @@ HFOPControlsPanel::HFOPControlsPanel(QWidget *parent) : FrogPilotPanel(parent) {
         {"CarApproachingReminder", "前車急煞"},
         {"CarAwayReminder", "前車遠離"}
       }, mainLayout);
-      // createSubButtonControl(key, {  
-        
-      //   {"CarAwayReminder", "前車遠離語音"}
-      // }, mainLayout);
     } else if (key == "Navspeed") {
       createSubControl(key, label, desc, icon, {
       });

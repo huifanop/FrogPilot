@@ -241,7 +241,12 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"Navspeed", PERSISTENT},  
     {"Speeddistance", PERSISTENT},
     {"Emergencycontrol", PERSISTENT},
-
+    {"CarAwayReminderstatus", PERSISTENT},
+    {"speedoverreminderstatus", PERSISTENT},
+    {"NavReminderstatus", PERSISTENT},
+    {"GreenLightReminderstatus", PERSISTENT},
+    {"VagSpeed", PERSISTENT},
+    {"VagSpeedFactor", PERSISTENT},
 ////////////NAV語音////////////////////////
     {"NavReminder", PERSISTENT},
     {"navTurn", PERSISTENT},
