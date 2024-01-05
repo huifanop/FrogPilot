@@ -11,6 +11,7 @@ from opendbc.can.parser import CANParser
 from openpilot.selfdrive.car.interfaces import CarStateBase
 from openpilot.selfdrive.car.toyota.values import ToyotaFlags, CAR, DBC, STEER_THRESHOLD, NO_STOP_TIMER_CAR, \
                                                   TSS2_CAR, RADAR_ACC_CAR, EPS_SCALE, UNSUPPORTED_DSU_CAR
+from openpilot.selfdrive.frogpilot.functions.speed_limit_controller import SpeedLimitController
 
 SteerControlType = car.CarParams.SteerControlType
 
@@ -25,6 +26,8 @@ TEMP_STEER_FAULTS = (0, 9, 11, 21, 25)
 # - prolonged high driver torque: 17 (permanent)
 PERM_STEER_FAULTS = (3, 17)
 
+ZSS_THRESHOLD = 4.0
+ZSS_THRESHOLD_COUNT = 10
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -49,6 +52,7 @@ class CarState(CarStateBase):
     self.zss_compute = False
     self.zss_cruise_active_last = False
     self.zss_angle_offset = 0.
+    self.zss_threshold_count = 0
 
     self.traffic_signals = {}
 
@@ -168,21 +172,6 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint != CAR.PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
 
-    # ZSS Support - Credit goes to the DragonPilot team!
-    if self.CP.flags & ToyotaFlags.ZSS:
-      zorro_steer = cp.vl["SECONDARY_STEER_ANGLE"]["ZORRO_STEER"]
-      # Only compute ZSS offset when acc is active
-      if bool(cp.vl["PCM_CRUISE"]["CRUISE_ACTIVE"]) and not self.zss_cruise_active_last:
-        self.zss_compute = True # Cruise was just activated, so allow offset to be recomputed
-      self.zss_cruise_active_last = bool(cp.vl["PCM_CRUISE"]["CRUISE_ACTIVE"])
-
-      # Compute ZSS offset
-      if self.zss_compute:
-        if abs(ret.steeringAngleDeg) > 1e-3 and abs(zorro_steer) > 1e-3:
-          self.zss_angle_offset = zorro_steer - ret.steeringAngleDeg
-      # Apply offset
-      ret.steeringAngleDeg = zorro_steer - self.zss_angle_offset
-
     # Driving personalities function
     if self.personalities_via_wheel and ret.cruiseState.available:
       # Need to subtract by 1 to comply with the personality profiles of "0", "1", and "2"
@@ -219,9 +208,9 @@ class CarState(CarStateBase):
           self.previous_personality_profile = self.personality_profile
 
     # Toggle Experimental Mode from steering wheel function
-    if self.experimental_mode_via_press and ret.cruiseState.available:
+    if self.experimental_mode_via_press and ret.cruiseState.available and self.CP.carFingerprint != CAR.PRIUS_V:
       message_keys = ["LDA_ON_MESSAGE", "SET_ME_X02"]
-      lkas_pressed = any(cp_cam.vl["LKAS_HUD"].get(key) == 1 for key in message_keys)
+      lkas_pressed = any(self.lkas_hud.get(key) == 1 for key in message_keys)
       if lkas_pressed and not self.lkas_previously_pressed:
         if self.conditional_experimental_mode:
           # Set "CEStatus" to work with "Conditional Experimental Mode"
@@ -235,19 +224,45 @@ class CarState(CarStateBase):
       self.lkas_previously_pressed = lkas_pressed
 
     # Traffic signals for Speed Limit Controller - Credit goes to the DragonPilot team!
-    self._update_traffic_signals(cp_cam)
-    self.param_memory.put_int("CarStateSpeedLimit", self._calculate_speed_limit())
+    self.update_traffic_signals(cp_cam)
+    SpeedLimitController.load_state()
+    SpeedLimitController.car_speed_limit = self.calculate_speed_limit()
+    SpeedLimitController.write_car_state()
+
+    # ZSS Support - Credit goes to the DragonPilot team!
+    if self.CP.flags & ToyotaFlags.ZSS and self.zss_threshold_count < ZSS_THRESHOLD_COUNT:
+      zorro_steer = cp.vl["SECONDARY_STEER_ANGLE"]["ZORRO_STEER"]
+      # Only compute ZSS offset when acc is active
+      zss_cruise_active = ret.cruiseState.available
+      if zss_cruise_active and not self.zss_cruise_active_last:
+        self.zss_compute = True  # Cruise was just activated, so allow offset to be recomputed
+        self.zss_threshold_count = 0
+      self.zss_cruise_active_last = zss_cruise_active
+
+      # Compute ZSS offset
+      if self.zss_compute:
+        if abs(ret.steeringAngleDeg) > 1e-3 and abs(zorro_steer) > 1e-3:
+          self.zss_compute = False
+          self.zss_angle_offset = zorro_steer - ret.steeringAngleDeg
+
+      # Error check
+      new_steering_angle_deg = zorro_steer - self.zss_angle_offset
+      if abs(ret.steeringAngleDeg - new_steering_angle_deg) > ZSS_THRESHOLD:
+        self.zss_threshold_count += 1
+      else:
+        # Apply offset
+        ret.steeringAngleDeg = new_steering_angle_deg
 
     return ret
 
-  def _update_traffic_signals(self, cp_cam):
+  def update_traffic_signals(self, cp_cam):
     signals = ["TSGN1", "SPDVAL1", "SPLSGN1", "TSGN2", "SPLSGN2", "TSGN3", "SPLSGN3", "TSGN4", "SPLSGN4"]
     new_values = {signal: cp_cam.vl["RSA1"].get(signal, cp_cam.vl["RSA2"].get(signal)) for signal in signals}
 
     if new_values != self.traffic_signals:
       self.traffic_signals.update(new_values)
 
-  def _calculate_speed_limit(self):
+  def calculate_speed_limit(self):
     tsgn1 = self.traffic_signals.get("TSGN1", None)
     spdval1 = self.traffic_signals.get("SPDVAL1", None)
 

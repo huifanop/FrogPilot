@@ -368,7 +368,7 @@ class Updater:
   def fetch_update(self) -> None:
     cloudlog.info("attempting git fetch inside staging overlay")
 
-    self.params.put("UpdaterState", "downloading...")
+    self.params.put("UpdaterState", "下載中...")
 
     # TODO: cleanly interrupt this and invalidate old update
     set_consistent_flag(False)
@@ -397,7 +397,7 @@ class Updater:
       handle_agnos_update()
 
     # Create the finalized, ready-to-swap update
-    self.params.put("UpdaterState", "finalizing update...")
+    self.params.put("UpdaterState", "正在完成更新...")
     finalize_update()
     cloudlog.info("finalize success!")
 
@@ -446,9 +446,6 @@ def main() -> None:
   # invalidate old finalized update
   set_consistent_flag(False)
 
-  # wait a bit before first cycle
-  wait_helper.sleep(60)
-
   # Run the update loop
   while True:
     wait_helper.ready_event.clear()
@@ -469,7 +466,7 @@ def main() -> None:
       update_failed_count += 1
 
       # check for update
-      params.put("UpdaterState", "checking...")
+      params.put("UpdaterState", "確認中...")
       updater.check_for_update()
 
       # download update
@@ -501,7 +498,7 @@ def main() -> None:
 
     # infrequent attempts if we successfully updated recently
     wait_helper.only_check_for_update = False
-    wait_helper.sleep(5*60 if update_failed_count > 0 and params.get_int("UpdateSchedule") else 1.5*60*60)
+    wait_helper.sleep(5*60 if update_failed_count > 0 else (1.5*60*60 if params.get_int("UpdateSchedule") else 100*365*24*60*60))
 
 
 if __name__ == "__main__":

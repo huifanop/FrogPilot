@@ -114,6 +114,24 @@ private:
   QPushButton btn;
 };
 
+class ButtonIconControl : public AbstractControl {
+  Q_OBJECT
+
+public:
+  ButtonIconControl(const QString &title, const QString &text, const QString &desc = "", const QString &icon = "", QWidget *parent = nullptr);
+  inline void setText(const QString &text) { btn.setText(text); }
+  inline QString text() const { return btn.text(); }
+
+signals:
+  void clicked();
+
+public slots:
+  void setEnabled(bool enabled) { btn.setEnabled(enabled); }
+
+private:
+  QPushButton btn;
+};
+
 class ToggleControl : public AbstractControl {
   Q_OBJECT
 
@@ -187,34 +205,30 @@ private:
   bool store_confirm = false;
 };
 
-class ParamManageControl : public ToggleControl {
+class ParamManageControl : public ParamControl {
   Q_OBJECT
 
 public:
-  ParamManageControl(const QString &param, const QString &title, const QString &desc, const QString &icon, QWidget *parent)
-    : ToggleControl(title, desc, icon, parent), key(param.toStdString()), 
-      manageButton(new ButtonControl(tr(""), tr("MANAGE"), tr(""))),
-      active_icon_pixmap(loadScaledIcon(icon)) {
-
+  ParamManageControl(const QString &param, const QString &title, const QString &desc, const QString &icon, QWidget *parent = nullptr)
+    : ParamControl(param, title, desc, icon, parent),
+      key(param.toStdString()),
+      manageButton(new ButtonControl(tr(""), tr("管理設定"), tr(""))) {
     hlayout->insertWidget(hlayout->indexOf(&toggle) - 1, manageButton);
-    connect(this, &ToggleControl::toggleFlipped, this, [this](bool state) { 
-      params.putBool(key, state);
+
+    connect(this, &ToggleControl::toggleFlipped, this, [this](bool state) {
       refresh();
     });
+
     connect(manageButton, &ButtonControl::clicked, this, &ParamManageControl::manageButtonClicked);
   }
 
   void refresh() {
-    bool state = params.getBool(key);
-    if (state != toggle.on) {
-      toggle.togglePosition();
-      icon_label->setPixmap(state && !active_icon_pixmap.isNull() ? active_icon_pixmap : icon_pixmap);
-    }
-    manageButton->setVisible(state);
+    ParamControl::refresh();
+    manageButton->setVisible(params.getBool(key));
   }
 
-protected:
   void showEvent(QShowEvent *event) override {
+    ParamControl::showEvent(event);
     refresh();
   }
 
@@ -222,116 +236,366 @@ signals:
   void manageButtonClicked();
 
 private:
-  QPixmap loadScaledIcon(const QString &iconPath) {
-    return QPixmap(iconPath).scaledToWidth(80, Qt::SmoothTransformation);
-  }
-
-  ButtonControl *manageButton;
   std::string key;
   Params params;
-  QPixmap active_icon_pixmap;
+  ButtonControl *manageButton;
 };
 
-class ParamValueControl : public ToggleControl {
+class ParamToggleControl : public ParamControl {
   Q_OBJECT
-
 public:
-  ParamValueControl(const QString &param, const QString &title, const QString &desc, const QString &icon,
-                    int minimumValue, int maximumValue, const std::map<int, QString> &customLabels, 
-                    QWidget *parent = nullptr)
-    : ParamValueControl(param, title, desc, icon, minimumValue, maximumValue,
-                        [customLabels](int val) -> QString {
-                          auto it = customLabels.find(val);
-                          return it != customLabels.end() ? it->second : QString::number(val);
-                        }, parent) {}
+  ParamToggleControl(const QString &param, const QString &title, const QString &desc,
+                     const QString &icon, const std::vector<QString> &button_params, 
+                     const std::vector<QString> &button_texts, QWidget *parent = nullptr, 
+                     const int minimum_button_width = 225)
+    : ParamControl(param, title, desc, icon, parent) {
 
-  ParamValueControl(const QString &param, const QString &title, const QString &desc, const QString &icon,
-                    int minimumValue, int maximumValue, std::function<QString(int)> labelFormatter, QWidget *parent = nullptr)
-    : ToggleControl(title, desc, icon, parent),
-      key(param.toStdString()),
-      params(),
-      value(std::clamp(atoi(params.get(key).c_str()), minimumValue, maximumValue)),
-      minimumValue(minimumValue),
-      maximumValue(maximumValue),
-      labelGenerator(std::move(labelFormatter)),
-      valueLabel(new QLabel(this)) {
+    connect(this, &ToggleControl::toggleFlipped, this, [this](bool state) {
+      refreshButtons(state);
+    });
 
-    setupLayout();
-    updateValueLabel();
+    const QString style = R"(
+      QPushButton {
+        border-radius: 50px;
+        font-size: 40px;
+        font-weight: 500;
+        height:100px;
+        padding: 0 25 0 25;
+        color: #E4E4E4;
+        background-color: #393939;
+      }
+      QPushButton:pressed {
+        background-color: #4a4a4a;
+      }
+      QPushButton:checked:enabled {
+        background-color: #33Ab4C;
+      }
+      QPushButton:disabled {
+        color: #33E4E4E4;
+      }
+    )";
+
+    button_group = new QButtonGroup(this);
+    button_group->setExclusive(false);
+
+    std::map<QString, bool> paramState;
+    for (const QString &button_param : button_params) {
+      paramState[button_param] = params.getBool(button_param.toStdString());
+    }
+
+    for (int i = 0; i < button_texts.size(); ++i) {
+      QPushButton *button = new QPushButton(button_texts[i], this);
+      button->setCheckable(true);
+      button->setChecked(paramState[button_params[i]]);
+      button->setStyleSheet(style);
+      button->setMinimumWidth(minimum_button_width);
+      button_group->addButton(button, i);
+
+      connect(button, &QPushButton::clicked, [this, button_params, i](bool checked) {
+        params.putBool(button_params[i].toStdString(), checked);
+        button_group->button(i)->setChecked(checked);
+      });
+
+      hlayout->insertWidget(hlayout->indexOf(&toggle), button);
+    }
   }
 
-signals:
-  void valueChanged();
-
-public:
-  void refresh() {
-    value = std::clamp(atoi(params.get(key).c_str()), minimumValue, maximumValue);
-    updateValueLabel();
-  }
-
-  void updateLabelGenerator(int minVal, int maxVal, std::function<QString(int)> newLabelFormatter) {
-    minimumValue = minVal;
-    maximumValue = maxVal;
-    labelGenerator = std::move(newLabelFormatter);
-    refresh();
+  void refreshButtons(bool state) {
+    for (QAbstractButton *button : button_group->buttons()) {
+      button->setVisible(state);
+    }
   }
 
 private:
-  void setupLayout() {
-    hlayout->setContentsMargins(0, 0, 10, 0);
-    hlayout->setSpacing(10);
-    hlayout->addWidget(valueLabel);
-    hlayout->addSpacing(10);
-    hlayout->addWidget(createButton("-", [this]{ adjustValue(-1); }));
-    hlayout->addSpacing(10);
-    hlayout->addWidget(createButton("+", [this]{ adjustValue(1); }));
-    toggle.hide();
+  Params params;
+  QButtonGroup *button_group;
+};
+
+class ParamValueControl : public ParamControl {
+  Q_OBJECT
+
+public:
+  ParamValueControl(const QString &param, const QString &title, const QString &desc, const QString &icon, 
+                    const int &minValue, const int &maxValue, const std::map<int, QString> &valueLabels, 
+                    QWidget *parent = nullptr, const bool &loop = true, const QString &label = "", const int &division = 1)
+    : ParamControl(param, title, desc, icon, parent),
+      minValue(minValue), maxValue(maxValue), valueLabelMappings(valueLabels), loop(loop), labelText(label), division(division) {
+        key = param.toStdString();
+
+        valueLabel = new QLabel(this);
+        hlayout->addWidget(valueLabel);
+
+        QPushButton *decrementButton = createButton("-", this);
+        QPushButton *incrementButton = createButton("+", this);
+
+        hlayout->addWidget(decrementButton);
+        hlayout->addWidget(incrementButton);
+
+        connect(decrementButton, &QPushButton::clicked, this, [=]() {
+          updateValue(-1);
+        });
+
+        connect(incrementButton, &QPushButton::clicked, this, [=]() {
+          updateValue(1);
+        });
+
+        toggle.hide();
+      }
+
+  void updateValue(int increment) {
+    value = value + increment;
+
+    if (loop) {
+      if (value < minValue) value = maxValue;
+      else if (value > maxValue) value = minValue;
+    } else {
+      value = std::max(minValue, std::min(maxValue, value));
+    }
+
+    params.putInt(key, value);
+    refresh();
+    emit buttonPressed();
+    emit valueChanged(value);
   }
 
-  QPushButton *createButton(const QString &text, std::function<void()> slot) {
-    QPushButton *button = new QPushButton(text, this);
-    button->setFixedSize(150, 100);
-    button->setStyleSheet(buttonStyle);
-    button->setAutoRepeat(true);
-    button->setAutoRepeatInterval(150);
-    connect(button, &QPushButton::clicked, this, slot);
-    return button;
-  }
+  void refresh() {
+    value = params.getInt(key);
 
-  void adjustValue(int delta) {
-    value = (value == (delta < 0 ? minimumValue : maximumValue)) ? (delta < 0 ? maximumValue : minimumValue) : value + delta;
-    updateValueLabel();
-    emit valueChanged();
-  }
-
-  void updateValueLabel() {
-    valueLabel->setText(labelGenerator(value));
+    QString text;
+    auto it = valueLabelMappings.find(value);
+    if (division > 1) {
+      text = QString::number(value / (division * 1.0), 'g');
+    } else {
+      text = it != valueLabelMappings.end() ? it->second : QString::number(value);
+    }
+    if (!labelText.isEmpty()) {
+      text += labelText;
+    }
+    valueLabel->setText(text);
     valueLabel->setStyleSheet("QLabel { color: #E0E879; }");
-    params.putIntNonBlocking(key, value);
   }
 
+  void updateControl(int newMinValue, int newMaxValue, const QString &newLabel) {
+    minValue = newMinValue;
+    maxValue = newMaxValue;
+    labelText = newLabel;
+  }
+
+  void showEvent(QShowEvent *event) override {
+    refresh();
+  }
+
+signals:
+  void buttonPressed();
+  void valueChanged(int value);
+
+private:
+  bool loop;
+  int division;
+  int maxValue;
+  int minValue;
+  int value;
+  QLabel *valueLabel;
+  QString labelText;
+  std::map<int, QString> valueLabelMappings;
   std::string key;
   Params params;
-  int value;
-  int minimumValue;
-  int maximumValue;
-  QLabel *valueLabel;
-  std::function<QString(int)> labelGenerator;
 
-  inline static const QString buttonStyle = R"(
-    QPushButton {
-      border-radius: 50px;
-      font-size: 50px;
-      font-weight: 500;
-      height: 75px;
-      padding: 0 25 0 25;
-      color: #E4E4E4;
-      background-color: #393939;
+  QPushButton *createButton(const QString &text, QWidget *parent) {
+    QPushButton *button = new QPushButton(text, parent);
+    button->setFixedSize(150, 100);
+    button->setAutoRepeat(true);
+    button->setAutoRepeatInterval(150);
+    button->setStyleSheet(R"(
+      QPushButton {
+        border-radius: 50px;
+        font-size: 50px;
+        font-weight: 500;
+        height: 100px;
+        padding: 0 25 0 25;
+        color: #E4E4E4;
+        background-color: #393939;
+      }
+      QPushButton:pressed {
+        background-color: #4a4a4a;
+      }
+    )");
+    return button;
+  }
+};
+
+class DualParamValueControl : public ParamControl {
+  Q_OBJECT
+
+public:
+  DualParamValueControl(ParamValueControl *control1, ParamValueControl *control2, QWidget *parent = nullptr)
+    : ParamControl("", "", "", "", parent) {
+    toggle.hide();
+
+    hlayout->addWidget(control1);
+    hlayout->addWidget(control2);
+  }
+};
+
+class ParamValueToggleControl : public ParamControl {
+  Q_OBJECT
+
+public:
+  ParamValueToggleControl(const QString &param, const QString &title, const QString &desc, const QString &icon,
+                          const int &minValue, const int &maxValue, const std::map<int, QString> &valueLabels,
+                          QWidget *parent = nullptr, const bool &loop = true, const QString &label = "", const int &division = 1,
+                          const std::vector<QString> &button_params = std::vector<QString>(), const std::vector<QString> &button_texts = std::vector<QString>(),
+                          const int minimum_button_width = 225)
+    : ParamControl(param, title, desc, icon, parent),
+      minValue(minValue), maxValue(maxValue), valueLabelMappings(valueLabels), loop(loop), labelText(label), division(division) {
+        key = param.toStdString();
+
+        const QString style = R"(
+          QPushButton {
+            border-radius: 50px;
+            font-size: 40px;
+            font-weight: 500;
+            height:100px;
+            padding: 0 25 0 25;
+            color: #E4E4E4;
+            background-color: #393939;
+          }
+          QPushButton:pressed {
+            background-color: #4a4a4a;
+          }
+          QPushButton:checked:enabled {
+            background-color: #33Ab4C;
+          }
+          QPushButton:disabled {
+            color: #33E4E4E4;
+          }
+        )";
+
+        button_group = new QButtonGroup(this);
+        button_group->setExclusive(false);
+
+        std::map<QString, bool> paramState;
+        for (const QString &button_param : button_params) {
+          paramState[button_param] = params.getBool(button_param.toStdString());
+        }
+
+        for (int i = 0; i < button_texts.size(); ++i) {
+          QPushButton *button = new QPushButton(button_texts[i], this);
+          button->setCheckable(true);
+          button->setChecked(paramState[button_params[i]]);
+          button->setStyleSheet(style);
+          button->setMinimumWidth(minimum_button_width);
+          button_group->addButton(button, i);
+
+          connect(button, &QPushButton::clicked, [this, button_params, i](bool checked) {
+            params.putBool(button_params[i].toStdString(), checked);
+            button_group->button(i)->setChecked(checked);
+          });
+
+          hlayout->addWidget(button);
+        }
+
+        valueLabel = new QLabel(this);
+        hlayout->addWidget(valueLabel);
+
+        QPushButton *decrementButton = createButton("-", this);
+        QPushButton *incrementButton = createButton("+", this);
+
+        hlayout->addWidget(decrementButton);
+        hlayout->addWidget(incrementButton);
+
+        connect(decrementButton, &QPushButton::clicked, this, [=]() {
+          updateValue(-1);
+        });
+
+        connect(incrementButton, &QPushButton::clicked, this, [=]() {
+          updateValue(1);
+        });
+
+        toggle.hide();
+      }
+
+  void updateValue(int increment) {
+    value = value + increment;
+
+    if (loop) {
+      if (value < minValue) value = maxValue;
+      else if (value > maxValue) value = minValue;
+    } else {
+      value = std::max(minValue, std::min(maxValue, value));
     }
-    QPushButton:pressed {
-      background-color: #4a4a4a;
+
+    params.putInt(key, value);
+    refresh();
+    emit buttonPressed();
+    emit valueChanged(value);
+  }
+
+  void refresh() {
+    value = params.getInt(key);
+
+    QString text;
+    auto it = valueLabelMappings.find(value);
+    if (division > 1) {
+      text = QString::number(value / (division * 1.0), 'g');
+    } else {
+      text = it != valueLabelMappings.end() ? it->second : QString::number(value);
     }
-  )";
+    if (!labelText.isEmpty()) {
+      text += labelText;
+    }
+    valueLabel->setText(text);
+    valueLabel->setStyleSheet("QLabel { color: #E0E879; }");
+  }
+
+  void updateControl(int newMinValue, int newMaxValue, const QString &newLabel) {
+    minValue = newMinValue;
+    maxValue = newMaxValue;
+    labelText = newLabel;
+  }
+
+  void showEvent(QShowEvent *event) override {
+    refresh();
+  }
+
+signals:
+  void buttonPressed();
+  void valueChanged(int value);
+
+private:
+  bool loop;
+  int division;
+  int maxValue;
+  int minValue;
+  int value;
+  QButtonGroup *button_group;
+  QLabel *valueLabel;
+  QString labelText;
+  std::map<int, QString> valueLabelMappings;
+  std::string key;
+  Params params;
+
+  QPushButton *createButton(const QString &text, QWidget *parent) {
+    QPushButton *button = new QPushButton(text, parent);
+    button->setFixedSize(150, 100);
+    button->setAutoRepeat(true);
+    button->setAutoRepeatInterval(150);
+    button->setStyleSheet(R"(
+      QPushButton {
+        border-radius: 50px;
+        font-size: 50px;
+        font-weight: 500;
+        height: 100px;
+        padding: 0 25 0 25;
+        color: #E4E4E4;
+        background-color: #393939;
+      }
+      QPushButton:pressed {
+        background-color: #4a4a4a;
+      }
+    )");
+    return button;
+  }
 };
 
 class ButtonParamControl : public AbstractControl {

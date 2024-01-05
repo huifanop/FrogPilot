@@ -3,8 +3,10 @@ from cereal import car
 from openpilot.common.conversions import Conversions as CV
 from openpilot.selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
+#############################
 from openpilot.selfdrive.car.volkswagen.values import DBC, CANBUS, PQ_CARS, NetworkLocation, TransmissionType, GearShifter, \
-                                            CarControllerParams
+                                            CarControllerParams, VolkswagenFlags
+#############################
 
 
 class CarState(CarStateBase):
@@ -14,6 +16,11 @@ class CarState(CarStateBase):
     self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.esp_hold_confirmation = False
     self.upscale_lead_car_signal = False
+#############################
+    self.eps_stock_values = False
+    vsf = self.param.get_int("VagSpeedFactor")/2
+    self.vagspeedfactor = (110 +vsf) /110
+#############################
 
   def create_button_events(self, pt_cp, buttons):
     button_events = []
@@ -33,6 +40,7 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in PQ_CARS:
       return self.update_pq(pt_cp, cam_cp, ext_cp, trans_type)
 
+
     ret = car.CarState.new_message()
     # Update vehicle speed and acceleration from ABS wheel speeds.
     ret.wheelSpeeds = self.get_wheel_speeds(
@@ -41,8 +49,9 @@ class CarState(CarStateBase):
       pt_cp.vl["ESP_19"]["ESP_HL_Radgeschw_02"],
       pt_cp.vl["ESP_19"]["ESP_HR_Radgeschw_02"],
     )
-
-    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
+##########儀表時速與C3同步############
+    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])* self.vagspeedfactor)
+####################################
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw == 0
 
@@ -57,7 +66,15 @@ class CarState(CarStateBase):
     # Verify EPS readiness to accept steering commands
     hca_status = self.CCP.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
     ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
-    ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
+###########全時修正LKAS FAULT###############
+    ret.steerFaultTemporary = hca_status in ("INITIALIZING")
+####################################
+
+    # VW Emergency Assist status tracking and mitigation
+    self.eps_stock_values = pt_cp.vl["LH_EPS_03"]
+    if self.CP.flags & VolkswagenFlags.STOCK_HCA_PRESENT:
+      ret.carFaultedNonCritical = bool(cam_cp.vl["HCA_01"]["EA_Ruckfreigabe"]) or cam_cp.vl["HCA_01"]["EA_ACC_Sollstatus"] > 0
+#############################
 
     # Update gas, brakes, and gearshift.
     ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
@@ -95,6 +112,10 @@ class CarState(CarStateBase):
     if self.CP.enableBsm:
       ret.leftBlindspot = bool(ext_cp.vl["SWA_01"]["SWA_Infostufe_SWA_li"]) or bool(ext_cp.vl["SWA_01"]["SWA_Warnung_SWA_li"])
       ret.rightBlindspot = bool(ext_cp.vl["SWA_01"]["SWA_Infostufe_SWA_re"]) or bool(ext_cp.vl["SWA_01"]["SWA_Warnung_SWA_re"])
+##########################################################
+    self.bcm_01 = pt_cp.vl["BCM_01"]
+    self.motor_18 = pt_cp.vl["Motor_18"]
+##########################################################
 
     # Consume factory LDW data relevant for factory SWA (Lane Change Assist)
     # and capture it for forwarding to the blind spot radar controller
@@ -268,6 +289,20 @@ class CarState(CarStateBase):
 
     return ret
 
+##########################################################
+  @staticmethod
+  def get_body_can_parser(CP):
+    messages = [
+      # sig_address, frequency
+      ("Getriebe_14", 10),
+      ("Motor_12", 100),
+      ("Motor_09", 1),
+      ("OBD_01", 1),
+    ]
+
+    return CANParser(DBC[CP.carFingerprint]["pt"], messages, CANBUS.body)
+##########################################################
+
   @staticmethod
   def get_can_parser(CP):
     if CP.carFingerprint in PQ_CARS:
@@ -290,6 +325,10 @@ class CarState(CarStateBase):
       ("Kombi_01", 2),      # From J285 Instrument cluster
       ("Blinkmodi_02", 1),  # From J519 BCM (sent at 1Hz when no lights active, 50Hz when active)
       ("Kombi_03", 0),      # From J285 instrument cluster (not present on older cars, 1Hz when present)
+##########################################################
+      ("BCM_01", 1),
+      ("Motor_18", 1),
+##########################################################
     ]
 
     if CP.transmissionType == TransmissionType.automatic:
@@ -311,11 +350,17 @@ class CarState(CarStateBase):
       return CarState.get_cam_can_parser_pq(CP)
 
     messages = []
+####################################
+    if CP.flags & VolkswagenFlags.STOCK_HCA_PRESENT:
+      messages += [
+        ("HCA_01", 1),  # From R242 Driver assistance camera, 50Hz if steering/1Hz if not
+      ]
+####################################
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
       messages += [
         # sig_address, frequency
-        ("LDW_02", 10)      # From R242 Driver assistance camera
+        ("LDW_02", 10),      # From R242 Driver assistance camera
       ]
     else:
       # Radars are here on CANBUS.cam

@@ -45,7 +45,7 @@ FrogPilot is my custom "Frog Themed" fork of openpilot that has been tailored to
 
 FrogPilot was last updated on:
 
-**December 17th, 2023**
+**January 1st, 2024**
 
 Features
 ------
@@ -68,13 +68,14 @@ FrogPilot offers a wide range of customizable features that can be easily toggle
     - Approaching slower vehicles
     - Curve and stop light/stop sign detection
     - Driving below a set speed
+    - Navigation based for when crossing intersections and upcoming turns
     - Turn signal activation below 55mph for turn assistance
 ------
 🎮 **Custom UI:**
 
   - Road UI Customizations:
     - Blind spot path to indicate a vehicle is in your blind spot within that respective lane
-    - Compass that rotates according to the direction you're driving (Doesn't work on C3X)
+    - Compass that rotates according to the direction you're driving
     - Increase or decrease the lane line, path, and road edge widths
     - Path edge colors based on specific driving statuses
       - 🔵 Blue - Navigation active
@@ -93,13 +94,17 @@ FrogPilot offers a wide range of customizable features that can be easily toggle
   - Lane detection measuring the width of the adjacent lanes
   - Tap the "CPU"/"GPU" gauge to toggle between CPU and GPU monitoring
   - Tap the "MEMORY" gauge to toggle between RAM and storage monitoring
+  - Tap the "TEMP" gauge for device temperature monitoring
 ------
 🛠 **Device Behaviors:**
 
   - Adjustable screen brightness
+  - Automatic updates that auto install for a completely "set and forget" experience
   - Device can operate offline indefinitely
+  - Disable uploads while onroad to help reduce data usage
   - Easy Panda firmware flashing via a "Flash Panda" button in the "Device" menu
   - Faster boot with prebuilt functionality
+  - Remove all stored driving logs to clear up space/privacy via a "Remove" button in the "Device" menu
   - Set when the device will auto-shutdown to prevent battery drain
 ------
 🚘 **Driving Behaviors:**
@@ -115,6 +120,7 @@ FrogPilot offers a wide range of customizable features that can be easily toggle
   - Longitudinal Adjustments:
     - Aggressive acceleration following a lead vehicle from a stop
     - Enhanced stopping distances and braking behaviors
+    - Map Turn Speed Controller to slow down for curves based on stored map data
     - Speed Limit Controller to adjust your speed to the posted speed limit
       - With additional toggles to set offsets for the ranges of "0-34 mph", "35-54 mph", "55-64 mph", and "65-99 mph"
     - Sport and Eco acceleration modes
@@ -135,7 +141,9 @@ FrogPilot offers a wide range of customizable features that can be easily toggle
 🗺️ **Navigation:**
 
   - 3D buildings in the map panel
+  - iOS shortcuts to use with setting navigation directions
   - Navigate on openpilot without a comma prime subscription
+  - Offline maps
   - Open Street Maps integration for speed limit control and road name view
 ------
 🚙 **Vehicle Specific Additions:**
@@ -151,11 +159,15 @@ FrogPilot offers a wide range of customizable features that can be easily toggle
 ------
 🚦 **Other Quality of Life Features:**
 
-  - Disable the wide camera while in Experimental Mode (cosmetic only)
+  - Camera view selection to view your preferred camera (cosmetic only)
+  - Driving statistics to show how many hours and miles you've driven on the home screen
+  - Fleet Manager to easily access your driving logs and screen recordings
   - Green light alert
   - Hide the speed indicator by simply tapping on it
   - Numerical temperature gauge with the ability to use Fahrenheit by simply tapping on the gauge
   - Pause lateral control when turn signals are active
+  - Retain tethering status between reboots
+  - Screenrecorder
   - Sidebar displays by default for easy device monitoring
   - Silent Mode for a completely silent driving experience
 
@@ -165,9 +177,8 @@ How to Install
 Easiest way to install FrogPilot is via this URL at the installation screen:
 
 ```
-https://installer.comma.ai/FrogAi/FrogPilot
+frogpilot.download
 ```
-Be sure to capitalize the "F" and "P" in "FrogPilot" otherwise the installation will fail.
 
 DO NOT install the "FrogPilot-Development" branch. I'm constantly breaking things on there so unless you don't want to use openpilot, NEVER install it!
 

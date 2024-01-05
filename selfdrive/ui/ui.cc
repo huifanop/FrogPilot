@@ -259,13 +259,17 @@ static void update_state(UIState *s) {
       scene.speed_limit = frogpilotLongitudinalPlan.getSlcSpeedLimit();
       scene.speed_limit_offset = frogpilotLongitudinalPlan.getSlcSpeedLimitOffset();
       scene.speed_limit_overridden = frogpilotLongitudinalPlan.getSlcOverridden();
+      scene.speed_limit_overridden_speed = frogpilotLongitudinalPlan.getSlcOverriddenSpeed();
     }
-    scene.vtsc_offset = frogpilotLongitudinalPlan.getVtscOffset();
+    scene.adjusted_cruise = frogpilotLongitudinalPlan.getAdjustedCruise();
   }
-  if (sm.updated("gpsLocationExternal")) {
-    const auto gpsLocationExternal = sm["gpsLocationExternal"].getGpsLocationExternal();
+  if (sm.updated("liveLocationKalman")) {
+    const auto liveLocationKalman = sm["liveLocationKalman"].getLiveLocationKalman();
     if (scene.compass) {
-      scene.bearing_deg = gpsLocationExternal.getBearingDeg();
+      const auto orientation = liveLocationKalman.getCalibratedOrientationNED();
+      if (orientation.getValid()) {
+        scene.bearing_deg = RAD2DEG(orientation.getValue()[2]);
+      }
     }
   }
   if (sm.updated("wideRoadCameraState")) {
@@ -289,7 +293,6 @@ void ui_update_params(UIState *s) {
 
   // FrogPilot variables
   static UIScene &scene = s->scene;
-  static float conversion = scene.is_metric ? 0.06 : 0.1524;
 
   scene.always_on_lateral = params.getBool("AlwaysOnLateral");
   scene.camera_view = params.getInt("CameraView");
@@ -315,15 +318,14 @@ void ui_update_params(UIState *s) {
 
   scene.model_ui = params.getBool("ModelUI");
   scene.acceleration_path = scene.model_ui && params.getBool("AccelerationPath");
-  scene.lane_line_width = params.getInt("LaneLinesWidth") / 12.0 * conversion;
+  scene.lane_line_width = params.getInt("LaneLinesWidth") * (scene.is_metric ? 1 : INCH_TO_CM) / 200;
   scene.path_edge_width = params.getInt("PathEdgeWidth");
-  scene.path_width = params.getInt("PathWidth") / 10.0 * (scene.is_metric ? 0.5 : 0.1524);
-  scene.road_edge_width = params.getInt("RoadEdgesWidth") / 12.0 * conversion;
+  scene.path_width = params.getInt("PathWidth") / 10.0 * (scene.is_metric ? 1 : FOOT_TO_METER) / 2;
+  scene.road_edge_width = params.getInt("RoadEdgesWidth") * (scene.is_metric ? 1 : INCH_TO_CM) / 200;
   scene.unlimited_road_ui_length = scene.model_ui && params.getBool("UnlimitedLength");
 
   scene.mute_dm = params.getBool("FireTheBabysitter") && params.getBool("MuteDM");
   scene.personalities_via_screen = (params.getInt("AdjustablePersonalities") == 2 || params.getInt("AdjustablePersonalities") == 3);
-
   scene.rotating_wheel = params.getBool("RotatingWheel");
   scene.speed_limit_controller = params.getBool("SpeedLimitController");
 
@@ -360,7 +362,7 @@ UIState::UIState(QObject *parent) : QObject(parent) {
   sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "roadCameraState",
     "pandaStates", "carParams", "driverMonitoringState", "carState", "liveLocationKalman", "driverStateV2",
-    "wideRoadCameraState", "managerState", "navInstruction", "navRoute", "uiPlan", "gpsLocationExternal", 
+    "wideRoadCameraState", "managerState", "navInstruction", "navRoute", "uiPlan", "liveLocationKalman",
     "frogpilotCarControl", "frogpilotDeviceState", "frogpilotLateralPlan", "frogpilotLongitudinalPlan",
   });
 
@@ -393,15 +395,9 @@ void UIState::update() {
 
   // Update FrogPilot variables when they are changed
   static Params paramsMemory{"/dev/shm/params"};
-  static bool toggles_checked = false;
   if (paramsMemory.getBool("FrogPilotTogglesUpdated")) {
-    scene.screen_brightness = Params().getInt("ScreenBrightness");
+    ui_update_params(this);
     emit uiUpdateFrogPilotParams();
-    // Loop through twice so other parts of the code update first
-    if (toggles_checked) {
-      paramsMemory.putBoolNonBlocking("FrogPilotTogglesUpdated", false);
-    }
-    toggles_checked = !toggles_checked;
   }
 
   // FrogPilot live variables that need to be constantly checked

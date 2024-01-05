@@ -12,21 +12,19 @@ public:
 
 private:
   void hideEvent(QHideEvent *event);
-  void showCustomOnroadUI(bool visible);
-  void showCustomThemes(bool visible);
-  void showModelUI(bool visible);
-  void updateMetric();
-
-  ButtonControl *backButton;
+  void hideSubToggles();
+  void parentToggleClicked();
+  void setDefaults();
+  void updateState();
 
   std::set<QString> customOnroadUIKeys;
   std::set<QString> customThemeKeys;
   std::set<QString> modelUIKeys;
 
-  std::map<std::string, ToggleControl*> toggles;
-
-  bool isMetric;
+  std::map<std::string, ParamControl*> toggles;
 
   Params params;
   Params paramsMemory{"/dev/shm/params"};
+
+  bool isMetric = params.getBool("IsMetric");
 };

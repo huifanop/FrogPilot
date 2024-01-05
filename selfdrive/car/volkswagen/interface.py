@@ -3,7 +3,9 @@ from panda import Panda
 from openpilot.common.conversions import Conversions as CV
 from openpilot.selfdrive.car import get_safety_config
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
-from openpilot.selfdrive.car.volkswagen.values import CAR, PQ_CARS, CANBUS, NetworkLocation, TransmissionType, GearShifter
+####################################
+from openpilot.selfdrive.car.volkswagen.values import CAR, PQ_CARS, CANBUS, NetworkLocation, TransmissionType, GearShifter, VolkswagenFlags
+####################################
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -67,6 +69,11 @@ class CarInterface(CarInterfaceBase):
       else:
         ret.networkLocation = NetworkLocation.fwdCamera
 
+####################################
+      if 0x126 in fingerprint[2]:  # HCA_01
+        ret.flags |= VolkswagenFlags.STOCK_HCA_PRESENT.value
+####################################
+
     # Global lateral tuning defaults, can be overridden per-vehicle
 
     ret.steerActuatorDelay = 0.1
@@ -90,11 +97,14 @@ class CarInterface(CarInterfaceBase):
 
     ret.pcmCruise = not ret.openpilotLongitudinalControl
     ret.stoppingControl = True
-    ret.startingState = True
-    ret.startAccel = 1.0
+####################################
+    #ret.startingState = True
+    #ret.startAccel = 1.5
+####################################
     ret.stopAccel = -0.55
-    ret.vEgoStarting = 1.0
-    ret.vEgoStopping = 1.0
+####################################
+    ret.vEgoStarting = 0.1
+####################################
     ret.longitudinalTuning.kpV = [0.1]
     ret.longitudinalTuning.kiV = [0.0]
 
@@ -114,7 +124,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 50 * CV.KPH_TO_MS
 
     elif candidate == CAR.GOLF_MK7:
-      ret.mass = 1397
+      ret.mass = 1305
       ret.wheelbase = 2.62
 
     elif candidate == CAR.JETTA_MK7:
@@ -122,7 +132,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.71
 
     elif candidate == CAR.PASSAT_MK8:
-      ret.mass = 1551
+      ret.mass = 1745
       ret.wheelbase = 2.79
 
     elif candidate == CAR.PASSAT_NMS:
@@ -152,7 +162,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.60
 
     elif candidate == CAR.TIGUAN_MK2:
-      ret.mass = 1715
+      ret.mass = 1673
       ret.wheelbase = 2.74
 
     elif candidate == CAR.TOURAN_MK2:
@@ -201,7 +211,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.66
 
     elif candidate == CAR.SKODA_KODIAQ_MK1:
-      ret.mass = 1569
+      ret.mass = 1700
       ret.wheelbase = 2.79
 
     elif candidate == CAR.SKODA_OCTAVIA_MK3:
@@ -213,7 +223,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.65
 
     elif candidate == CAR.SKODA_SUPERB_MK3:
-      ret.mass = 1505
+      ret.mass = 1710
       ret.wheelbase = 2.84
 
     else:

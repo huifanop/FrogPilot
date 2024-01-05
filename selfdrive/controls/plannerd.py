@@ -43,8 +43,10 @@ def plannerd_thread():
   lateral_planner = LateralPlanner(CP, debug=debug_mode)
 
   pm = messaging.PubMaster(['longitudinalPlan', 'lateralPlan', 'uiPlan', 'frogpilotLateralPlan', 'frogpilotLongitudinalPlan'])
+############################################################################################################
   sm = messaging.SubMaster(['carControl', 'carState', 'controlsState', 'radarState', 'modelV2', 
-                            'frogpilotCarControl', 'frogpilotNavigation'],
+                            'frogpilotCarControl', 'frogpilotNavigation', 'navInstruction'],
+############################################################################################################
                            poll=['radarState', 'modelV2'], ignore_avg_freq=['radarState'])
 
   lateral_planner.update_frogpilot_params(params)

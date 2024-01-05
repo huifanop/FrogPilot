@@ -10,6 +10,25 @@ def create_steering_control(packer, bus, apply_steer, lkas_enabled):
   return packer.make_can_msg("HCA_01", bus, values)
 
 
+####################################
+def create_eps_update(packer, bus, eps_stock_values, ea_simulated_torque):
+  values = {s: eps_stock_values[s] for s in [
+    "COUNTER",                     # Sync counter value to EPS output
+    "EPS_Lenkungstyp",             # EPS rack type
+    "EPS_Berechneter_LW",          # Absolute raw steering angle
+    "EPS_VZ_BLW",                  # Raw steering angle sign
+    "EPS_HCA_Status",              # EPS HCA control status
+  ]}
+
+  values.update({
+    # Absolute driver torque input and sign, with EA inactivity mitigation
+    "EPS_Lenkmoment": abs(ea_simulated_torque),
+    "EPS_VZ_Lenkmoment": 1 if ea_simulated_torque < 0 else 0,
+  })
+
+  return packer.make_can_msg("LH_EPS_03", bus, values)
+####################################
+
 def create_lka_hud_control(packer, bus, ldw_stock_values, enabled, steering_pressed, hud_alert, hud_control):
   values = {}
   if len(ldw_stock_values):
@@ -94,7 +113,9 @@ def create_acc_accel_control(packer, bus, acc_type, acc_enabled, accel, acc_cont
     acc_hold_type = 0
 
   acc_07_values = {
-    "ACC_Anhalteweg": 0.75 if stopping else 20.46,  # Distance to stop (stopping coordinator handles terminal roll-out)
+#################調整起步#################
+    "ACC_Anhalteweg": 0.2 if stopping else 20.46,  # Distance to stop (stopping coordinator handles terminal roll-out)
+###################################################
     "ACC_Freilauf_Info": 2 if acc_enabled else 0,
     "ACC_Folgebeschl": 3.02,  # Not using secondary controller accel unless and until we understand its impact
     "ACC_Sollbeschleunigung_02": accel if acc_enabled else 3.01,
@@ -117,3 +138,41 @@ def create_acc_hud_control(packer, bus, acc_hud_status, set_speed, lead_distance
   }
 
   return packer.make_can_msg("ACC_02", bus, values)
+##########################################################
+def create_bcm_01_control(packer, bus, bcm_01_value):
+  values = bcm_01_value
+  #values = {s: bcm_01_value[s] for s in [
+  #  "BCM_Bremsbelag_Sensor",
+  #  "BCM_Bremsfluessigkeit_Sensor",
+  #  "BCM1_Licht_Warn",
+  #  "BCM_Waschwasser_Sensor",
+  #  "BCM_Kuehlmittel_Sensor",
+  #  "BCM1_Kl_15_HW_erkannt",
+  #  "BCM_Eis_Offroad_Taste",
+  #  "ZZH_Endlage_oben",
+  #  "ZZH_Endlage_unten",
+  #  "ZZH_Endlage_unplausibel",
+  #  "BCM2_EZS_gedrueckt",
+  #  "BCM2_SST_gedrueckt",
+  #  "BCM_Hybrid_StartStopp_Taste",
+  #  "BCM1_Warnblink_Taster",
+  #  "BCM1_Valet_Parking_Taster",
+  #  "BCM_Remotestart_Betrieb",
+  #  "BCM1_HSK_Taster",
+  #  "BCM1_Heckrollo_Taster",
+  #  "BCM1_Rueckfahrlicht_Schalter",
+  #  "BCM1_MH_Schalter",
+  #  "BCM1_MH_WIV_Schalter",
+  #  "BCM_Eco_Charisma_Taste",
+  #  "BCM_Thermomanagement",
+  #  "BCM_Thermomanagement_Fehler",
+  #  "BCM_Thermomanagement_gueltig",
+  #  "BCM1_Lichtwarn_Texte",
+  #]}
+
+  values.update({
+    "BCM_Hybrid_StartStopp_Taste": 1,
+  })
+
+  return packer.make_can_msg("BCM_01", bus, values)
+##########################################################
