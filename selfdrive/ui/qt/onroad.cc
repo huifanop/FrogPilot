@@ -828,7 +828,7 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
   p.drawText(ci_rect.adjusted(20, 10, 0, 0), Qt::AlignTop | Qt::AlignJustify, roadprofile_text);
   
   p.setFont(InterFont(40, QFont::Normal));
-    index = qBound(0, accProfile-1, 3);
+    index = qBound(0, accProfile-1, 2);
   QString accprofile_text = "駕駛  "+accprofile_data[index].second;
   p.drawText(ci_rect.adjusted(20, 65, 0, 0), Qt::AlignTop | Qt::AlignJustify, accprofile_text);
   
@@ -1374,7 +1374,6 @@ void AnnotatedCameraWidget::initializeFrogPilotWidgets() {
     {QPixmap("../assets/aggressive.png"), "節能"},
     {QPixmap("../assets/standard.png"), "正常"},
     {QPixmap("../assets/relaxed.png"), "快速"},
-    {QPixmap("../assets/relaxed.png"), "超節"}
   };
 
   // Roadtype Profiles
