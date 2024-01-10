@@ -7,75 +7,75 @@
 
 FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : ListWidget(parent) {
   const std::vector<std::tuple<QString, QString, QString, QString>> controlToggles {
-    {"AdjustablePersonalities", "Adjustable Personalities", "Use the 'Distance' button on the steering wheel or the onroad UI to switch between openpilot's driving personalities.\n\n1 bar = Aggressive\n2 bars = Standard\n3 bars = Relaxed", "../frogpilot/assets/toggle_icons/icon_distance.png"},
+    {"AdjustablePersonalities", "駕駛模式", "透過畫面切換駕駛模式.\n\n1 格 = 積極\n2 格 = 標準\n3 格 = 輕鬆", "../frogpilot/assets/toggle_icons/icon_distance.png"},
 
-    {"AlwaysOnLateral", "Always on Lateral", "Maintain openpilot lateral control when the brake or gas pedals are used.\n\n1Deactivation occurs only through the 'Cruise Control' button.", "../frogpilot/assets/toggle_icons/icon_always_on_lateral.png"},
-    {"AlwaysOnLateralMain", "   Enable 'Always on Lateral' On Cruise Main", "Activate 'Always On Lateral' when cruise control is engaged without needing openpilot to be enabled first.", "../frogpilot/assets/toggle_icons/icon_blank.png"},
+    {"AlwaysOnLateral", "全時置中模式", "使用剎車或油門踏板時仍保持橫向控制.只有停用“定速”後才能解除.", "../frogpilot/assets/toggle_icons/icon_always_on_lateral.png"},
+    {"AlwaysOnLateralMain", "在道路上啟動全時置中模式", "啟用巡航控制時啟動“始終開啟橫向”，無需先啟用 openpilot.", "../frogpilot/assets/toggle_icons/icon_blank.png"},
 
-    {"ConditionalExperimental", "Conditional Experimental Mode", "Automatically switches to 'Experimental Mode' under predefined conditions.", "../frogpilot/assets/toggle_icons/icon_conditional.png"},
-    {"CECurves", "Curve Detected Ahead", "Switch to 'Experimental Mode' when a curve is detected.", ""},
-    {"CENavigation", "Navigation Based", "Switch to 'Experimental Mode' based on navigation data. (i.e. Intersections, stop signs, etc.)", ""},
-    {"CESlowerLead", "Slower Lead Detected Ahead", "Switch to 'Experimental Mode' when a slower lead vehicle is detected ahead.", ""},
-    {"CEStopLights", "Stop Lights and Stop Signs", "Switch to 'Experimental Mode' when a stop light or stop sign is detected.", ""},
-    {"CESignal", "Turn Signal When Driving Below Highway Speeds", "Switch to 'Experimental Mode' when using turn signals below highway speeds to help assit with turns.", ""},
+    {"ConditionalExperimental", "條件式的實驗模式", "根據特定條件自動啟動實驗模式.", "../frogpilot/assets/toggle_icons/icon_conditional.png"},
+    {"CECurves", "彎道", "偵測到曲線時切換到“實驗模式”.", ""},
+    {"CENavigation", "  導航", "根據導航十字路口、停車標誌等切換到“實驗模式”.", ""},
+    {"CESlowerLead", "  低速前車", "當偵測到前方較慢車輛時切換到“實驗模式”.", ""},
+    {"CEStopLights", "停止標誌", "當偵測到停車燈或停車標誌時切換到“實驗模式”.", ""},
+    {"CESignal", "  方向燈", "當使用低於 55 英里/小時的轉向信號燈時切換到“實驗模式”以幫助轉彎.", ""},
 
-    {"CustomPersonalities", "Custom Driving Personalities", "Customize the driving personality profiles to your driving style.", "../frogpilot/assets/toggle_icons/icon_custom.png"},
-    {"AggressiveFollow", "Follow Time", "Set the 'Aggressive' personality' following distance. Represents seconds to follow behind the lead vehicle.\n\nStock: 1.25 seconds.", "../frogpilot/assets/other_images/aggressive.png"},
-    {"AggressiveJerk", "Jerk Value", "Configure brake/gas pedal responsiveness for the 'Aggressive' personality. Higher values yield a more 'relaxed' response.\n\nStock: 0.5.", "../frogpilot/assets/other_images/aggressive.png"},
-    {"StandardFollow", "Follow Time", "Set the 'Standard' personality following distance. Represents seconds to follow behind the lead vehicle.\n\nStock: 1.45 seconds.", "../frogpilot/assets/other_images/standard.png"},
-    {"StandardJerk", "Jerk Value", "Adjust brake/gas pedal responsiveness for the 'Standard' personality. Higher values yield a more 'relaxed' response.\n\nStock: 1.0.", "../frogpilot/assets/other_images/standard.png"},
-    {"RelaxedFollow", "Follow Time", "Set the 'Relaxed' personality following distance. Represents seconds to follow behind the lead vehicle.\n\nStock: 1.75 seconds.", "../frogpilot/assets/other_images/relaxed.png"},
-    {"RelaxedJerk", "Jerk Value", "Set brake/gas pedal responsiveness for the 'Relaxed' personality. Higher values yield a more 'relaxed' response.\n\nStock: 1.0.", "../frogpilot/assets/other_images/relaxed.png"},
+    {"CustomPersonalities", "設定駕駛模式", "根據您的喜好設定駕駛模式細項設定.", "../frogpilot/assets/toggle_icons/icon_custom.png"},
+    {"AggressiveFollow", "積極模式時間", "設定積極模式中的跟隨距離.表示跟隨前方車輛的秒數.\n\n預設:1.25 秒.", "../frogpilot/assets/other_images/aggressive.png"},
+    {"AggressiveJerk", "Jerk 值", "設定積極模式中的煞車/油門踏板反應能力.數值越高，反應越“輕鬆”.\n\n預設: 0.5.", "../frogpilot/assets/other_images/aggressive.png"},
+    {"StandardFollow", "標準模式時間", "設定標準模式中的跟隨距離.表示跟隨前方車輛的秒數..\n\n預設: 1.45 秒.", "../frogpilot/assets/other_images/standard.png"},
+    {"StandardJerk", "Jerk 值", "設定標準模式中的煞車/油門踏板反應能力.數值越高，反應越“輕鬆”.\n\n預設: 1.0.", "../frogpilot/assets/other_images/standard.png"},
+    {"RelaxedFollow", "輕鬆模式時間", "設定輕鬆模式中的跟隨距離.表示跟隨前方車輛的秒數.\n\n預設: 1.75 秒.", "../frogpilot/assets/other_images/relaxed.png"},
+    {"RelaxedJerk", "Jerk 值", "設定輕鬆模式中的煞車/油門踏板反應能力.數值越高，反應越“輕鬆”.\n\n預設: 1.0.", "../frogpilot/assets/other_images/relaxed.png"},
 
-    {"DeviceShutdown", "Device Shutdown Timer", "Configure the timer for automatic device shutdown when offroad conserving energy and preventing battery drain.", "../frogpilot/assets/toggle_icons/icon_time.png"},
-    {"ExperimentalModeViaPress", "Experimental Mode Via 'LKAS' Button / Screen", "Toggle Experimental Mode by double-clicking the 'Lane Departure'/'LKAS' button or double tapping screen.\n\nOverrides 'Conditional Experimental Mode'.", "../assets/img_experimental_white.svg"},
+    {"DeviceShutdown", "設備自動關機設定", "設置設備在熄火後自動關閉的時間，以減少能源浪費並防止電池耗盡.", "../frogpilot/assets/toggle_icons/icon_time.png"},
+    {"ExperimentalModeViaPress", "利用畫面或方向盤開啟實驗模式", "通過雙擊方向盤上的“車道偏離”/LKAS 按鈕(Toyota/Lexus Only)以啟用或禁用實驗模式，或雙擊營幕覆蓋“條件實驗模式”'.", "../assets/img_experimental_white.svg"},
 
-    {"FireTheBabysitter", "Fire the Babysitter", "Deactivate some of openpilot's 'Babysitter' protocols for more user autonomy.", "../frogpilot/assets/toggle_icons/icon_babysitter.png"},
-    {"NoLogging", "Disable All Logging", "Turn off all data tracking to enhance privacy or reduce thermal load.\n\nWARNING: This action will prevent drive recording and data cannot be recovered!", ""},
-    {"MuteDM", "Mute Driver Monitoring", "Disable driver monitoring.", ""},
-    {"MuteDoor", "Mute Door Open Alert", "Disable alerts for open doors.", ""},
-    {"MuteOverheated", "Mute Overheated System Alert", "Disable alerts for the device being overheated.", ""},
-    {"MuteSeatbelt", "Mute Seatbelt Unlatched Alert", "Disable alerts for unlatched seatbelts.", ""},
+    {"FireTheBabysitter", "關閉監控", "禁用 openpilot 的一些‘保姆協議’.", "../frogpilot/assets/toggle_icons/icon_babysitter.png"},
+    {"NoLogging", "  停用所有日誌記錄", "關閉所有數據追蹤以增強隱私或減少熱負荷.\n\n 警告：此操作將阻止驅動器記錄且資料無法恢復!", ""},
+    {"MuteDM", "  駕駛監控", "禁用駕駛員監控.", ""},
+    {"MuteDoor", "  車門", "禁用開門警報.", ""},
+    {"MuteOverheated", "  系統過熱", "禁用設備過熱警報.", ""},
+    {"MuteSeatbelt", "  安全帶", "禁用未扣安全帶的警報.", ""},
 
-    {"LateralTune", "Lateral Tuning", "Modify openpilot's steering behavior.", "../frogpilot/assets/toggle_icons/icon_lateral_tune.png"},
-    {"AverageCurvature", "Average Desired Curvature", "Use Pfeiferj's distance-based curvature adjustment for improved curve handling.", ""},
-    {"NNFF", "NNFF - Neural Network Feedforward", "Use Twilsonco's Neural Network Feedforward for enhanced precision in lateral control.", ""},
+    {"LateralTune", "橫向調整", "改變 openpilot 的駕駛方式.", "../frogpilot/assets/toggle_icons/icon_lateral_tune.png"},
+    {"AverageCurvature", "  平均期望曲率", "使用 Pfeiferj 的以距離為基準的曲率調整方法來更平滑地處理轉彎.", ""},
+    {"NNFF", "  NNFF - 神經網路前饋", "使用Twilsonco's的神經網路前饋扭矩控制系統來獲得更精準的橫向控制.", ""},
 
-    {"LongitudinalTune", "Longitudinal Tuning", "Modify openpilot's acceleration and braking behavior.", "../frogpilot/assets/toggle_icons/icon_longitudinal_tune.png"},
-    {"AccelerationProfile", "Acceleration Profile", "Change the acceleration rate to be either sporty or eco-friendly.", ""},
-    {"AggressiveAcceleration", "Aggressive Acceleration With Lead", "Increase acceleration aggressiveness when following a lead vehicle from a stop.", ""},
-    {"SmoothBraking", "Smoother Braking Behind Lead", "Smoothen out the braking behavior when approaching slower vehicles.", ""},
-    {"StoppingDistance", "Increased Stopping Distance", "Increase the stopping distance for a more comfortable stop.", ""},
+    {"LongitudinalTune", "縱向調整", "改變 openpilot 加速和煞車方式.", "../frogpilot/assets/toggle_icons/icon_longitudinal_tune.png"},
+    {"AccelerationProfile", "  加速曲線", "將加速度改為運動型或環保型.", ""},
+    {"AggressiveAcceleration", "  積極加速跟車", "當有前車可跟隨時起步更加積極的加速.", ""},
+    {"SmoothBraking", "  平穩煞車的跟車", "當接近速度較慢的車輛時，煞車行為更加自然.", ""},
+    {"StoppingDistance", "  增加停車距離", "增加停車距離，讓停車更舒適.", ""},
 
-    {"Model", "Model Selector", "Choose your preferred openpilot model.", "../assets/offroad/icon_calibration.png"},
-    {"MTSCEnabled", "Map Turn Speed Control", "Slow down for anticipated curves detected by your downloaded maps.", "../frogpilot/assets/toggle_icons/icon_speed_map.png"},
+    {"Model", "模型選擇", "選擇您喜歡的模型.", "../assets/offroad/icon_calibration.png"},
+    {"MTSCEnabled", "地圖彎道速度控制", "根據下載地圖偵測到的預期曲線放慢速度.", "../frogpilot/assets/toggle_icons/icon_speed_map.png"},
 
-    {"NudgelessLaneChange", "Nudgeless Lane Change", "Enable lane changes without manual steering input.", "../frogpilot/assets/toggle_icons/icon_lane.png"},
-    {"LaneChangeTime", "Lane Change Timer", "Specify a delay before executing a nudgeless lane change.", ""},
-    {"LaneDetection", "Lane Detection", "Block nudgeless lane changes when a lane isn't detected.", ""},
-    {"OneLaneChange", "One Lane Change Per Signal", "Limit to one nudgeless lane change per turn signal activation.", ""},
-    {"PauseLateralOnSignal", "Pause Lateral On Turn Signal", "Temporarily disable lateral control during turn signal use.", ""},
+    {"NudgelessLaneChange", "自動變換車道", "不需輕推方向盤即可變換車道.", "../frogpilot/assets/toggle_icons/icon_lane.png"},
+    {"LaneChangeTime", "  自動變換車道延遲", "設定自動變換車道延遲時間.", ""},
+    {"LaneDetection", "  車道檢測", "未偵測到車道時阻止自動變換車道.", ""},
+    {"OneLaneChange", "  每次只變換一個車道", "每次啟動方向燈時，僅執行一次自動變換車道.", ""},
+    {"PauseLateralOnSignal", "  打方向燈時暫停控制", "使用方向燈期間暫時停用橫向控制.", ""},
 
-    {"SpeedLimitController", "Speed Limit Controller", "Automatically adjust vehicle speed to match speed limits using 'Open Street Map's, 'Navigate On openpilot', or your car's dashboard (TSS2 Toyotas only).", "../assets/offroad/icon_speed_limit.png"},
-    {"Offset1", "Speed Limit Offset (0-34 mph)", "Speed limit offset for speed limits between 0-34 mph.", ""},
-    {"Offset2", "Speed Limit Offset (35-54 mph)", "Speed limit offset for speed limits between 35-54 mph.", ""},
-    {"Offset3", "Speed Limit Offset (55-64 mph)", "Speed limit offset for speed limits between 55-64 mph.", ""},
-    {"Offset4", "Speed Limit Offset (65-99 mph)", "Speed limit offset for speed limits between 65-99 mph.", ""},
-    {"SLCFallback", "Fallback Method", "Choose your fallback method for when there are no speed limits currently being obtained from Navigation, OSM, and the car's dashboard.", ""},
-    {"SLCPriority", "Speed Limit Priority", "Determine the priority order for what speed limits to use.", ""},
+    {"SpeedLimitController", "限速控制器", "使用「開放街道地圖」、「在 openpilot 上導航」或汽車儀表板（僅限 TSS2 豐田）自動調整車速以匹配速度限制.", "../assets/offroad/icon_speed_limit.png"},
+    {"Offset1", "速限微調 (0-34 mph)", "  速度介於 0-34 mph 的速限微調.", ""},
+    {"Offset2", "速限微調 (35-54 mph)", "  速度介於 35-54 mph 的速限微調.", ""},
+    {"Offset3", "速限微調 (55-64 mph)", "  速度介於 55-64 mph 的速限微調.", ""},
+    {"Offset4", "速限微調 (65-99 mph)", "  速度介於 65-99 mph 的速限微調.", ""},
+    {"SLCFallback", "  備援方式", "當導航、OSM 或汽車儀表板中沒有速度限制時，設定您的替代方法.", ""},
+    {"SLCPriority", "優先選項", "選擇優先使用的速度限制模式.", ""},
 
-    {"TurnDesires", "Use Turn Desires", "Use turn desires for enhanced precision in turns below the minimum lane change speed.", "../assets/navigation/direction_continue_right.png"},
+    {"TurnDesires", "意圖轉彎", "打開此選項在低於最低自動換道時速40KMH以下時打方向燈時獲得更精準的轉彎.", "../assets/navigation/direction_continue_right.png"},
 
-    {"VisionTurnControl", "Vision Turn Speed Controller", "Slow down for detected road curvature for smoother curve handling.", "../frogpilot/assets/toggle_icons/icon_vtc.png"},
-    {"CurveSensitivity", "Curve Detection Sensitivity", "Set curve detection sensitivity. Higher values prompt earlier responses, lower values lead to smoother but later reactions.", ""},
-    {"TurnAggressiveness", "Turn Speed Aggressiveness", "Set turn speed aggressiveness. Higher values result in faster turns, lower values yield gentler turns.", ""},
+    {"VisionTurnControl", "視覺轉向速度控制", "根據路面曲率自動調整車速，轉彎更順暢.", "../frogpilot/assets/toggle_icons/icon_vtc.png"},
+    {"CurveSensitivity", "  曲線檢測靈敏度", "設定曲線檢測靈敏度.較高的值會導致較早的反應，較低的值會導致較平滑但較晚的反應.", ""},
+    {"TurnAggressiveness", "  轉彎速度積極性", "設定轉彎速度攻擊性.較高的數值會導致較快的轉彎，較低的數值會導致較平緩的轉彎.", ""},
   };
 
   for (const auto &[param, title, desc, icon] : controlToggles) {
     ParamControl *toggle;
 
     if (param == "AdjustablePersonalities") {
-      toggle = new ParamValueControl(param, title, desc, icon, 0, 3, {{0, "None"}, {1, "Steering Wheel"}, {2, "Onroad UI Button"}, {3, "Wheel + Button"}}, this, true);
+      toggle = new ParamValueControl(param, title, desc, icon, 0, 3, {{0, "無"}, {1, "方向盤"}, {2, "畫面按鈕"}, {3, "方向盤 + 畫面按鈕"}}, this, true);
 
     } else if (param == "ConditionalExperimental") {
       ParamManageControl *conditionalExperimentalToggle = new ParamManageControl(param, title, desc, icon, this);
@@ -90,23 +90,23 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : ListWid
       toggle = conditionalExperimentalToggle;
 
     } else if (param == "CECurves") {
-      ParamValueControl *CESpeedImperial = new ParamValueControl("CESpeed", "Below", "Switch to 'Experimental Mode' below this speed in absence of a lead vehicle.", "", 0, 99, std::map<int, QString>(), this, false, " mph");
-      ParamValueControl *CESpeedLeadImperial = new ParamValueControl("CESpeedLead", "Lead", "Switch to 'Experimental Mode' below this speed when following a lead vehicle.", "", 0, 99, std::map<int, QString>(), this, false, " mph");
+      ParamValueControl *CESpeedImperial = new ParamValueControl("CESpeed", "無車時速", "沒有前方車輛時低於此速度切換“實驗模式”.", "", 0, 99, std::map<int, QString>(), this, false, " mph");
+      ParamValueControl *CESpeedLeadImperial = new ParamValueControl("CESpeedLead", "有車時速", "有前方車輛時低於此速度切換到“實驗模式”.", "", 0, 99, std::map<int, QString>(), this, false, " mph");
       conditionalSpeedsImperial = new DualParamValueControl(CESpeedImperial, CESpeedLeadImperial, this);
       addItem(conditionalSpeedsImperial);
 
-      ParamValueControl *CESpeedMetric = new ParamValueControl("CESpeed", "Below", "Switch to 'Experimental Mode' below this speed in absence of a lead vehicle.", "", 0, 99, std::map<int, QString>(), this, false, " kph");
-      ParamValueControl *CESpeedLeadMetric = new ParamValueControl("CESpeedLead", "W/ Lead", "Switch to 'Experimental Mode' below this speed when following a lead vehicle.", "", 0, 99, std::map<int, QString>(), this, false, " kph");
+      ParamValueControl *CESpeedMetric = new ParamValueControl("CESpeed", "無車", "沒有車輛時低於此速度切換“實驗模式”.", "", 0, 99, std::map<int, QString>(), this, false, " kph");
+      ParamValueControl *CESpeedLeadMetric = new ParamValueControl("CESpeedLead", "有車", "有車輛時低於此速度切換到“實驗模式”.", "", 0, 99, std::map<int, QString>(), this, false, " kph");
       conditionalSpeedsMetric = new DualParamValueControl(CESpeedMetric, CESpeedLeadMetric, this);
       addItem(conditionalSpeedsMetric);
 
       std::vector<QString> curveToggles{tr("CECurvesLead")};
-      std::vector<QString> curveToggleNames{tr("With Lead")};
-      toggle = new ParamToggleControl("CECurves", tr("Curve Detected Ahead"), tr("Switch to 'Experimental Mode' when a curve is detected."), "", curveToggles, curveToggleNames);
+      std::vector<QString> curveToggleNames{tr("有前車")};
+      toggle = new ParamToggleControl("CECurves", tr("  偵測彎道"), tr("偵測到彎道時切換到“實驗模式”."), "", curveToggles, curveToggleNames);
     } else if (param == "CEStopLights") {
-      std::vector<QString> stopLightToggles{tr("CEStopLightsLead")};
-      std::vector<QString> stopLightToggleNames{tr("With Lead")};
-      toggle = new ParamToggleControl("CEStopLights", tr("Stop Lights and Stop Signs"), tr("Switch to 'Experimental Mode' when a stop light or stop sign is detected."), "", stopLightToggles, stopLightToggleNames);
+      std::vector<QString> stopLightToggles{tr("停止燈號")};
+      std::vector<QString> stopLightToggleNames{tr("有前車")};
+      toggle = new ParamToggleControl("CEStopLights", tr("  停車燈和停車標誌"), tr("當偵測到停車燈或停車標誌時切換到“實驗模式”."), "", stopLightToggles, stopLightToggleNames);
 
     } else if (param == "CustomPersonalities") {
       ParamManageControl *customPersonalitiesToggle = new ParamManageControl(param, title, desc, icon, this);
@@ -125,7 +125,7 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : ListWid
     } else if (param == "DeviceShutdown") {
       std::map<int, QString> shutdownLabels;
       for (int i = 0; i <= 33; ++i) {
-        shutdownLabels[i] = i == 0 ? "Instant" : i <= 3 ? QString::number(i * 15) + " mins" : QString::number(i - 3) + (i == 4 ? " hour" : " hours");
+        shutdownLabels[i] = i == 0 ? "立即" : i <= 3 ? QString::number(i * 15) + " 分鐘" : QString::number(i - 3) + (i == 4 ? " 小時" : " 小時");
       }
       toggle = new ParamValueControl(param, title, desc, icon, 0, 33, shutdownLabels, this, false);
 
@@ -159,18 +159,18 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : ListWid
       });
       toggle = longitudinalTuneToggle;
     } else if (param == "AccelerationProfile") {
-      toggle = new ParamValueControl(param, title, desc, icon, 0, 2, {{0, "Standard"}, {1, "Eco"}, {2, "Sport"}}, this, true);
+      toggle = new ParamValueControl(param, title, desc, icon, 0, 2, {{0, "標準"}, {1, "節能"}, {2, "運動"}}, this, true);
     } else if (param == "StoppingDistance") {
       toggle = new ParamValueControl(param, title, desc, icon, 0, 10, std::map<int, QString>(), this, false, " feet");
 
     } else if (param == "Model") {
-      modelSelectorButton = new ButtonIconControl(tr("Model Selector"), tr("SELECT"), tr("Select your preferred openpilot model."), "../assets/offroad/icon_calibration.png");
-      const QStringList models = {"Blue Diamond V2", "Blue Diamond V1", "Farmville", "New Delhi", "New Lemon Pie"};
+      modelSelectorButton = new ButtonIconControl(tr("模型選擇"), tr("選擇"), tr("選擇您喜歡的開放駕駛型號."), "../assets/offroad/icon_calibration.png");
+      const QStringList models = {"New Delhi", "Blue Diamond V1", "Farmville", "Blue Diamond V2", "New Lemon Pie"};
       QObject::connect(modelSelectorButton, &ButtonIconControl::clicked, this, [this, models]() {
         const int currentModel = params.getInt("Model");
         const QString currentModelLabel = models[currentModel];
 
-        const QString selection = MultiOptionDialog::getSelection(tr("Select a driving model"), models, currentModelLabel, this);
+        const QString selection = MultiOptionDialog::getSelection(tr("選擇駕駛模型"), models, currentModelLabel, this);
         if (!selection.isEmpty()) {
           const int selectedModel = models.indexOf(selection);
           params.putInt("Model", selectedModel);
@@ -195,7 +195,7 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : ListWid
     } else if (param == "LaneChangeTime") {
       std::map<int, QString> laneChangeTimeLabels;
       for (int i = 0; i <= 10; ++i) {
-        laneChangeTimeLabels[i] = i == 0 ? "Instant" : QString::number(i / 2.0) + " seconds";
+        laneChangeTimeLabels[i] = i == 0 ? "立即" : QString::number(i / 2.0) + " 秒";
       }
       toggle = new ParamValueControl(param, title, desc, icon, 0, 10, laneChangeTimeLabels, this, false);
 
@@ -212,55 +212,55 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : ListWid
     } else if (param == "Offset1" || param == "Offset2" || param == "Offset3" || param == "Offset4") {
       toggle = new ParamValueControl(param, title, desc, icon, 0, 99, std::map<int, QString>(), this, false, " mph");
     } else if (param == "SLCFallback") {
-      toggle = new ParamValueControl(param, title, desc, icon, 0, 2, {{0, "None"}, {1, "Experimental Mode"}, {2, "Previous Speed Limit"}}, this, true);
+      toggle = new ParamValueControl(param, title, desc, icon, 0, 2, {{0, "無"}, {1, "實驗模式"}, {2, "之前的限速"}}, this, true);
     } else if (param == "SLCPriority") {
       const QStringList priorities {
-        "Navigation, Dashboard, Offline Maps",
-        "Navigation, Offline Maps, Dashboard",
-        "Navigation, Offline Maps",
-        "Navigation, Dashboard",
-        "Navigation",
-        "Offline Maps, Dashboard, Navigation",
-        "Offline Maps, Navigation, Dashboard",
-        "Offline Maps, Navigation",
-        "Offline Maps, Dashboard",
-        "Offline Maps",
-        "Dashboard, Navigation, Offline Maps",
-        "Dashboard, Offline Maps, Navigation",
-        "Dashboard, Offline Maps",
-        "Dashboard, Navigation",
-        "Dashboard",
-        "Highest",
-        "Lowest",
+        "導航, 儀表板, 離線地圖",
+        "導航, 離線地圖, 儀表板",
+        "導航, 離線地圖",
+        "導航, 儀表板",
+        "導航",
+        "離線地圖, 儀表板, 導航",
+        "離線地圖, 導航, 儀表板",
+        "離線地圖, 導航",
+        "離線地圖, 儀表板",
+        "離線地圖",
+        "儀表板, 導航, 離線地圖",
+        "儀表板, 離線地圖, 導航",
+        "儀表板, 離線地圖",
+        "儀表板, 導航",
+        "儀表板",
+        "最高速",
+        "最低速",
         "",
       };
 
-      slscPriorityButton = new ButtonControl(tr("Priority Order"), tr("SELECT"), tr("Determine priority order for selecting speed limits with 'Speed Limit Controller'."));
+      slscPriorityButton = new ButtonControl(tr("  優先順序"), tr("選擇"), tr("使用“速度限制控制器”確定選擇速度限制的優先順序'."));
       QObject::connect(slscPriorityButton, &ButtonControl::clicked, this, [this, priorities]() {
-        QStringList availablePriorities = {"Dashboard", "Navigation", "Offline Maps", "Highest", "Lowest", "None"};
+        QStringList availablePriorities = {"儀表板", "導航", "離線地圖", "最高速", "最低速", "無"};
         QStringList selectedPriorities;
         int priorityValue = -1;
 
-        const QStringList priorityPrompts = {tr("Select your primary priority"), tr("Select your secondary priority"), tr("Select your tertiary priority")};
+        const QStringList priorityPrompts = {tr("選擇首要優先"), tr("選擇次要優先"), tr("選擇第三優先")};
 
         for (int i = 0; i < 3; ++i) {
           const QString selection = MultiOptionDialog::getSelection(priorityPrompts[i], availablePriorities, "", this);
           if (selection.isEmpty()) break;
 
-          if (selection == "None") {
+          if (selection == "無") {
             priorityValue = 17;
             break;
-          } else if (selection == "Highest") {
+          } else if (selection == "最高速") {
             priorityValue = 15;
             break;
-          } else if (selection == "Lowest") {
+          } else if (selection == "最低速") {
             priorityValue = 16;
             break;
           } else {
             selectedPriorities.append(selection);
             availablePriorities.removeAll(selection);
-            availablePriorities.removeAll("Highest");
-            availablePriorities.removeAll("Lowest");
+            availablePriorities.removeAll("最高速");
+            availablePriorities.removeAll("最低速");
           }
         }
 
@@ -389,21 +389,21 @@ void FrogPilotControlsPanel::updateState() {
     ParamValueControl *stoppingDistanceToggle = static_cast<ParamValueControl*>(toggles["StoppingDistance"]);
 
     if (isMetric) {
-      offset1Toggle->setTitle("Speed Limit Offset (0-34 kph)");
-      offset2Toggle->setTitle("Speed Limit Offset (35-54 kph)");
-      offset3Toggle->setTitle("Speed Limit Offset (55-64 kph)");
-      offset4Toggle->setTitle("Speed Limit Offset (65-99 kph)");
+      offset1Toggle->setTitle("  速度 0-34 kph 的微調");
+      offset2Toggle->setTitle("  速度 35-54 kph 的微調");
+      offset3Toggle->setTitle("  速度 55-64 kph 的微調");
+      offset4Toggle->setTitle("  速度 65-99 kph 的微調");
 
-      offset1Toggle->setDescription("Set speed limit offset for limits between 0-34 kph.");
-      offset2Toggle->setDescription("Set speed limit offset for limits between 35-54 kph.");
-      offset3Toggle->setDescription("Set speed limit offset for limits between 55-64 kph.");
-      offset4Toggle->setDescription("Set speed limit offset for limits between 65-99 kph.");
+      offset1Toggle->setDescription("設定 0-34 kph 速限微調.");
+      offset2Toggle->setDescription("設定 35-54 kph 速限微調.");
+      offset3Toggle->setDescription("設定 55-64 kph 速限微調.");
+      offset4Toggle->setDescription("設定 65-99 kph 速限微調.");
 
       offset1Toggle->updateControl(0, 99, " kph");
       offset2Toggle->updateControl(0, 99, " kph");
       offset3Toggle->updateControl(0, 99, " kph");
       offset4Toggle->updateControl(0, 99, " kph");
-      stoppingDistanceToggle->updateControl(0, 5, " meters");
+      stoppingDistanceToggle->updateControl(0, 5, " 公尺");
     } else {
       offset1Toggle->setTitle("Speed Limit Offset (0-34 mph)");
       offset2Toggle->setTitle("Speed Limit Offset (35-54 mph)");
@@ -472,56 +472,56 @@ void FrogPilotControlsPanel::setDefaults() {
   const bool FrogsGoMoo = params.get("DongleId").substr(0, 3) == "be6";
 
   const std::map<std::string, std::string> defaultValues {
-    {"AccelerationProfile", "2"},
+    {"AccelerationProfile", "1"},
     {"AdjustablePersonalities", "3"},
     {"AggressiveAcceleration", "1"},
     {"AggressiveFollow", FrogsGoMoo ? "10" : "12"},
     {"AggressiveJerk", FrogsGoMoo ? "6" : "5"},
     {"AlwaysOnLateral", "1"},
-    {"AlwaysOnLateralMain", FrogsGoMoo ? "1" : "0"},
-    {"AverageCurvature", FrogsGoMoo ? "1" : "0"},
+    {"AlwaysOnLateralMain", FrogsGoMoo ? "1" : "1"},
+    {"AverageCurvature", FrogsGoMoo ? "1" : "1"},
     {"CECurves", "1"},
-    {"CECurvesLead", "0"},
+    {"CECurvesLead", "1"},
     {"CENavigation", "1"},
     {"CESignal", "1"},
-    {"CESlowerLead", "0"},
+    {"CESlowerLead", "1"},
     {"CESpeed", "0"},
     {"CESpeedLead", "0"},
     {"CEStopLights", "1"},
     {"CEStopLightsLead", FrogsGoMoo ? "0" : "1"},
     {"ConditionalExperimental", "1"},
-    {"CurveSensitivity", FrogsGoMoo ? "125" : "100"},
+    {"CurveSensitivity", FrogsGoMoo ? "125" : "180"},
     {"CustomPersonalities", "1"},
     {"DeviceShutdown", "9"},
     {"ExperimentalModeViaPress", "1"},
-    {"FireTheBabysitter", FrogsGoMoo ? "1" : "0"},
-    {"LaneChangeTime", "0"},
+    {"FireTheBabysitter", FrogsGoMoo ? "1" : "1"},
+    {"LaneChangeTime", "1"},
     {"LaneDetection", "1"},
     {"LateralTune", "1"},
     {"LongitudinalTune", "1"},
     {"MTSCEnabled", "1"},
-    {"MuteDM", FrogsGoMoo ? "1" : "0"},
-    {"MuteDoor", FrogsGoMoo ? "1" : "0"},
-    {"MuteOverheated", FrogsGoMoo ? "1" : "0"},
-    {"MuteSeatbelt", FrogsGoMoo ? "1" : "0"},
-    {"NNFF", FrogsGoMoo ? "1" : "0"},
+    {"MuteDM", FrogsGoMoo ? "1" : "1"},
+    {"MuteDoor", FrogsGoMoo ? "1" : "1"},
+    {"MuteOverheated", FrogsGoMoo ? "1" : "1"},
+    {"MuteSeatbelt", FrogsGoMoo ? "1" : "1"},
+    {"NNFF", FrogsGoMoo ? "1" : "1"},
     {"NudgelessLaneChange", "1"},
-    {"Offset1", "5"},
-    {"Offset2", FrogsGoMoo ? "7" : "5"},
-    {"Offset3", "5"},
-    {"Offset4", FrogsGoMoo ? "20" : "10"},
+    {"Offset1", "0"},
+    {"Offset2", FrogsGoMoo ? "7" : "0"},
+    {"Offset3", "0"},
+    {"Offset4", FrogsGoMoo ? "20" : "0"},
     {"OneLaneChange", "1"},
     {"PauseLateralOnSignal", "0"},
     {"RelaxedFollow", "30"},
     {"RelaxedJerk", "50"},
-    {"SLCFallback", "2"},
+    {"SLCFallback", "0"},
     {"SLCPriority", "1"},
     {"SmoothBraking", "1"},
     {"SpeedLimitController", "1"},
     {"StandardFollow", "15"},
     {"StandardJerk", "10"},
-    {"StoppingDistance", FrogsGoMoo ? "6" : "3"},
-    {"TurnAggressiveness", FrogsGoMoo ? "150" : "100"},
+    {"StoppingDistance", FrogsGoMoo ? "6" : "1"},
+    {"TurnAggressiveness", FrogsGoMoo ? "150" : "150"},
     {"TurnDesires", "1"},
     {"VisionTurnControl", "1"},
   };

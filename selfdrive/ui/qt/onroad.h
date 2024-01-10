@@ -12,12 +12,17 @@
 #include "selfdrive/ui/qt/widgets/cameraview.h"
 
 #include "selfdrive/frogpilot/screenrecorder/screenrecorder.h"
-
+////////////////////////
+#include "selfdrive/ui/qt/maps/map_instructions.h"
+////////////////////////
 const int btn_size = 192;
 const int img_size = (btn_size / 4) * 3;
 
 // FrogPilot global variables
 static bool reverseCruise;
+////////////////////////
+static bool autoaccProfile;
+////////////////////////
 static bool showSLCOffset;
 static bool speedHidden;
 static double fps;
@@ -141,7 +146,9 @@ public:
 
 private:
   void drawText(QPainter &p, int x, int y, const QString &text, int alpha = 255);
-
+//////////////////////////////////
+  void drawPersonalities(QPainter &p);
+//////////////////////////////////
   QVBoxLayout *main_layout;
   ExperimentalButton *experimental_btn;
   QPixmap dm_img;
@@ -208,7 +215,27 @@ private:
   int conditionalStatus;
   int customColors;
   int customSignals;
+////////////////////////////
+  float batteryVol;
+  int accProfile;
+  int vtsctaProfile;
+  int vtsccsProfile;
+  int roadProfile;
+  int personalityProfile;
+  bool autoaccProfile;
+  int leaddisProfile;
+  int leadspeedProfile;
+  int leadspeeddiffProfile;
+////////////////////////////
   int totalFrames = 8;
+////////////////////////////
+  MapInstructions *map_instructions;
+  QVector<std::pair<QPixmap, QString>> profile_data;
+  QVector<std::pair<QPixmap, QString>> accprofile_data;
+  QVector<std::pair<QPixmap, QString>> roadprofile_data;
+  QVector<std::pair<QPixmap, QString>> autoaccprofile_data;
+  QString navBanner;
+////////////////////////////
   QTimer *animationTimer;
   size_t animationFrameIndex;
 

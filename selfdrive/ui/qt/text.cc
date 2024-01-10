@@ -33,22 +33,24 @@ int main(int argc, char *argv[]) {
 
   QPushButton *btn = new QPushButton();
 #ifdef __aarch64__
-  btn->setText(QObject::tr("Reboot"));
+  btn->setText(QObject::tr("重啟"));
   QObject::connect(btn, &QPushButton::clicked, [=]() {
     std::remove("/data/params/d_tmp/Model");
-    std::system("python3 /data/openpilot/selfdrive/frogpilot/functions/model_switcher.py");
+    std::system("git pull");
+    // std::system("python3 /data/openpilot/selfdrive/frogpilot/functions/model_switcher.py");
     Hardware::reboot();
   });
   QPushButton *recompileBtn = new QPushButton();
-  recompileBtn->setText(QObject::tr("Recompile Model"));
+  recompileBtn->setText(QObject::tr("重新編譯模型"));
   QObject::connect(recompileBtn, &QPushButton::clicked, [=]() {
-    std::system("python3 /data/openpilot/selfdrive/frogpilot/functions/model_switcher.py");
+    std::system("git pull");
+    // std::system("python3 /data/openpilot/selfdrive/frogpilot/functions/model_switcher.py");
     Hardware::reboot();
   });
   main_layout->addWidget(recompileBtn, 0, 0, Qt::AlignLeft | Qt::AlignBottom);
   main_layout->addWidget(btn, 0, 1, Qt::AlignRight | Qt::AlignBottom);
 #else
-  btn->setText(QObject::tr("Exit"));
+  btn->setText(QObject::tr("離開"));
   QObject::connect(btn, &QPushButton::clicked, &a, &QApplication::quit);
 #endif
   main_layout->addWidget(btn, 0, 0, Qt::AlignRight | Qt::AlignBottom);

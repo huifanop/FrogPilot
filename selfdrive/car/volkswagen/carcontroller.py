@@ -1,6 +1,7 @@
 from cereal import car
 from opendbc.can.packer import CANPacker
 from openpilot.common.numpy_fast import clip
+from openpilot.common.params import Params
 from openpilot.common.conversions import Conversions as CV
 from openpilot.common.realtime import DT_CTRL
 from openpilot.selfdrive.car import apply_driver_steer_torque_limits
@@ -29,6 +30,8 @@ class CarController:
     actuators = CC.actuators
     hud_control = CC.hudControl
     can_sends = []
+    self.params = Params()
+    self.params_memory = Params("/dev/shm/params")
 
     # **** Steering Controls ************************************************ #
 

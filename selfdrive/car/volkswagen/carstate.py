@@ -14,6 +14,11 @@ class CarState(CarStateBase):
     self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.esp_hold_confirmation = False
     self.upscale_lead_car_signal = False
+#############################
+    self.eps_stock_values = False
+    vsf = self.param.get_int("VagSpeedFactor")/2
+    self.vagspeedfactor = (110 +vsf) /110
+#############################
 
   def create_button_events(self, pt_cp, buttons):
     button_events = []
@@ -41,8 +46,9 @@ class CarState(CarStateBase):
       pt_cp.vl["ESP_19"]["ESP_HL_Radgeschw_02"],
       pt_cp.vl["ESP_19"]["ESP_HR_Radgeschw_02"],
     )
-
-    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
+##########儀表時速與C3同步############
+    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])* self.vagspeedfactor)
+####################################
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw == 0
 
@@ -57,7 +63,7 @@ class CarState(CarStateBase):
     # Verify EPS readiness to accept steering commands
     hca_status = self.CCP.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
     ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
-    ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
+    ret.steerFaultTemporary = hca_status in ("INITIALIZING")
 
     # Update gas, brakes, and gearshift.
     ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
