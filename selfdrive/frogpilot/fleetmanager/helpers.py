@@ -153,10 +153,22 @@ def get_PrimeType():
   PrimeType = params.get_int("PrimeType")
   return PrimeType
 
+def get_past_dest():
+    past_dest = params.get("NavPastDestinations")
+    return past_dest
+
 def get_last_lon_lat():
   last_pos = params.get("LastGPSPosition")
-  l = json.loads(last_pos)
-  return l["longitude"], l["latitude"]
+  if last_pos is not None and last_pos != "":
+    l = json.loads(last_pos)
+    return l["longitude"], l["latitude"]
+  else:
+    locale = params.get("LanguageSetting", encoding='utf8')
+    if locale == "main_zh-CHT":
+      return "121.3149803", "24.996256935"
+    else:
+      #Comma's headquarters:1441 STATE STREET SAN DIEGO CA 92101
+      return "174.1966074", "13.8404475" 
 
 def get_locations():
   data = params.get("ApiCache_NavDestinations", encoding='utf-8')

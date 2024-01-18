@@ -1,3 +1,7 @@
+##############
+import math
+import cereal.messaging as messaging
+##############
 import numpy as np
 from cereal import car
 from openpilot.common.conversions import Conversions as CV
@@ -9,6 +13,12 @@ from openpilot.selfdrive.controls.lib.lateral_planner import TRAJECTORY_SIZE
 THRESHOLD = 5     # Time threshold (0.25s)
 SPEED_LIMIT = 25  # Speed limit for turn signal check
 TURN_ANGLE = 60   # Angle for turning check
+
+###################################
+# Lookup table for approaching slower leads - Credit goes to Henryccy!
+LEAD_DISTANCE = [10., 100.]
+LEAD_SPEED_DIFF = [-1., -10.]
+###################################
 
 # Lookup table for approaching slower leads - Credit goes to the DragonPilot team!
 SLOW_LEAD_TTC = 1.55
@@ -54,6 +64,15 @@ class ConditionalExperimentalMode:
     self.curvature_gmac = GenericMovingAverageCalculator(window_size=THRESHOLD)
     self.slow_down_gmac = GenericMovingAverageCalculator(window_size=THRESHOLD)
     self.slow_lead_gmac = GenericMovingAverageCalculator(window_size=THRESHOLD)
+    ###################################
+    self.acarapproch = False
+    self.bcarapproch = True
+    self.detect_speed_prev = 0
+    self.lead_emer_count = 0
+    self.lead_emeroff_count = 0
+    self.detect_drel_count =5
+    self.previous_lead_distance = 0
+    ###################################
 
     self.update_frogpilot_params(self.params.get_bool("IsMetric"))
 
@@ -63,7 +82,11 @@ class ConditionalExperimentalMode:
     lead_distance = radarState.leadOne.dRel
     speed_difference = radarState.leadOne.vRel * 3.6
     standstill = carState.standstill
-
+########################################################################
+    v_ego_kph = v_ego * 3.6
+    emergencyslow = False
+    dvratio = lead_distance/np.where(v_ego_kph == 0, 1, v_ego_kph)
+########################################################################
     # Set the value of "overridden"
     if self.experimental_mode_via_press:
       overridden = self.params_memory.get_int("CEStatus")
@@ -71,7 +94,9 @@ class ConditionalExperimentalMode:
       overridden = 0
 
     # Update Experimental Mode based on the current driving conditions
-    condition_met = self.check_conditions(carState, frogpilotNavigation, lead, lead_distance, modelData, speed_difference, standstill, v_ego, v_lead, mtsc_offset, vtsc_offset)
+########################################################################
+    condition_met = self.check_conditions(carState, frogpilotNavigation, lead, lead_distance, modelData, speed_difference, standstill, v_ego, v_lead, mtsc_offset, vtsc_offset, v_ego_kph, emergencyslow,dvratio)
+########################################################################
     if (not self.experimental_mode and condition_met and overridden not in (1, 3)) or overridden in (2, 4):
       self.experimental_mode = True
     elif (self.experimental_mode and not condition_met and overridden not in (2, 4)) or overridden in (1, 3):
@@ -86,7 +111,9 @@ class ConditionalExperimentalMode:
     self.previous_v_ego = v_ego
 
   # Check conditions for the appropriate state of Experimental Mode
-  def check_conditions(self, carState, frogpilotNavigation, lead, lead_distance, modelData, speed_difference, standstill, v_ego, v_lead, mtsc_offset, vtsc_offset):
+##################################################################
+  def check_conditions(self, carState, frogpilotNavigation, lead, lead_distance, modelData, speed_difference, standstill, v_ego, v_lead, mtsc_offset, vtsc_offset, v_ego_kph, emergencyslow, dvratio):
+##################################################################
     if standstill:
       return self.experimental_mode
 
@@ -111,7 +138,7 @@ class ConditionalExperimentalMode:
       return True
 
     # Slower lead check
-    if self.slower_lead and lead and self.slow_lead(lead, lead_distance, v_ego):
+    if self.slower_lead and lead and self.slow_lead(lead, lead_distance, v_ego) and (((speed_difference < interp(lead_distance, LEAD_DISTANCE, LEAD_SPEED_DIFF) and speed_difference < -1) or emergencyslow) or v_lead < 1):
       self.status_value = 9
       return True
 
@@ -130,10 +157,67 @@ class ConditionalExperimentalMode:
     if self.stop_lights and self.stop_sign_and_light(carState, lead, lead_distance, modelData, v_ego, v_lead) and not curve_detected:
       self.status_value = 12
       return True
+##################################################################
+    if(self.detect_emergency(speed_difference, dvratio) or self.detect_drel(lead_distance)) and v_ego_kph > 20  and lead_distance < 100  and speed_difference < 0:
+      if self.params.get_bool('Emergencycontrol') :
+        if self.params_memory.get_int('SpeedPrev') == 0:
+          self.params_memory.put_int('SpeedPrev',self.params_memory.get_int('KeySetSpeed'))
+        self.params_memory.put_int('KeySetSpeed', math.floor((v_ego_kph-5) / 5) * 5)
+        self.params_memory.put_bool('KeyChanged', True)
+        self.acarapproch = True
+        self.bcarapproch = False
+        emergencyslow = True
+    if (self.detect_emer_off(speed_difference) or not lead) and self.params_memory.get_int('SpeedPrev') != 0:
+      self.params_memory.put_int('KeySetSpeed', self.params_memory.get_int('SpeedPrev'))
+      self.params_memory.put_bool('KeyChanged', True)
+      self.params_memory.put_int('SpeedPrev',0)
+      self.acarapproch = False
+      self.bcarapproch = True
 
+    frogpilot_plan_send = messaging.new_message('frogpilotLongitudinalPlan')
+    frogpilotLongitudinalPlan = frogpilot_plan_send.frogpilotLongitudinalPlan
+    frogpilotLongitudinalPlan.carapproch = self.acarapproch 
+    frogpilotLongitudinalPlan.carnotapproch = self.bcarapproch 
+
+##################################################################
     return False
 
   # Determine the road curvature - Credit goes to to Pfeiferj!
+ ##################################################################
+  def detect_drel(self, lead_distance):
+    if self.detect_drel_count >= 10:
+      if lead_distance - self.previous_lead_distance < -8:
+        drel_decreased = True 
+      else:
+        drel_decreased = False
+      self.previous_lead_distance = lead_distance  
+      self.detect_drel_count = 0
+    else:
+      self.detect_drel_count += 1
+      drel_decreased = False
+    return drel_decreased
+
+  def detect_emergency(self, speed_difference, dvratio):
+    if (dvratio < 0.4) and (speed_difference < -10):
+      self.lead_emer_count = max(10, self.lead_emer_count + 1)
+    else:
+      self.lead_emer_count = min(0, self.lead_emer_count - 1)
+    # Check if lead is detected for > 0.25s
+    if self.lead_emer_count >= THRESHOLD:
+      #self.status_value = 3
+      return True      
+    else:      
+      return False
+  
+  def detect_emer_off(self, speed_difference):
+    if speed_difference > 1:
+      self.lead_emeroff_count = max(10, self.lead_emeroff_count + 1)
+    else:
+      self.lead_emeroff_count = min(0, self.lead_emeroff_count - 1)
+    # Check if lead is detected for > 0.25s
+    return self.lead_emeroff_count >= THRESHOLD
+##################################################################
+  
   def road_curvature(self, modelData, v_ego):
     predicted_velocities = np.array(modelData.velocity.x)
     if predicted_velocities.size:

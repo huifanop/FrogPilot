@@ -148,11 +148,11 @@ def addr_input():
     return redirect(url_for('public_token_input'))
   elif s_token == "" or s_token is None:
     return redirect(url_for('app_token_input'))
-  elif SearchInput == 2:
-    lon, lat = fleet.get_last_lon_lat()
+  elif SearchInput == 2:    
     if gmap_key == "" or gmap_key is None:
       return redirect(url_for('gmap_key_input'))
     else:
+      lon, lat = fleet.get_last_lon_lat()
       return render_template("addr.html", gmap_key=gmap_key, lon=lon, lat=lat)
   else:
       return render_template("addr.html", gmap_key=None, lon=None, lat=None)
@@ -178,6 +178,11 @@ def public_token_input():
     return redirect(url_for('addr_input'))
   else:
     return render_template("public_token_input.html")
+  
+@app.route("/get_past_dest", methods=['GET'])
+def get_past_dest():
+    response = fleet.get_past_dest()
+    return Response(response, content_type='application/json')
 
 @app.route("/app_token_input", methods=['GET', 'POST'])
 def app_token_input():

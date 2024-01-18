@@ -136,7 +136,7 @@ class RouteEngine:
 
     lang = self.params.get('LanguageSetting', encoding='utf8')
     if lang is not None:
-      lang = lang.replace('main_', '')
+      lang = 'zh-Hant'
 
     params = {
       'access_token': self.mapbox_token,
@@ -390,7 +390,7 @@ class RouteEngine:
         # Calculate the distance to the stopSign or trafficLight
         distance_to_condition = self.last_position.distance_to(self.stop_coord[index])
         if distance_to_condition < max((seconds_to_stop * v_ego), 25): 
-          self.nav_condition = True
+          self.nav_condition = False
         else:
           self.nav_condition = False  # Not approaching any stopSign or trafficLight
       else:

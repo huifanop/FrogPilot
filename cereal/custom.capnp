@@ -25,6 +25,21 @@ enum FrogPilotEvents @0xf35cc4560bbf6ec2 {
   torqueNNLoad @3;
   turningLeft @4;
   turningRight @5;
+  #######################
+  carAwayed @6;
+  carApproaching @7;
+  detectSpeedLimitu @8;
+  detectSpeedLimitd @9;
+  speedOver @10;
+  ######NAV語音######
+  navTurn @11;
+  navUturn @12;
+  navturnLeft @13;
+  navturnRight @14;
+  navSharpright @15;
+  navSharpleft @16;
+  navOfframp @17;
+  #######################
 }
 
 struct FrogPilotLateralPlan @0xda96579883444c35 {
@@ -46,6 +61,14 @@ struct FrogPilotLongitudinalPlan @0x80ae746ee2596b11 {
   slcSpeedLimitOffset @10 :Float32;
   stoppedEquivalenceFactor @11 :Float32;
   stoppedEquivalenceFactorStock @12 :Float32;
+  #########################
+  carawayck @13 : Bool;
+  carapproch @14 :Bool;
+  carnotapproch @15 :Bool;
+  dspeedlimitu @16 :Bool;
+  dspeedlimitd @17 :Bool;
+  speedover @18 :Bool;
+  #############################
 }
 
 struct FrogPilotNavigation @0xa5cd762cd951a455 {

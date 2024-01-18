@@ -67,7 +67,7 @@ QStringList getCarNames(const QString &dirPath, const QString &carMake) {
 }
 
 FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : ListWidget(parent) {
-  selectMakeButton = new ButtonControl(tr("Select Make"), tr("SELECT"));
+  selectMakeButton = new ButtonControl(tr("選擇品牌"), tr("選擇"));
   QObject::connect(selectMakeButton, &ButtonControl::clicked, [this]() {
     std::string currentModel = params.get("CarMake");
     QStringList makes = {
@@ -76,7 +76,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : ListWid
       "Mercedes", "Nissan", "Ram", "SEAT", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo", "Škoda",
     };
 
-    const QString newMakeSelection = MultiOptionDialog::getSelection(tr("Select a Make"), makes, QString::fromStdString(currentModel), this);
+    const QString newMakeSelection = MultiOptionDialog::getSelection(tr("  選擇品牌"), makes, QString::fromStdString(currentModel), this);
     if (!newMakeSelection.isEmpty()) {
       params.put("CarMake", newMakeSelection.toStdString());
       selectMakeButton->setValue(newMakeSelection);
@@ -85,11 +85,11 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : ListWid
   });
   addItem(selectMakeButton);
 
-  selectModelButton = new ButtonControl(tr("Select Model"), tr("SELECT"));
+  selectModelButton = new ButtonControl(tr("選擇型號"), tr("選擇"));
   const QString modelSelection = QString::fromStdString(params.get("CarModel"));
   QObject::connect(selectModelButton, &ButtonControl::clicked, [this]() {
     const std::string currentModel = params.get("CarModel");
-    const QString newModelSelection = MultiOptionDialog::getSelection(tr("Select a Model"), models, QString::fromStdString(currentModel), this);
+    const QString newModelSelection = MultiOptionDialog::getSelection(tr("  選擇型號"), models, QString::fromStdString(currentModel), this);
     if (!newModelSelection.isEmpty()) {
       params.put("CarModel", newModelSelection.toStdString());
       selectModelButton->setValue(newModelSelection);
@@ -98,7 +98,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : ListWid
   selectModelButton->setValue(modelSelection);
   addItem(selectModelButton);
 
-  noToggles = new QLabel(tr("No additional options available for the selected make."));
+  noToggles = new QLabel(tr("所選品牌沒有可用的其他選項."));
   noToggles->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   noToggles->setAlignment(Qt::AlignCenter);
   addItem(noToggles);
