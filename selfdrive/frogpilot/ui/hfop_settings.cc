@@ -10,7 +10,7 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : ListWidget(parent
     {"OffScreen", "  啟動關閉螢幕", "車輛起動後自動關閉螢幕.", ""},
     {"VagSpeed", "時速差調整", "VAG專用。調整車錶速度與C3定速設定不同步的問題。", "../assets/offroad/icon_openpilot.png"},
     {"VagSpeedFactor", "  時速差調整", "請輸入OP定速為110時儀表板的速度差值.", ""},
-    {"Disablestartstop", "  取消怠速熄火", "開啟後將強制關閉怠速熄火功能.", ""},
+    // {"Disablestartstop", "  取消怠速熄火", "開啟後將強制關閉怠速熄火功能.", ""},
     
     {"AutoACC", "自動啟動ACC", "啟用後會自動啟動ACC.", "../assets/offroad/icon_conditional.png"},
     {"AutoACCspeed", "  自動啟動ACC時速設定", "設定自動啟動ACC的時速條件設定.", ""},
@@ -191,7 +191,7 @@ void HFOPControlsPanel::setDefaults() {
     {"CarAwaydistance", "5"},
     {"CarAwayReminder", "1"},
     {"ChangeLaneReminder", "1"},
-    {"Disablestartstop", "1"},
+    // {"Disablestartstop", "1"},
     {"GreenLightReminder", "1"},    
     {"Laneblindspotdetection", "1"},
     {"Navspeed", "1"},
