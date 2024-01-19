@@ -134,7 +134,7 @@ AdvancedNetworking::AdvancedNetworking(QWidget* parent, WifiManager* wifi): QWid
     tetheringToggle->setVisualOn();
     uiState()->scene.tethering_enabled = true;
 //////////////////////////////////////////////////////////////////////////////
-
+  }
   // Change tethering password
   ButtonControl *editPasswordButton = new ButtonControl(tr("網路分享密碼"), tr("編輯"));
   connect(editPasswordButton, &ButtonControl::clicked, [=]() {
