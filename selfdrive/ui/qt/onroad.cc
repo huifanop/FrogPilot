@@ -147,13 +147,19 @@ void OnroadWindow::mousePressEvent(QMouseEvent* e) {
       preBrightnessScreen = params.getInt("ScreenBrightness");
       if (speedHidden == 1){
         params.putInt("ScreenBrightness", 0);
+        BrightnessScreen = params.getInt("ScreenBrightness");
+        uiState()->scene.screen_brightness = BrightnessScreen;
+        paramsMemory.putBoolNonBlocking("FrogPilotTogglesUpdated", true);
       }
       if (speedHidden == 0){
         params.putInt("ScreenBrightness", preBrightnessScreen);
+        BrightnessScreen = params.getInt("ScreenBrightness");
+        uiState()->scene.screen_brightness = BrightnessScreen;
+        paramsMemory.putBoolNonBlocking("FrogPilotTogglesUpdated", true);
       }
-      BrightnessScreen = params.getInt("ScreenBrightness");
-      uiState()->scene.screen_brightness = BrightnessScreen;
-      paramsMemory.putBoolNonBlocking("FrogPilotTogglesUpdated", true);
+      // BrightnessScreen = params.getInt("ScreenBrightness");
+      // uiState()->scene.screen_brightness = BrightnessScreen;
+      // paramsMemory.putBoolNonBlocking("FrogPilotTogglesUpdated", true);
     } else {
       showSLCOffset = !params.getBool("ShowSLCOffset");
       params.putBoolNonBlocking("ShowSLCOffset", showSLCOffset);
