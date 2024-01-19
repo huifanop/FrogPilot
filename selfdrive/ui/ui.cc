@@ -478,7 +478,7 @@ void Device::updateBrightness(const UIState &s) {
     brightness = 0;
   } else if (s.scene.screen_brightness <= 100) {
     // Bring the screen brightness up to 5% upon screen tap
-    brightness = fmax(1, s.scene.screen_brightness);
+    brightness = fmax(5, s.scene.screen_brightness);
   }
 
   if (brightness != last_brightness) {
