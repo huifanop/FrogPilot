@@ -253,6 +253,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"OffScreen", PERSISTENT},
     {"VagSpeed", PERSISTENT},
     {"VagSpeedFactor", PERSISTENT},
+    {"ScreenBrightnesspre", PERSISTENT},
 ////////////NAV語音////////////////////////
     {"NavReminder", PERSISTENT},
     {"navTurn", PERSISTENT},
