@@ -39,7 +39,7 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : ListWidget(parent
     {"Laneblindspotdetection", "  換道盲點", "開啟後在變換車道時若盲點偵測到車輛會發出語音提醒.", ""},
     {"CarApproachingReminder", "  前車急煞", "開啟後在前車急煞時會發出語音提醒.", ""},
     {"CarAwayReminder", "  前車遠離", "開啟後在前車遠離時會發出語音提醒.", ""},
-    {"Autowifi", "  自動啟動網路分享", "開機後自動啟動網路分享.", ""},
+    // {"Autowifi", "  自動啟動網路分享", "開機後自動啟動網路分享.", ""},
   };
 
   for (const auto &[param, title, desc, icon] : hfopToggles) {
@@ -180,7 +180,7 @@ void HFOPControlsPanel::setDefaults() {
 
   const std::map<std::string, std::string> defaultValues {
     {"OffScreen", "0"},
-    {"Autowifi", "1"},
+    // {"Autowifi", "1"},
     {"AutoACC", "1"},
     {"AutoACCspeed", "10"},
     {"AutoACCCarAway", "1"},

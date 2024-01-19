@@ -130,19 +130,9 @@ AdvancedNetworking::AdvancedNetworking(QWidget* parent, WifiManager* wifi): QWid
   tetheringToggle = new ToggleControl(tr("開啟網路分享"), "", "", wifi->isTetheringEnabled());
   list->addItem(tetheringToggle);
   QObject::connect(tetheringToggle, &ToggleControl::toggleFlipped, this, &AdvancedNetworking::toggleTethering);
-  if (params.getBool("Autowifi")) {
-    params.putBool("TetheringEnabled", true);
-    if (params.getBool("TetheringEnabled")) {
-      tetheringToggle->setVisualOn();
-      uiState()->scene.tethering_enabled = true;
-    } 
-  } else {
-    params.putBool("TetheringEnabled", false);
-    if (params.getBool("TetheringEnabled")) {
-      tetheringToggle->setVisualOn();
-      uiState()->scene.tethering_enabled = false;
-    }  
-  }
+  if (params.getBool("TetheringEnabled")) {
+    tetheringToggle->setVisualOn();
+    uiState()->scene.tethering_enabled = true;
 //////////////////////////////////////////////////////////////////////////////
 
   // Change tethering password
@@ -227,11 +217,7 @@ void AdvancedNetworking::refresh() {
 void AdvancedNetworking::toggleTethering(bool enabled) {
   wifi->setTetheringEnabled(enabled);
 //////////////////////////////////////////////////////////////////////////////
-  if (params.getBool("Autowifi")) {
-    tetheringToggle->setEnabled(true);
-  } else {
-    tetheringToggle->setEnabled(false);
-  }
+  tetheringToggle->setEnabled(false);
 //////////////////////////////////////////////////////////////////////////////
   params.putBool("TetheringEnabled", enabled);
   uiState()->scene.tethering_enabled = enabled;

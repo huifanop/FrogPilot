@@ -144,12 +144,12 @@ void OnroadWindow::mousePressEvent(QMouseEvent* e) {
     } else if (isSpeedClicked) {
       speedHidden = !params.getBool("HideSpeed");
       params.putBoolNonBlocking("HideSpeed", speedHidden);
-      
+      preBrightnessScreen = params.getInt("ScreenBrightness");
       if (speedHidden == 1){
         params.putInt("ScreenBrightness", 0);
       }
       if (speedHidden == 0){
-        params.putInt("ScreenBrightness", 101);
+        params.putInt("ScreenBrightness", preBrightnessScreen);
       }
       BrightnessScreen = params.getInt("ScreenBrightness");
       uiState()->scene.screen_brightness = BrightnessScreen;

@@ -23,6 +23,7 @@ static bool reverseCruise;
 ////////////////////////
 static bool autoaccProfile;
 static int BrightnessScreen;
+static int preBrightnessScreen;
 ////////////////////////
 static bool showSLCOffset;
 static bool speedHidden;
