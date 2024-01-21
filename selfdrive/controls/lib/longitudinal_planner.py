@@ -232,12 +232,9 @@ class LongitudinalPlanner:
     Roadtype = self.params.get_bool('Roadtype')
     Roadtype_Profile = self.params.get_int("RoadtypeProfile")
     
-    Speed_distance = self.params.get_bool("Speeddistance")
     Navspeed = self.params.get_bool('Navspeed')
     
     current_setspeed = self.params_memory.get_int('KeySetSpeed')
-    SpeedLimitChangedck = self.params_memory.get_bool('SpeedLimitChanged')
-    KeyChangedck = self.params_memory.get_bool('KeyChanged')
 
     #自動啟動ACC並帶入最高速限
     if Auto_ACC :
@@ -290,23 +287,6 @@ class LongitudinalPlanner:
         if self.params.get_bool("AutoACCCarAway"):
           self.AutoACCCarAway = False
 
-    #速度調控車距
-    LongitudinalPersonalityck = self.params.get_int("LongitudinalPersonality")
-    if Speed_distance :
-      if SpeedLimitChangedck==True or KeyChangedck==True:
-        if  v_ego_kph < 60:
-          if LongitudinalPersonalityck != 0 :
-            self.params.put_int("LongitudinalPersonality", 0)
-            self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
-        elif v_ego_kph == 60 and v_ego_kph < 90:
-          if LongitudinalPersonalityck != 1 :
-            self.params.put_int("LongitudinalPersonality",1)
-            self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
-        elif v_ego_kph == 90 and v_ego_kph < 120:
-          if LongitudinalPersonalityck != 2 :
-              self.params.put_int("LongitudinalPersonality",2)
-              self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
-    
     #綠燈帶入提醒與時速控制
     if self.green_light:
       if self.params.get_bool("AutoACCGreenLight"):

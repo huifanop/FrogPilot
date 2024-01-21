@@ -20,6 +20,7 @@ private:
   std::set<QString> VagSpeedKeys;
   std::set<QString> AutoACCKeys;
   std::set<QString> CarAwayKeys;  
+  std::set<QString> RoadKeys;
   std::set<QString> NavspeedKeys;
   std::set<QString> VoiceKeys;
 

@@ -434,6 +434,20 @@ class Controls:
         print("[PONTEST][controlsd.py][update_events()] speedover_reminder_status0=", speedover_reminder_status)
       self.params_memory.put_int('speedoverreminderstatus',speedover_reminder_status)
 
+    # 依車速調整跟車距離
+    if self.params.get_bool("Speeddistance") :
+      v_ego_kph = CS.vEgo*3.6
+      if  v_ego_kph < 60:
+        if self.params.get_int("LongitudinalPersonality") != 0 :
+          self.params.put_int("LongitudinalPersonality", 0)
+      elif v_ego_kph > 60 and v_ego_kph < 90:
+        if self.params.get_int("LongitudinalPersonality") != 1 :
+          self.params.put_int("LongitudinalPersonality",1)
+      elif v_ego_kph > 90 and v_ego_kph < 120:
+        if self.params.get_int("LongitudinalPersonality") != 2 :
+          self.params.put_int("LongitudinalPersonality",2)
+      self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
+
     #速限變更提醒  
     if self.Speedlimitu_Reminder:
       if self.sm['frogpilotLongitudinalPlan'].dspeedlimitu:

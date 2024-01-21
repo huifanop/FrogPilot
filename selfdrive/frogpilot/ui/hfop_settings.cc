@@ -22,7 +22,8 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : ListWidget(parent
     {"CarAwaydistance", "  前車距離差設定", "設定前車距離大於多少公尺時提醒..", ""},
     
     {"Roadtype", "道路種類設定", "開啟後可依道路種類在特定條件下預設時速", "../assets/offroad/icon_road.png"},
-    
+    {"RoadtypeProfile", "道路種類設定", "開啟後可依道路種類在特定條件下預設時速", "../assets/offroad/icon_road.png"},
+
     {"Speeddistance", "車速調控跟車距離", "開啟後可依行車路線自動切換跟車距離， 1格 60公里 2格90公里 3格120公里.", "../assets/offroad/icon_distance.png"},
     
     {"Navspeed", "圖資速限", "開啟後可依當下所在道路的圖資速限自動更新.", "../assets/offroad/icon_map.png"},
@@ -86,8 +87,17 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : ListWidget(parent
       toggle = new ParamValueControl(param, title, desc, icon, 1, 10, std::map<int, QString>(), this, false, "公尺");
 
     } else if (param == "Roadtype") {
-      std::map<int, QString> themeLabels = {{0, "關閉"}, {1, "平面"}, {2, "快速"}, {3, "高速"}};
-      toggle = new ParamValueControl(param, title, desc, icon, 0, 3, themeLabels, this, true);
+      ParamManageControl *RoadToggle = new ParamManageControl(param, title, desc, icon, this);
+      QObject::connect(RoadToggle, &ParamManageControl::manageButtonClicked, this, [this]() {
+        parentToggleClicked();
+        for (auto &[key, toggle] : toggles) {
+          toggle->setVisible(RoadKeys.find(key.c_str()) != RoadKeys.end());
+        }
+      });
+      toggle = RoadToggle;
+    } else if (param == "RoadtypeProfile") {
+      std::map<int, QString> RoadtypeProfile = {{0, "關閉"}, {1, "平面"}, {2, "快速"}, {3, "高速"}};
+      toggle = new ParamValueControl(param, title, desc, icon, 0, 3, RoadtypeProfile, this, true);
 
     } else if (param == "Navspeed") {
       ParamManageControl *NavspeedToggle = new ParamManageControl(param, title, desc, icon, this);
@@ -126,6 +136,7 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : ListWidget(parent
   VagSpeedKeys = {"VagSpeedFactor"};  
   AutoACCKeys = {"AutoACCspeed", "AutoACCCarAway", "AutoACCGreenLight"};
   CarAwayKeys = {"CarAwayspeed", "CarAwaydistance"};
+  RoadKeys = {"RoadtypeProfile"};
   NavspeedKeys = {"NavReminder", "speedoverreminder", "SpeedlimituReminder", "speedreminderreset"};
   VoiceKeys = {"GreenLightReminder", "ChangeLaneReminder","Laneblindspotdetection","CarApproachingReminder","CarAwayReminder"};
 
@@ -165,6 +176,7 @@ void HFOPControlsPanel::hideSubToggles() {
     const bool subToggles = VagSpeedKeys.find(key.c_str()) != VagSpeedKeys.end() ||
                             AutoACCKeys.find(key.c_str()) != AutoACCKeys.end() ||
                             CarAwayKeys.find(key.c_str()) != CarAwayKeys.end() ||
+                            RoadKeys.find(key.c_str()) != RoadKeys.end() ||
                             NavspeedKeys.find(key.c_str()) != NavspeedKeys.end() ||
                             VoiceKeys.find(key.c_str()) != VoiceKeys.end();
     toggle->setVisible(!subToggles);

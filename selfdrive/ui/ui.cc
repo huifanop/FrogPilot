@@ -447,7 +447,7 @@ void Device::resetInteractiveTimeout(int timeout) {
   int screen_brightness = params.getInt("ScreenBrightness");
   if (screen_brightness == 0){
     if (timeout == -1) {
-      timeout = 5;
+      timeout = 3;
     }
   } else {
     if (timeout == -1) {
@@ -478,7 +478,7 @@ void Device::updateBrightness(const UIState &s) {
     brightness = 0;
   } else if (s.scene.screen_brightness <= 100) {
     // Bring the screen brightness up to 5% upon screen tap
-    brightness = fmax(5, s.scene.screen_brightness);
+    brightness = fmax(10, s.scene.screen_brightness);
   }
 
   if (brightness != last_brightness) {
