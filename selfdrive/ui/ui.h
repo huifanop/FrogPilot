@@ -184,15 +184,22 @@ typedef struct UIScene {
   bool driver_camera;
   bool enabled;
   bool experimental_mode;
-  bool experimental_mode_via_press;
+  bool experimental_mode_via_screen;
+  bool full_map;
+  bool hide_speed;
   bool lead_info;
   bool map_open;
   bool model_ui;
   bool mute_dm;
   bool personalities_via_screen;
+  bool quality_of_life_controls;
+  bool quality_of_life_visuals;
+  bool random_events;
+  bool reverse_cruise;
   bool road_name_ui;
   bool rotating_wheel;
   bool show_driver_camera;
+  bool show_slc_offset;
   bool show_fps;
   bool speed_limit_controller;
   bool speed_limit_overridden;
@@ -200,34 +207,36 @@ typedef struct UIScene {
   bool turn_signal_left;
   bool turn_signal_right;
   bool unlimited_road_ui_length;
-  int bearing_deg;
-  int camera_view;
-  int conditional_speed;
-  int conditional_speed_lead;
-  int conditional_status;
-  int custom_colors;
-  int custom_signals;
-  int screen_brightness;
-  int steering_angle_deg;
-  int wheel_icon;
+  bool use_si;
+  bool use_vienna_slc_sign;
   float adjusted_cruise;
-  float desired_follow;
   float lane_line_width;
   float lane_width_left;
   float lane_width_right;
-  float obstacle_distance;
-  float obstacle_distance_stock;
   float path_edge_width;
   float path_width;
   float road_edge_width;
   float speed_limit;
   float speed_limit_offset;
   float speed_limit_overridden_speed;
-  float stopped_equivalence;
-  float stopped_equivalence_stock;
+  int bearing_deg;
+  int camera_view;
+  int conditional_speed;
+  int conditional_speed_lead;
+  int conditional_status;
+  int current_random_event;
+  int custom_colors;
+  int custom_icons;
+  int custom_signals;
+  int desired_follow;
+  int obstacle_distance;
+  int obstacle_distance_stock;
+  int screen_brightness;
+  int steering_angle_deg;
+  int stopped_equivalence;
+  int wheel_icon;
+  QPolygonF track_adjacent_vertices[6];
   QPolygonF track_edge_vertices;
-  QPolygonF track_left_adjacent_lane_vertices;
-  QPolygonF track_right_adjacent_lane_vertices;
 
 } UIScene;
 
@@ -261,9 +270,6 @@ signals:
   void offroadTransition(bool offroad);
   void primeChanged(bool prime);
   void primeTypeChanged(PrimeType prime_type);
-
-  // FrogPilot signals
-  void uiUpdateFrogPilotParams();
 
 private slots:
   void update();

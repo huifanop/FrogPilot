@@ -77,7 +77,8 @@ class RouteEngine:
   def update(self):
     # Update FrogPilot parameters
     if self.params_memory.get_bool("FrogPilotTogglesUpdated"):
-      self.update_frogpilot_params()
+      updateFrogPilotParams = threading.Thread(target=self.update_frogpilot_params)
+      updateFrogPilotParams.start()
 
     self.sm.update(0)
 
@@ -90,8 +91,11 @@ class RouteEngine:
         self.ui_pid = ui_pid[0]
 
     self.update_location()
-    self.recompute_route()
-    self.send_instruction()
+    try:
+      self.recompute_route()
+      self.send_instruction()
+    except Exception:
+      cloudlog.exception("navd.failed_to_compute")
 
   def update_location(self):
     location = self.sm['liveLocationKalman']
@@ -136,7 +140,7 @@ class RouteEngine:
 
     lang = self.params.get('LanguageSetting', encoding='utf8')
     if lang is not None:
-      lang = 'zh-Hant'
+      lang = lang.replace('main_', '')
 
     params = {
       'access_token': self.mapbox_token,
@@ -173,37 +177,6 @@ class RouteEngine:
       resp.raise_for_status()
 
       r = resp.json()
-      r1 = resp.json()
-      # Function to remove specified keys recursively unnessary for display
-      def remove_keys(obj, keys_to_remove):
-        if isinstance(obj, list):
-          return [remove_keys(item, keys_to_remove) for item in obj]
-        elif isinstance(obj, dict):
-          return {key: remove_keys(value, keys_to_remove) for key, value in obj.items() if key not in keys_to_remove}
-        else:
-          return obj
-      keys_to_remove = ['geometry', 'annotation', 'incidents', 'intersections', 'components', 'sub', 'waypoints']
-      self.r2 = remove_keys(r1, keys_to_remove)
-      self.r3 = {}
-      # Add items for display under "routes"
-      if 'routes' in self.r2 and len(self.r2['routes']) > 0:
-        first_route = self.r2['routes'][0]
-        nav_destination_json = self.params.get('NavDestination')
-        try:
-          nav_destination_data = json.loads(nav_destination_json)
-          place_name = nav_destination_data.get('place_name', 'Default Place Name')
-          first_route['Destination'] = place_name
-          first_route['Metric'] = self.params.get_bool("IsMetric")
-          self.r3['CurrentStep'] = 0
-          self.r3['uuid'] = self.r2['uuid']
-        except json.JSONDecodeError as e:
-          print(f"Error decoding JSON: {e}")
-	  # Save slim json as file
-      with open('navdirections.json', 'w') as json_file:
-        json.dump(self.r2, json_file, indent=4)
-      with open('CurrentStep.json', 'w') as json_file:
-        json.dump(self.r3, json_file, indent=4)
-		
       if len(r['routes']):
         self.route = r['routes'][0]['legs'][0]['steps']
         self.route_geometry = []
@@ -322,7 +295,10 @@ class RouteEngine:
     for i in range(self.step_idx + 1, len(self.route)):
       total_distance += self.route[i]['distance']
       total_time += self.route[i]['duration']
-      total_time_typical += self.route[i]['duration_typical']
+      if self.route[i]['duration_typical'] is None:
+        total_time_typical += self.route[i]['duration']
+      else:
+        total_time_typical += self.route[i]['duration_typical']
 
     msg.navInstruction.distanceRemaining = total_distance
     msg.navInstruction.timeRemaining = total_time
@@ -362,12 +338,6 @@ class RouteEngine:
       if self.step_idx + 1 < len(self.route):
         self.step_idx += 1
         self.reset_recompute_limits()
-        # Update the 'CurrentStep' value in the JSON
-        if 'routes' in self.r2 and len(self.r2['routes']) > 0:
-          self.r3['CurrentStep'] = self.step_idx
-        # Write the modified JSON data back to the file
-        with open('CurrentStep.json', 'w') as json_file:
-          json.dump(self.r3, json_file, indent=4)
       else:
         cloudlog.warning("Destination reached")
 
@@ -389,20 +359,25 @@ class RouteEngine:
 
         # Calculate the distance to the stopSign or trafficLight
         distance_to_condition = self.last_position.distance_to(self.stop_coord[index])
-        if distance_to_condition < max((seconds_to_stop * v_ego), 25): 
-          self.nav_condition = False
+        if distance_to_condition < max((seconds_to_stop * v_ego), 25):
+          self.nav_condition = True
         else:
           self.nav_condition = False  # Not approaching any stopSign or trafficLight
       else:
         self.nav_condition = False  # No more stopSign or trafficLight in array
 
       # Determine if NoO distance to maneuver is upcoming
-      if distance_to_maneuver_along_geometry < max((seconds_to_stop * v_ego), 25): 
+      if distance_to_maneuver_along_geometry < max((seconds_to_stop * v_ego), 25):
         self.noo_condition = True
       else:
         self.noo_condition = False  # Not approaching any NoO maneuver
 
-    self.send_frogpilot_navigation()
+    frogpilot_plan_send = messaging.new_message('frogpilotNavigation')
+    frogpilotNavigation = frogpilot_plan_send.frogpilotNavigation
+
+    frogpilotNavigation.navigationConditionMet = self.conditional_navigation and (self.nav_condition or self.noo_condition)
+
+    self.pm.send('frogpilotNavigation', frogpilot_plan_send)
 
   def send_route(self):
     coords = []
@@ -451,14 +426,6 @@ class RouteEngine:
       self.reroute_counter = 0
     return self.reroute_counter > REROUTE_COUNTER_MIN
     # TODO: Check for going wrong way in segment
-
-  def send_frogpilot_navigation(self):
-    frogpilot_plan_send = messaging.new_message('frogpilotNavigation')
-    frogpilotNavigation = frogpilot_plan_send.frogpilotNavigation
-
-    frogpilotNavigation.navigationConditionMet = self.conditional_navigation and (self.nav_condition or self.noo_condition)
-
-    self.pm.send('frogpilotNavigation', frogpilot_plan_send)
 
   def update_frogpilot_params(self):
     self.conditional_navigation = self.params.get_bool("CENavigation")

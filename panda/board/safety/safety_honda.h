@@ -12,7 +12,7 @@ const int HONDA_GAS_INTERCEPTOR_THRESHOLD = 492;
 #define HONDA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U)  // avg between 2 tracks
 
 const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
-  .max_accel = 200,   // accel is used for brakes
+  .max_accel = 400,   // accel is used for brakes
   .min_accel = -350,
 
   .max_gas = 2000,
@@ -384,6 +384,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
 static safety_config honda_nidec_init(uint16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_brake = 0;
+  honda_brake_switch_prev = false;
   honda_fwd_brake = false;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
@@ -410,6 +411,7 @@ static safety_config honda_nidec_init(uint16_t param) {
 
 static safety_config honda_bosch_init(uint16_t param) {
   honda_hw = HONDA_BOSCH;
+  honda_brake_switch_prev = false;
   honda_bosch_radarless = GET_FLAG(param, HONDA_PARAM_RADARLESS);
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);

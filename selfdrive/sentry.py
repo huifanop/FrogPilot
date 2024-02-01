@@ -12,15 +12,13 @@ from openpilot.common.swaglog import cloudlog
 from openpilot.system.version import get_branch, get_commit, get_origin, get_version, is_tested_branch
 
 
+CRASHES_DIR = '/data/community/crashes/'
+
 class SentryProject(Enum):
   # python project
   SELFDRIVE = "https://5ad1714d27324c74a30f9c538bff3b8d@o4505034923769856.ingest.sentry.io/4505034930651136"
   # native project
   SELFDRIVE_NATIVE = "https://5ad1714d27324c74a30f9c538bff3b8d@o4505034923769856.ingest.sentry.io/4505034930651136"
-
-
-CRASHES_DIR = '/data/community/crashes/'
-
 
 def report_tombstone(fn: str, message: str, contents: str) -> None:
   cloudlog.error({'tombstone': message})
@@ -83,7 +81,6 @@ def init(project: SentryProject) -> bool:
   env = "release" if is_tested_branch() else "master"
 
   params = Params()
-  dongle_id = params.get("DongleId", encoding='utf-8')
   installed = params.get("InstallDate")
   updated = params.get("Updated")
 
@@ -100,7 +97,6 @@ def init(project: SentryProject) -> bool:
                   traces_sample_rate=1.0,
                   environment=env)
 
-  sentry_sdk.set_user({"id": dongle_id})
   sentry_sdk.set_tag("serial", HARDWARE.get_serial())
   sentry_sdk.set_tag("branch", get_branch())
   sentry_sdk.set_tag("commit", get_commit())

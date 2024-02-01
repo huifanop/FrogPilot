@@ -10,7 +10,7 @@ FrogPilotNavigationPanel::FrogPilotNavigationPanel(QWidget *parent) : QFrame(par
   QVBoxLayout *navigationLayout = new QVBoxLayout(navigationWidget);
   navigationLayout->setMargin(40);
 
-  ListWidget *list = new ListWidget(navigationWidget);
+  FrogPilotListWidget *list = new FrogPilotListWidget(navigationWidget);
 
   Primeless *primelessPanel = new Primeless(this);
   mainLayout->addWidget(primelessPanel);
@@ -129,6 +129,7 @@ void FrogPilotNavigationPanel::updateVisibility(bool visibility) {
   downloadOfflineMapsButton->setVisible(!visibility);
   lastMapsDownload->setVisible(QDir(offlineFolderPath).exists() && !downloadActive);
   removeOfflineMapsButton->setVisible(QDir(offlineFolderPath).exists() && !downloadActive);
+  update();
 }
 
 void FrogPilotNavigationPanel::checkIfUpdateMissed() {
@@ -199,11 +200,11 @@ void FrogPilotNavigationPanel::downloadSchedule() {
 }
 
 void FrogPilotNavigationPanel::cancelDownload(QWidget *parent) {
-  if (ConfirmationDialog::yesorno("Are you sure you want to cancel the download?", parent)) {
+  if (FrogPilotConfirmationDialog::yesorno("Are you sure you want to cancel the download?", parent)) {
     std::thread([&] {
       std::system("pkill mapd");
     }).detach();
-    if (ConfirmationDialog::toggle("Reboot required to re-enable map downloads", "Reboot Now", parent)) {
+    if (FrogPilotConfirmationDialog::toggle("Reboot required to re-enable map downloads", "Reboot Now", parent)) {
       Hardware::reboot();
     }
     downloadActive = false;
@@ -220,7 +221,7 @@ void FrogPilotNavigationPanel::downloadMaps() {
 }
 
 void FrogPilotNavigationPanel::removeMaps(QWidget *parent) {
-  if (ConfirmationDialog::yesorno("Are you sure you want to delete all of your downloaded maps?", parent)) {
+  if (FrogPilotConfirmationDialog::yesorno("Are you sure you want to delete all of your downloaded maps?", parent)) {
     std::thread([&] {
       lastMapsDownload->setVisible(false);
       removeOfflineMapsButton->setVisible(false);
@@ -244,6 +245,7 @@ void FrogPilotNavigationPanel::setMaps() {
 
     if (!states.isEmpty() || !countries.isEmpty()) {
       downloadOfflineMapsButton->setVisible(true);
+      update();
     } else {
       params.remove("MapsSelected");
     }
@@ -281,7 +283,7 @@ SelectMaps::SelectMaps(QWidget *parent) : QWidget(parent) {
 
   QObject::connect(backButton, &QPushButton::clicked, this, [this]() { emit backPress(), emit setMaps(); });
 
-  ListWidget *statesList = new ListWidget();
+  FrogPilotListWidget *statesList = new FrogPilotListWidget();
 
   LabelControl *northeastLabel = new LabelControl(tr("美國 - 東北部"), "");
   statesList->addItem(northeastLabel);
@@ -322,7 +324,7 @@ SelectMaps::SelectMaps(QWidget *parent) : QWidget(parent) {
     countriesButton->setStyleSheet(normalButtonStyle);
   });
 
-  ListWidget *countriesList = new ListWidget();
+  FrogPilotListWidget *countriesList = new FrogPilotListWidget();
 
   LabelControl *taiwanLabel = new LabelControl(tr("台灣"), "");
   countriesList->addItem(taiwanLabel);
@@ -452,7 +454,7 @@ Primeless::Primeless(QWidget *parent) : QWidget(parent) {
   QObject::connect(backButton, &QPushButton::clicked, this, [this]() { emit backPress(); });
   mainLayout->addWidget(backButton, 0, Qt::AlignLeft);
 
-  list = new ListWidget(mainWidget);
+  list = new FrogPilotListWidget(mainWidget);
 
   wifi = new WifiManager(this);
   ipLabel = new LabelControl(tr("管理您的設置在"), QString("%1:8082").arg(wifi->getIp4Address()));

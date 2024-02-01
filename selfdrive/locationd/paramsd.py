@@ -14,6 +14,7 @@ from openpilot.selfdrive.locationd.models.car_kf import CarKalman, ObservationKi
 from openpilot.selfdrive.locationd.models.constants import GENERATED_DIR
 from openpilot.common.swaglog import cloudlog
 
+params_memory = Params("/dev/shm/params")
 
 MAX_ANGLE_OFFSET_DELTA = 20 * DT_MDL  # Max 20 deg/s
 ROLL_MAX_DELTA = math.radians(20.0) * DT_MDL  # 20deg in 1 second is well within curvature limits
@@ -26,7 +27,6 @@ OFFSET_LOWERED_MAX = 8.0
 MIN_ACTIVE_SPEED = 1.0
 LOW_ACTIVE_SPEED = 10.0
 
-params_memory = Params("/dev/shm/params")
 
 class ParamsLearner:
   def __init__(self, CP, steer_ratio, stiffness_factor, angle_offset, P_initial=None):
@@ -134,6 +134,14 @@ def main():
     CP = msg
   cloudlog.info("paramsd got CarParams")
 
+  steer_ratio = params_reader.get_float("SteerRatio")
+  steer_ratio_stock = params_reader.get_float("SteerRatioStock")
+
+  if steer_ratio_stock != CP.steerRatio or steer_ratio >= steer_ratio_stock * 2:
+    params_reader.put_float("SteerRatio", CP.steerRatio)
+    params_reader.put_float("SteerRatioStock", CP.steerRatio)
+    params_reader.put_bool("DoReboot", True)
+
   min_sr, max_sr = 0.5 * CP.steerRatio, 2.0 * CP.steerRatio
 
   params = params_reader.get("LiveParameters")
@@ -239,6 +247,8 @@ def main():
         0.2 <= liveParameters.stiffnessFactor <= 5.0,
         min_sr <= liveParameters.steerRatio <= max_sr,
       ))
+      if (CP.carName == "subaru" and CP.lateralTuning.which() == 'torque'):
+        liveParameters.valid = True
       liveParameters.steerRatioStd = float(P[States.STEER_RATIO].item())
       liveParameters.stiffnessFactorStd = float(P[States.STIFFNESS].item())
       liveParameters.angleOffsetAverageStd = float(P[States.ANGLE_OFFSET].item())

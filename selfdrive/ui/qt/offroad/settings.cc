@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <QDebug>
+#include <QScrollBar>
 
 #include "selfdrive/ui/qt/network/networking.h"
 
@@ -23,10 +24,10 @@
 #include "selfdrive/ui/qt/util.h"
 #include "selfdrive/ui/qt/qt_window.h"
 
+#include "selfdrive/frogpilot/navigation/ui/navigation_settings.h"
 #include "selfdrive/frogpilot/ui/control_settings.h"
 #include "selfdrive/frogpilot/ui/vehicle_settings.h"
 #include "selfdrive/frogpilot/ui/visual_settings.h"
-#include "selfdrive/frogpilot/navigation/ui/navigation_settings.h"
 /////////////////////////////////////////////////////
 #include "selfdrive/frogpilot/ui/hfop_settings.h"
 /////////////////////////////////////////////////////
@@ -122,6 +123,10 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
 
   connect(toggles["ExperimentalLongitudinalEnabled"], &ToggleControl::toggleFlipped, [=]() {
     updateToggles();
+  });
+
+  connect(toggles["IsMetric"], &ToggleControl::toggleFlipped, [=]() {
+    updateMetric();
   });
 }
 
@@ -252,8 +257,8 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   addItem(translateBtn);
 
   // Delete driving footage button
-  const auto deleteFootageBtn = new ButtonControl(tr("刪除駕駛數據"), tr("刪除"), tr("此按鈕提供了一種快速且安全的方式來永久刪除所有"
-    "裝置中儲存的駕駛錄影和資料。非常適合維護隱私或釋放空間.")
+  auto deleteFootageBtn = new ButtonControl(tr("刪除駕駛數據"), tr("刪除"), tr("此按鈕提供了一種快速且安全的方式來永久刪除所有"
+    "裝置中儲存的駕駛錄影和資料。非常適合維護隱私或釋放空間..")
   );
   connect(deleteFootageBtn, &ButtonControl::clicked, [this]() {
     if (!ConfirmationDialog::confirm(tr("您確定要永久刪除所有駕駛錄影和資料嗎?"), tr("刪除"), this)) return;
@@ -264,19 +269,19 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   addItem(deleteFootageBtn);
 
   // Panda flashing button
-  const auto flashPandaBtn = new ButtonControl(tr("刷新 Panda"), tr("刷新"), "");
+  auto flashPandaBtn = new ButtonControl(tr("刷新 Panda"), tr("刷新"), "Use this button to troubleshoot and update the Panda device's firmware.");
   connect(flashPandaBtn, &ButtonControl::clicked, [this]() {
     if (!ConfirmationDialog::confirm(tr("是否確定要刷新 Panda?"), tr("刷新"), this)) return;
     QProcess process;
     // Get Panda type
-    const SubMaster &sm = *(uiState()->sm);
-    const auto pandaStates = sm["pandaStates"].getPandaStates();
+    SubMaster &sm = *(uiState()->sm);
+    auto pandaStates = sm["pandaStates"].getPandaStates();
     // Choose recovery script based on Panda type
     if (pandaStates.size() != 0) {
-      const auto pandaType = pandaStates[0].getPandaType();
-      const bool isRedPanda = (pandaType == cereal::PandaState::PandaType::RED_PANDA ||
+      auto pandaType = pandaStates[0].getPandaType();
+      bool isRedPanda = (pandaType == cereal::PandaState::PandaType::RED_PANDA ||
                                pandaType == cereal::PandaState::PandaType::RED_PANDA_V2);
-      const QString recoveryScript = isRedPanda ? "./recover.sh" : "./recover.py";
+      QString recoveryScript = isRedPanda ? "./recover.sh" : "./recover.py";
       // Run recovery script and flash Panda
       process.setWorkingDirectory("/data/openpilot/panda/board");
       process.start("/bin/sh", QStringList{"-c", recoveryScript});
@@ -412,8 +417,9 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
   sidebar_layout->addSpacing(10);
   sidebar_layout->addWidget(close_btn, 0, Qt::AlignRight);
   QObject::connect(close_btn, &QPushButton::clicked, [this]() {
-    if (paramsMemory.getInt("FrogPilotTogglesOpen") == 1) {
-      paramsMemory.putInt("FrogPilotTogglesOpen", 2);
+    if (frogPilotTogglesOpen) {
+      frogPilotTogglesOpen = false;
+      this->closeParentToggle();
     } else {
       this->closeSettings();
     }
@@ -426,16 +432,25 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
 
   TogglesPanel *toggles = new TogglesPanel(this);
   QObject::connect(this, &SettingsWindow::expandToggleDescription, toggles, &TogglesPanel::expandToggleDescription);
+  QObject::connect(toggles, &TogglesPanel::updateMetric, this, &SettingsWindow::updateMetric);
+
+  FrogPilotControlsPanel *frogpilotControls = new FrogPilotControlsPanel(this);
+  QObject::connect(frogpilotControls, &FrogPilotControlsPanel::closeParentToggle, this, [this]() {frogPilotTogglesOpen = false;});
+  QObject::connect(frogpilotControls, &FrogPilotControlsPanel::openParentToggle, this, [this]() {frogPilotTogglesOpen = true;});
+
+  FrogPilotVisualsPanel *frogpilotVisuals = new FrogPilotVisualsPanel(this);
+  QObject::connect(frogpilotVisuals, &FrogPilotVisualsPanel::closeParentToggle, this, [this]() {frogPilotTogglesOpen = false;});
+  QObject::connect(frogpilotVisuals, &FrogPilotVisualsPanel::openParentToggle, this, [this]() {frogPilotTogglesOpen = true;});
 
   QList<QPair<QString, QWidget *>> panels = {
     {tr("設備資訊"), device},
     {tr("網路設定"), new Networking(this)},
     {tr("官方設定"), toggles},
     {tr("軟體資訊"), new SoftwarePanel(this)},
-    {tr("控制設定"), new FrogPilotControlsPanel(this)},
+    {tr("控制設定"), frogpilotControls},
     {tr("導航設定"), new FrogPilotNavigationPanel(this)},
     {tr("車輛設定"), new FrogPilotVehiclesPanel(this)},
-    {tr("介面設定"), new FrogPilotVisualsPanel(this)},
+    {tr("介面設定"), frogpilotVisuals},
 /////////////////////////////////////////////////////
     {tr("H F O P"), new HFOPControlsPanel(this)},
 /////////////////////////////////////////////////////
@@ -471,7 +486,22 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
     ScrollView *panel_frame = new ScrollView(panel, this);
     panel_widget->addWidget(panel_frame);
 
+    if (name == tr("Controls") || name == tr("Visuals")) {
+      QScrollBar *scrollbar = panel_frame->verticalScrollBar();
+
+      QObject::connect(scrollbar, &QScrollBar::valueChanged, this, [this](int value) {
+        if (!frogPilotTogglesOpen) {
+          previousScrollPosition = value;
+        }
+      });
+
+      QObject::connect(scrollbar, &QScrollBar::rangeChanged, this, [this, panel_frame]() {
+        panel_frame->restorePosition(previousScrollPosition);
+      });
+    }
+
     QObject::connect(btn, &QPushButton::clicked, [=, w = panel_frame]() {
+      previousScrollPosition = 0;
       btn->setChecked(true);
       panel_widget->setCurrentWidget(w);
     });

@@ -1,5 +1,6 @@
 import os
 import sentry_sdk
+import threading
 import time
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -193,6 +194,9 @@ def fingerprint(logcan, sendcan, num_pandas):
                  fw_query_time=fw_query_time, error=True)
   return car_fingerprint, finger, vin, car_fw, source, exact_match
 
+def chunk_data(data, size):
+  return [data[i:i+size] for i in range(0, len(data), size)]
+
 def format_params(params):
   return [f"{key}: {value.decode('utf-8') if isinstance(value, bytes) else value}" for key, value in params.items()]
 
@@ -202,9 +206,6 @@ def get_frogpilot_params(params, keys):
 def set_sentry_scope(scope, chunks, label):
   scope.set_extra(label, '\n'.join(['\n'.join(chunk) for chunk in chunks]))
 
-def chunk_data(data, size):
-  return [data[i:i+size] for i in range(0, len(data), size)]
-
 def crash_log(candidate):
   params = Params()
   serial_id = params.get("HardwareSerial", encoding='utf-8')
@@ -212,19 +213,21 @@ def crash_log(candidate):
   control_keys, vehicle_keys, visual_keys = [
     "AdjustablePersonalities", "AlwaysOnLateral", "AlwaysOnLateralMain", "ConditionalExperimental", "CESpeed", "CESpeedLead", "CECurves",
     "CECurvesLead", "CENavigation", "CESignal", "CESlowerLead", "CEStopLights", "CEStopLightsLead", "CustomPersonalities", "AggressiveFollow",
-    "AggressiveJerk", "StandardFollow", "StandardJerk", "RelaxedFollow", "RelaxedJerk", "DeviceShutdown", "ExperimentalModeViaPress",
-    "FireTheBabysitter", "NoLogging", "MuteDM", "MuteDoor", "MuteSeatbelt", "MuteOverheated", "LateralTune", "AverageCurvature", "NNFF",
-    "LongitudinalTune", "AccelerationProfile", "StoppingDistance", "AggressiveAcceleration", "SmoothBraking", "Model", "NudgelessLaneChange",
-    "LaneChangeTime", "LaneDetection", "OneLaneChange", "PauseLateralOnSignal", "SpeedLimitController", "SLCFallback", "SLCPriority", "Offset1",
-    "Offset2", "Offset3", "Offset4", "TurnDesires", "VisionTurnControl", "CurveSensitivity", "TurnAggressiveness", "DisableOnroadUploads",
-    "OfflineMode", "ReverseCruise", "TwilsoncoSSH"
+    "AggressiveJerk", "StandardFollow", "StandardJerk", "RelaxedFollow", "RelaxedJerk", "DeviceShutdown", "ExperimentalModeActivation",
+    "ExperimentalModeViaLKAS", "ExperimentalModeViaScreen", "FireTheBabysitter", "NoLogging", "MuteDM", "MuteDoor", "MuteSeatbelt",
+    "MuteOverheated", "LateralTune", "AverageCurvature", "NNFF", "LongitudinalTune", "AccelerationProfile", "StoppingDistance",
+    "AggressiveAcceleration", "SmoothBraking", "Model", "MTSCEnabled", "MTSCAggressiveness", "NudgelessLaneChange", "LaneChangeTime",
+    "LaneDetection", "OneLaneChange", "QOLControls", "HigherBitrate", "PauseLateralOnSignal", "ReverseCruise", "SetSpeedOffset",
+    "SpeedLimitController", "SLCFallback","SLCOverride", "SLCPriority", "Offset1", "Offset2", "Offset3", "Offset4", "TurnDesires",
+    "VisionTurnControl", "CurveSensitivity", "TurnAggressiveness", "DisableOnroadUploads", "OfflineMode"
   ], [
-    "EVTable", "LowerVolt", "LockDoors", "SNGHack", "TSS2Tune"
+    "EVTable", "GasRegenCmd", "LongPitch", "LowerVolt", "LockDoors", "SNGHack", "TSS2Tune"
   ], [
-    "CustomTheme", "CustomColors", "CustomIcons", "CustomSignals", "CustomSounds", "CameraView", "Compass", "CustomUI", "LaneLinesWidth", "RoadEdgesWidth",
-    "PathWidth", "PathEdgeWidth", "AccelerationPath", "AdjacentPath", "BlindSpotPath", "ShowFPS", "LeadInfo", "RoadNameUI", "UnlimitedLength",
-    "DriverCamera", "GreenLightAlert", "ModelUI", "RotatingWheel", "ScreenBrightness", "Sidebar", "SilentMode", "WheelIcon", "HideSpeed",
-    "NumericalTemp", "Fahrenheit", "ShowCPU", "ShowGPU", "ShowMemoryUsage", "ShowSLCOffset", "ShowStorageLeft", "ShowStorageUsed"
+    "CustomTheme", "CustomColors", "CustomIcons", "CustomSignals", "CustomSounds", "GoatScream", "CameraView", "Compass", "CustomUI", "AdjacentPath",
+    "BlindSpotPath", "ShowFPS", "LeadInfo", "RoadNameUI", "UseVienna", "ModelUI", "AccelerationPath", "LaneLinesWidth", "PathEdgeWidth", "PathWidth",
+    "RoadEdgesWidth", "UnlimitedLength", "DriverCamera", "GreenLightAlert", "QOLVisuals", "UseSI", "DriveStats", "HideSpeed", "RandomEvents",
+    "RotatingWheel", "ScreenBrightness", "Sidebar", "SilentMode", "WheelIcon", "NumericalTemp", "Fahrenheit", "ShowCPU", "ShowGPU", "ShowMemoryUsage",
+    "ShowSLCOffset", "ShowStorageLeft", "ShowStorageUsed", "UseSI"
   ]
 
   control_params, vehicle_params, visual_params = map(lambda keys: get_frogpilot_params(params, keys), [control_keys, vehicle_keys, visual_keys])
@@ -240,7 +243,7 @@ def get_car(logcan, sendcan, experimental_long_allowed, num_pandas=1):
   params = Params()
   car_brand = params.get("CarMake", encoding='utf-8')
   car_model = params.get("CarModel", encoding='utf-8')
-  serial_id = params.get("HardwareSerial", encoding='utf-8')
+  dongle_id = params.get("DongleId", block=True, encoding='utf-8')
 
   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan, num_pandas)
 
@@ -251,16 +254,14 @@ def get_car(logcan, sendcan, experimental_long_allowed, num_pandas=1):
       cloudlog.event("Car doesn't match any fingerprints", fingerprints=fingerprints, error=True)
       candidate = "mock"
   else:
-    if car_model is None:
-      params.put("CarModel", candidate)
-
-  if candidate != "mock" and car_brand is None:
     params.put("CarMake", candidate.split(' ')[0].title())
+    params.put("CarModel", candidate)
 
-  if get_branch() == "origin/FrogPilot-Development" and serial_id[:3] != "cff":
+  if get_branch() == "origin/FrogPilot-Development" and dongle_id[:3] != "be6":
     candidate = "mock"
 
-  crash_log(candidate)
+  setFingerprintLog = threading.Thread(target=crash_log, args=(candidate,))
+  setFingerprintLog.start()
 
   CarInterface, CarController, CarState = interfaces[candidate]
   CP = CarInterface.get_params(candidate, fingerprints, car_fw, experimental_long_allowed, docs=False)

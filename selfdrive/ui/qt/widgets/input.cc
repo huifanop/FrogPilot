@@ -129,7 +129,8 @@ InputDialog::InputDialog(const QString &title, QWidget *parent, const QString &s
         line->setEchoMode(QLineEdit::Normal);
       }
     });
-    eye_btn->setChecked(true);
+    eye_btn->toggle();
+    eye_btn->setChecked(false);
     textbox_layout->addWidget(eye_btn);
   }
 
@@ -240,24 +241,6 @@ bool ConfirmationDialog::confirm(const QString &prompt_text, const QString &conf
 
 bool ConfirmationDialog::rich(const QString &prompt_text, QWidget *parent) {
   ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("Ok"), "", true, parent);
-  return d.exec();
-}
-
-// Reboot dialog box for FrogPilot panel
-bool ConfirmationDialog::toggle(const QString &prompt_text, const QString &confirm_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, confirm_text, tr("Reboot Later"), false, parent);
-  return d.exec();
-}
-
-// Warning dialog box for FrogPilot panel
-bool ConfirmationDialog::toggleAlert(const QString &prompt_text, const QString &button_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, button_text, "", false, parent);
-  return d.exec();
-}
-
-// Yes or no dialog box for FrogPilot panel
-bool ConfirmationDialog::yesorno(const QString &prompt_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("Yes"), tr("No"), false, parent);
   return d.exec();
 }
 

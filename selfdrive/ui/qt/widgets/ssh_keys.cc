@@ -5,19 +5,15 @@
 #include "selfdrive/ui/qt/widgets/input.h"
 
 SshControl::SshControl() :
-  ButtonControl(tr("SSH Keys"), "", tr("Warning: This grants SSH access to all public keys in your GitHub settings. Never enter a GitHub username "
-                                       "other than your own. A comma employee will NEVER ask you to add their GitHub username.")) {
-
+  ButtonControl(tr("SSH 密鑰"), "", tr("警告：這將授權給 GitHub 帳號中所有公鑰 SSH 訪問權限。切勿輸入非您自己的 GitHub 用戶名。"
+                                       "comma 員工「永遠不會」要求您添加他們的 GitHub 用戶名")) {
   QObject::connect(this, &ButtonControl::clicked, [=]() {
     if (text() == tr("ADD")) {
-      QString username = InputDialog::getText(tr("Enter your GitHub username"), this);
+      QString username = InputDialog::getText(tr("輸入您的 GitHub 帳號"), this);
       if (username.length() > 0) {
-        setText(tr("LOADING"));
+        setText(tr("載入中"));
         setEnabled(false);
-        getUserKeys(username, true);
-        if (params.getBool("TwilsoncoSSH")) {
-          getUserKeys("twilsonco", false);
-        }
+        getUserKeys(username);
       }
     } else {
       params.remove("GithubUsername");
@@ -41,25 +37,21 @@ void SshControl::refresh() {
   setEnabled(true);
 }
 
-void SshControl::getUserKeys(const QString &username, bool isUserInput = true) {
+void SshControl::getUserKeys(const QString &username) {
   HttpRequest *request = new HttpRequest(this, false);
   QObject::connect(request, &HttpRequest::requestDone, [=](const QString &resp, bool success) {
     if (success) {
       if (!resp.isEmpty()) {
-        std::string existing_keys = params.get("GithubSshKeys");
-        existing_keys += resp.toStdString();
-        if (isUserInput) {
-          params.put("GithubUsername", username.toStdString());
-        }
-        params.put("GithubSshKeys", existing_keys);
+        params.put("GithubUsername", username.toStdString());
+        params.put("GithubSshKeys", resp.toStdString());
       } else {
-        ConfirmationDialog::alert(tr("Username '%1' has no keys on GitHub").arg(username), this);
+        ConfirmationDialog::alert(tr("GitHub 用戶 '%1' 沒有設定任何密鑰").arg(username), this);
       }
     } else {
       if (request->timeout()) {
-        ConfirmationDialog::alert(tr("Request timed out"), this);
+        ConfirmationDialog::alert(tr("請求超時"), this);
       } else {
-        ConfirmationDialog::alert(tr("Username '%1' doesn't exist on GitHub").arg(username), this);
+        ConfirmationDialog::alert(tr("GitHub 用戶 '%1' 不存在").arg(username), this);
       }
     }
 

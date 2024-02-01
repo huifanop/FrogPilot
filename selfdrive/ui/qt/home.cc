@@ -77,18 +77,18 @@ void HomeWindow::offroadTransition(bool offroad) {
     slayout->setCurrentWidget(onroad);
   }
 ////////////////////////////////////////////////
-//  if (true) {
-//    sidebar->setVisible(true);
-//    slayout->setCurrentWidget(onroad);
-//  } else {
-//    body->setEnabled(false);
-//    sidebar->setVisible(offroad);
-//    if (offroad) {
-//      slayout->setCurrentWidget(home);
-//    } else {
-//      slayout->setCurrentWidget(onroad);
-//    }
-//  }  
+  // if (true) {
+  //   sidebar->setVisible(true);
+  //   slayout->setCurrentWidget(onroad);
+  // } else {
+  //   body->setEnabled(false);
+  //   sidebar->setVisible(offroad);
+  //   if (offroad) {
+  //     slayout->setCurrentWidget(home);
+  //   } else {
+  //     slayout->setCurrentWidget(onroad);
+  //   }
+  // }  
 ////////////////////////////////////////////////
 }
 
@@ -174,7 +174,7 @@ OffroadHome::OffroadHome(QWidget* parent) : QFrame(parent) {
     left_widget->addWidget(new DriveStats);
     left_widget->setStyleSheet("border-radius: 10px;");
 
-    left_widget->setCurrentIndex(uiState()->hasPrime() ? 0 : true ? 2 : 1);
+    left_widget->setCurrentIndex(params.getBool("DriveStats") ? 2 : uiState()->hasPrime() ? 0 : 1);
     connect(uiState(), &UIState::primeChanged, [=](bool prime) {
       left_widget->setCurrentIndex(prime ? 0 : 1);
     });
@@ -234,11 +234,7 @@ OffroadHome::OffroadHome(QWidget* parent) : QFrame(parent) {
 
   // Set the model name
   std::map<int, QString> MODEL_NAME {
-    {0, "Blue Diamond V2"},
-    {1, "Blue Diamond V1"},
-    {2, "Farmville"},
-    {3, "New Delhi"},
-    {4, "New Lemon Pie"},
+    {0, "Los Angeles"},
   };
 
   modelName = MODEL_NAME[params.getInt("Model")];

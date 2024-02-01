@@ -10,11 +10,7 @@ MODELS_SOURCE = os.path.join(DESTINATION_PATH, "models")
 THNEED_FILE = os.path.join(DESTINATION_PATH, "supercombo.thneed")
 
 MODEL_NAME = {
-  0: "blue-diamond",
-  1: "blue-diamond-v1",
-  2: "farmville",
-  3: "new-delhi",
-  4: "new-lemon-pie",
+  0: "los-angeles",
 }
 
 def set_model_list_parameter(params):
@@ -52,10 +48,6 @@ def copy_model_variant(params):
 
     # Copy over the onnx file
     shutil.copy(onnx_path, destination)
-
-    # Reset the calibration
-    params.remove("CalibrationParams")
-    params.remove("LiveTorqueParameters")
 
     # Reboot
     HARDWARE.reboot()

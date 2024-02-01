@@ -55,9 +55,6 @@ def enable_dm(started, params, CP: car.CarParams) -> bool:
 def enable_logging(started, params, CP: car.CarParams) -> bool:
   return not (params.get_bool("FireTheBabysitter") and params.get_bool("NoLogging"))
 
-def not_prime(started, params, CP: car.CarParams) -> bool:
-  return params.get_int("PrimeType") == 0
-
 def osm(started, params, CP: car.CarParams) -> bool:
   return params.get_bool("RoadNameUI") or params.get_bool("SpeedLimitController")
 

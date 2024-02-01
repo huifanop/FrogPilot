@@ -45,19 +45,19 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
 
   updateTime = new ButtonControl(tr("更新時間"), tr("選擇"));
   QStringList hours;
-  for (int h = 0; h < 24; ++h) {
-    const int displayHour = (h % 12 == 0) ? 12 : h % 12;
-    const QString meridiem = (h < 12) ? "AM" : "PM";
+  for (int h = 0; h < 24; h++) {
+    int displayHour = (h % 12 == 0) ? 12 : h % 12;
+    QString meridiem = (h < 12) ? "AM" : "PM";
     hours << QString("%1:00 %2").arg(displayHour).arg(meridiem)
           << QString("%1:30 %2").arg(displayHour).arg(meridiem);
   }
-  connect(updateTime, &ButtonControl::clicked, [=]() {
-    const int currentHourIndex = params.getInt("UpdateTime");
-    const QString currentHourLabel = hours[currentHourIndex];
+   QObject::connect(updateTime, &ButtonControl::clicked, [=]() {
+    int currentHourIndex = params.getInt("UpdateTime");
+    QString currentHourLabel = hours[currentHourIndex];
 
-    const QString selection = MultiOptionDialog::getSelection(tr("選擇時間自動更新"), hours, currentHourLabel, this);
+    QString selection = MultiOptionDialog::getSelection(tr("選擇時間自動更新"), hours, currentHourLabel, this);
     if (!selection.isEmpty()) {
-      const int selectedHourIndex = hours.indexOf(selection);
+      int selectedHourIndex = hours.indexOf(selection);
       params.putInt("UpdateTime", selectedHourIndex);
       updateTime->setValue(selection);
     }
@@ -124,7 +124,7 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent) {
   // error log button
   errorLogBtn = new ButtonControl(tr("錯誤資訊"), tr("查看"), "查看錯誤訊息.");
   connect(errorLogBtn, &ButtonControl::clicked, [=]() {
-    const std::string txt = util::read_file("/data/community/crashes/error.txt");
+    std::string txt = util::read_file("/data/community/crashes/error.txt");
     ConfirmationDialog::rich(QString::fromStdString(txt), this);
   });
   addItem(errorLogBtn);
@@ -236,7 +236,7 @@ void SoftwarePanel::automaticUpdate() {
     timer = 0;
   }
 
-  const bool isWifiConnected = (*uiState()->sm)["deviceState"].getDeviceState().getNetworkType() == cereal::DeviceState::NetworkType::WIFI;
+  bool isWifiConnected = (*uiState()->sm)["deviceState"].getDeviceState().getNetworkType() == cereal::DeviceState::NetworkType::WIFI;
   if (schedule == 0 || is_onroad || !isWifiConnected || isVisible()) return;
 
   static bool isDownloadCompleted = false;

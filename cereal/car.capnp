@@ -235,6 +235,10 @@ struct CarState {
 
   fuelGauge @41 :Float32; # battery or fuel tank level from 0.0 to 1.0
   charging @43 :Bool;
+#######################
+  tankvol @48 :Float32;
+  kpl @49 :Float32;
+#######################
 
   struct WheelSpeeds {
     # optional wheel speeds
@@ -424,6 +428,8 @@ struct CarControl {
       prompt @6;
       promptRepeat @7;
       promptDistracted @8;
+
+      firefox @23;
       ###########################
       lanechangesound @9;
       lanechangeblockedsound @10;

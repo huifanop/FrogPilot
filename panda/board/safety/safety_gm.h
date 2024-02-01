@@ -10,16 +10,16 @@ const SteeringLimits GM_STEERING_LIMITS = {
 };
 
 const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
-  .max_gas = 3072,
-  .min_gas = 1404,
-  .inactive_gas = 1404,
+  .max_gas = 7168,
+  .min_gas = 5500,
+  .inactive_gas = 5500,
   .max_brake = 400,
 };
 
 const LongitudinalLimits GM_CAM_LONG_LIMITS = {
-  .max_gas = 3400,
-  .min_gas = 1514,
-  .inactive_gas = 1554,
+  .max_gas = 8650,
+  .min_gas = 5610,
+  .inactive_gas = 5650,
   .max_brake = 400,
 };
 
@@ -68,7 +68,8 @@ const uint16_t GM_PARAM_CC_LONG = 8;
 const uint16_t GM_PARAM_HW_ASCM_LONG = 16;
 const uint16_t GM_PARAM_NO_CAMERA = 32;
 const uint16_t GM_PARAM_NO_ACC = 64;
-const uint16_t GM_PARAM_PEDAL_LONG = 128;
+const uint16_t GM_PARAM_PEDAL_LONG = 128;  // TODO: this can be inferred
+const uint16_t GM_PARAM_PEDAL_INTERCEPTOR = 256;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -138,10 +139,6 @@ static void gm_rx_hook(CANPacket_t *to_push) {
       brake_pressed = GET_BYTE(to_push, 1) >= 8U;
     }
 
-    if ((addr == 0xBE) && (gm_hw == GM_ASCM)) {
-      brake_pressed = GET_BYTE(to_push, 1) >= 8U;
-    }
-
     if ((addr == 0xC9) && ((gm_hw == GM_CAM) || (gm_hw == GM_SDGM))) {
       brake_pressed = GET_BIT(to_push, 40U) != 0U;
     }
@@ -177,8 +174,7 @@ static void gm_rx_hook(CANPacket_t *to_push) {
     }
 
     // Pedal Interceptor
-    if (addr == 0x201) {
-      enable_gas_interceptor = 1;
+    if ((addr == 0x201) && enable_gas_interceptor) {
       int gas_interceptor = GM_GET_INTERCEPTOR(to_push);
       gas_pressed = gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD;
       gas_interceptor_prev = gas_interceptor;
@@ -230,7 +226,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
   // GAS/REGEN: safety check
   if (addr == 0x2CB) {
     bool apply = GET_BIT(to_send, 0U) != 0U;
-    int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
+    int gas_regen = ((GET_BYTE(to_send, 1) & 0x1U) << 13) + ((GET_BYTE(to_send, 2) & 0xFFU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
 
     bool violation = false;
     // Allow apply bit in pre-enabled and overriding states
@@ -310,6 +306,7 @@ static safety_config gm_init(uint16_t param) {
   gm_pcm_cruise = ((gm_hw == GM_CAM) && (!gm_cam_long || gm_cc_long) && !gm_force_ascm && !gm_pedal_long) || (gm_hw == GM_SDGM);
   gm_skip_relay_check = GET_FLAG(param, GM_PARAM_NO_CAMERA);
   gm_has_acc = !GET_FLAG(param, GM_PARAM_NO_ACC);
+  enable_gas_interceptor = GET_FLAG(param, GM_PARAM_PEDAL_INTERCEPTOR);
 
   safety_config ret = BUILD_SAFETY_CFG(gm_rx_checks, GM_ASCM_TX_MSGS);
   if (gm_hw == GM_CAM) {

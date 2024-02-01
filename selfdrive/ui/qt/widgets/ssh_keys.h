@@ -10,7 +10,7 @@ class SshToggle : public ToggleControl {
   Q_OBJECT
 
 public:
-  SshToggle() : ToggleControl(tr("Enable SSH"), "", "", Hardware::get_ssh_enabled()) {
+  SshToggle() : ToggleControl(tr("開啟 SSH"), "", "", Hardware::get_ssh_enabled()) {
     QObject::connect(this, &SshToggle::toggleFlipped, [=](bool state) {
       Hardware::set_ssh_enabled(state);
     });
@@ -28,5 +28,5 @@ private:
   Params params;
 
   void refresh();
-  void getUserKeys(const QString &username, bool isUserInput);
+  void getUserKeys(const QString &username);
 };

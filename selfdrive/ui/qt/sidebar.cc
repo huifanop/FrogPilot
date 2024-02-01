@@ -24,7 +24,7 @@ void Sidebar::drawMetric(QPainter &p, const QPair<QString, QString> &label, QCol
   p.drawText(rect.adjusted(22, 0, 0, 0), Qt::AlignCenter, label.first + "\n" + label.second);
 }
 
-Sidebar::Sidebar(QWidget *parent) : QFrame(parent), onroad(false), flag_pressed(false), settings_pressed(false) {
+Sidebar::Sidebar(QWidget *parent) : QFrame(parent), onroad(false), flag_pressed(false), settings_pressed(false), scene(uiState()->scene) {
   home_img = loadPixmap("../assets/images/button_home.png", home_btn.size());
   flag_img = loadPixmap("../assets/images/button_flag.png", home_btn.size());
   settings_img = loadPixmap("../assets/images/button_settings.png", settings_btn.size(), Qt::IgnoreAspectRatio);
@@ -36,13 +36,10 @@ Sidebar::Sidebar(QWidget *parent) : QFrame(parent), onroad(false), flag_pressed(
   setFixedWidth(300);
 
   QObject::connect(uiState(), &UIState::uiUpdate, this, &Sidebar::updateState);
-  QObject::connect(uiState(), &UIState::uiUpdateFrogPilotParams, this, &Sidebar::updateFrogPilotParams);
 
   pm = std::make_unique<PubMaster, const std::initializer_list<const char *>>({"userFlag"});
 
   // FrogPilot variables
-  static Params params;
-
   isCPU = params.getBool("ShowCPU");
   isGPU = params.getBool("ShowGPU");
 
@@ -60,9 +57,9 @@ Sidebar::Sidebar(QWidget *parent) : QFrame(parent), onroad(false), flag_pressed(
     {3, {"stalin_theme", {QColor(255, 0, 0)}}}
   };
 
-  for (const auto &[key, themeData] : themeConfiguration) {
-    const QString &themeName = themeData.first;
-    const QString base = themeName == "stock" ? "../assets/images" : QString("../frogpilot/assets/custom_themes/%1/images").arg(themeName);
+  for (auto &[key, themeData] : themeConfiguration) {
+    QString &themeName = themeData.first;
+    QString base = themeName == "stock" ? "../assets/images" : QString("../frogpilot/assets/custom_themes/%1/images").arg(themeName);
     std::vector<QString> paths = {base + "/button_home.png", base + "/button_flag.png", base + "/button_settings.png"};
 
     home_imgs[key] = loadPixmap(paths[0], home_btn.size());
@@ -70,16 +67,18 @@ Sidebar::Sidebar(QWidget *parent) : QFrame(parent), onroad(false), flag_pressed(
     settings_imgs[key] = loadPixmap(paths[2], settings_btn.size(), Qt::IgnoreAspectRatio);
   }
 
-  updateFrogPilotParams();
+  home_img = home_imgs[scene.custom_icons];
+  flag_img = flag_imgs[scene.custom_icons];
+  settings_img = settings_imgs[scene.custom_icons];
+
+  currentColors = themeConfiguration[scene.custom_colors].second;
 }
 
 void Sidebar::mousePressEvent(QMouseEvent *event) {
-  static Params params;
-
   // Declare the click boxes
-  const QRect cpuRect = {30, 496, 240, 126};
-  const QRect memoryRect = {30, 654, 240, 126};
-  const QRect tempRect = {30, 338, 240, 126};
+  QRect cpuRect = {30, 496, 240, 126};
+  QRect memoryRect = {30, 654, 240, 126};
+  QRect tempRect = {30, 338, 240, 126};
 
   static int showChip = 0;
   static int showMemory = 0;
@@ -148,23 +147,29 @@ void Sidebar::updateState(const UIState &s) {
   setProperty("netStrength", strength > 0 ? strength + 1 : 0);
 
   // FrogPilot properties
+  home_img = home_imgs[scene.custom_icons];
+  flag_img = flag_imgs[scene.custom_icons];
+  settings_img = settings_imgs[scene.custom_icons];
+
+  currentColors = themeConfiguration[scene.custom_colors].second;
+
   auto frogpilotDeviceState = sm["frogpilotDeviceState"].getFrogpilotDeviceState();
 
-  const int maxTempC = deviceState.getMaxTempC();
-  const QString max_temp = isFahrenheit ? QString::number(maxTempC * 9 / 5 + 32) + "°F" : QString::number(maxTempC) + "°C";
-  const QColor theme_color = currentColors[0];
+  int maxTempC = deviceState.getMaxTempC();
+  QString max_temp = isFahrenheit ? QString::number(maxTempC * 9 / 5 + 32) + "°F" : QString::number(maxTempC) + "°C";
+  QColor theme_color = currentColors[0];
 
   // FrogPilot metrics
   if (isCPU || isGPU) {
-    const auto cpu_loads = deviceState.getCpuUsagePercent();
-    const int cpu_usage = std::accumulate(cpu_loads.begin(), cpu_loads.end(), 0) / cpu_loads.size();
-    const int gpu_usage = deviceState.getGpuUsagePercent();
+    auto cpu_loads = deviceState.getCpuUsagePercent();
+    int cpu_usage = std::accumulate(cpu_loads.begin(), cpu_loads.end(), 0) / cpu_loads.size();
+    int gpu_usage = deviceState.getGpuUsagePercent();
 
-    const QString cpu = QString::number(cpu_usage) + "%";
-    const QString gpu = QString::number(gpu_usage) + "%";
+    QString cpu = QString::number(cpu_usage) + "%";
+    QString gpu = QString::number(gpu_usage) + "%";
 
-    const QString metric = isGPU ? gpu : cpu;
-    const int usage = isGPU ? gpu_usage : cpu_usage;
+    QString metric = isGPU ? gpu : cpu;
+    int usage = isGPU ? gpu_usage : cpu_usage;
 
     ItemStatus cpuStatus = {{tr(isGPU ? "GPU" : "CPU"), metric}, theme_color};
     if (usage >= 85) {
@@ -176,12 +181,12 @@ void Sidebar::updateState(const UIState &s) {
   }
 
   if (isMemoryUsage || isStorageLeft || isStorageUsed) {
-    const int memory_usage = deviceState.getMemoryUsagePercent();
-    const int storage_left = frogpilotDeviceState.getFreeSpace();
-    const int storage_used = frogpilotDeviceState.getUsedSpace();
+    int memory_usage = deviceState.getMemoryUsagePercent();
+    int storage_left = frogpilotDeviceState.getFreeSpace();
+    int storage_used = frogpilotDeviceState.getUsedSpace();
 
-    const QString memory = QString::number(memory_usage) + "%";
-    const QString storage = QString::number(isStorageLeft ? storage_left : storage_used) + " GB";
+    QString memory = QString::number(memory_usage) + "%";
+    QString storage = QString::number(isStorageLeft ? storage_left : storage_used) + " GB";
 
     if (isMemoryUsage) {
       ItemStatus memoryStatus = {{tr("記憶體"), memory}, theme_color};
@@ -229,21 +234,6 @@ void Sidebar::updateState(const UIState &s) {
     pandaStatus = {{tr("GPS"), tr("搜尋")}, warning_color};
   }
   setProperty("pandaStatus", QVariant::fromValue(pandaStatus));
-}
-
-void Sidebar::updateFrogPilotParams() {
-  static Params params;
-
-  // Update FrogPilot parameters upon toggle change
-  isCustomTheme = params.getBool("CustomTheme");
-  customColors = isCustomTheme ? params.getInt("CustomColors") : 0;
-  customIcons = isCustomTheme ? params.getInt("CustomIcons") : 0;
-
-  home_img = home_imgs[customIcons];
-  flag_img = flag_imgs[customIcons];
-  settings_img = settings_imgs[customIcons];
-
-  currentColors = themeConfiguration[customColors].second;
 }
 
 void Sidebar::paintEvent(QPaintEvent *event) {

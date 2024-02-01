@@ -59,9 +59,9 @@ ChartView::ChartView(const std::pair<double, double> &x_range, ChartsWidget *par
 
 void ChartView::createToolButtons() {
   move_icon = new QGraphicsPixmapItem(utils::icon("grip-horizontal"), chart());
-  move_icon->setToolTip(tr("拖放以移動圖表"));
+  move_icon->setToolTip(tr("Drag and drop to move chart"));
 
-  QToolButton *remove_btn = new ToolButton("x", tr("刪除圖表"));
+  QToolButton *remove_btn = new ToolButton("x", tr("Remove Chart"));
   close_btn_proxy = new QGraphicsProxyWidget(chart());
   close_btn_proxy->setWidget(remove_btn);
   close_btn_proxy->setZValue(chart()->zValue() + 11);
@@ -70,7 +70,7 @@ void ChartView::createToolButtons() {
   // series types
   auto change_series_group = new QActionGroup(menu);
   change_series_group->setExclusive(true);
-  QStringList types{tr("線"), tr("階梯線"), tr("分散")};
+  QStringList types{tr("Line"), tr("Step Line"), tr("Scatter")};
   for (int i = 0; i < types.size(); ++i) {
     QAction *act = new QAction(types[i], change_series_group);
     act->setData(i);
@@ -79,8 +79,8 @@ void ChartView::createToolButtons() {
     menu->addAction(act);
   }
   menu->addSeparator();
-  menu->addAction(tr("管理訊號"), this, &ChartView::manageSignals);
-  split_chart_act = menu->addAction(tr("分裂圖表"), [this]() { charts_widget->splitChart(this); });
+  menu->addAction(tr("Manage Signals"), this, &ChartView::manageSignals);
+  split_chart_act = menu->addAction(tr("Split Chart"), [this]() { charts_widget->splitChart(this); });
 
   QToolButton *manage_btn = new ToolButton("list", "");
   manage_btn->setMenu(menu);
@@ -90,7 +90,7 @@ void ChartView::createToolButtons() {
   manage_btn_proxy->setWidget(manage_btn);
   manage_btn_proxy->setZValue(chart()->zValue() + 11);
 
-  close_act = new QAction(tr("關閉"), this);
+  close_act = new QAction(tr("Close"), this);
   QObject::connect(close_act, &QAction::triggered, [this] () { charts_widget->removeChart(this); });
   QObject::connect(remove_btn, &QToolButton::clicked, close_act, &QAction::triggered);
   QObject::connect(change_series_group, &QActionGroup::triggered, [this](QAction *action) {
@@ -170,7 +170,7 @@ void ChartView::msgUpdated(MessageId id) {
 }
 
 void ChartView::manageSignals() {
-  SignalSelector dlg(tr("管理圖表"), this);
+  SignalSelector dlg(tr("Manage Chart"), this);
   for (auto &s : sigs) {
     dlg.addSelected(s.msg_id, s.sig);
   }
