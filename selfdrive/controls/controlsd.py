@@ -212,6 +212,8 @@ class Controls:
     self.v_cruise_helper = VCruiseHelper(self.CP)
     self.recalibrating_seen = False
     self.nn_alert_shown = False
+    self.AutoOffScreen_counter = 0
+
 
     self.can_log_mono_time = 0
 
@@ -346,11 +348,15 @@ class Controls:
 ##########################################################
       if (CS.leftBlindspot and direction == LaneChangeDirection.left) or \
          (CS.rightBlindspot and direction == LaneChangeDirection.right):
-        self.params.put_int("ScreenBlindspot",1)
         if self.Laneblindspot_detection :
           self.events.add(EventName.laneChangeBlocked)
-        if self.params.get_int("ScreenBlindspot") == 0:
-          self.params.put_int("ScreenBlindspot",1)
+          print("[FANTEST][controlsd.py][update_events()] AutoOffScreen1=", self.AutoOffScreen)
+          if self.AutoOffScreen  and not self.AutoOffScreenpre :
+            self.params.put_bool("AutoOffScreen",False)
+            self.params.put_bool("FrogPilotTogglesUpdated", True)
+            self.params.put_bool("AutoOffScreenpre", True)
+            print("[FANTEST][controlsd.py][update_events()] AutoOffScreen0=", self.AutoOffScreen)
+            print("[FANTEST][controlsd.py][update_events()] AutoOffScreenpre1=", self.AutoOffScreenpre)
 ##########################################################
       else:
         if direction == LaneChangeDirection.left:
@@ -363,6 +369,20 @@ class Controls:
       if self.ChangeLane_Reminder :
         self.events.add(EventName.laneChange)
       ##########################################################
+##########################################################
+    self.AutoOffScreen_counter = self.AutoOffScreen_counter + 1 if self.AutoOffScreenpre and not self.AutoOffScreen else 0
+    # if self.AutoOffScreenpre and not self.AutoOffScreen:
+    #   self.AutoOffScreen_counter += 1
+    # else:
+    #   self.AutoOffScreen_counter = 0
+    print("[FANTEST][controlsd.py][update_events()] AutoOffScreen_counter=", self.AutoOffScreen_counter)
+    if self.AutoOffScreen_counter > 1000:
+      self.params.put_bool("AutoOffScreen", True)
+      self.params.put_bool("FrogPilotTogglesUpdated", True)
+      self.params.put_bool("AutoOffScreenpre", False)
+      print("[FANTEST][controlsd.py][update_events()] AutoOffScreen1=", self.AutoOffScreen)
+      print("[FANTEST][controlsd.py][update_events()] AutoOffScreenpre0=", self.AutoOffScreenpre)
+##########################################################
 
     # Handle turning
     if not CS.standstill:
@@ -1136,6 +1156,8 @@ class Controls:
     self.Speedlimitu_Reminder = self.params.get_bool('SpeedlimituReminder')
     self.NavReminder = self.params.get_bool("NavReminder")
     self.GreenLight_Reminder = self.params.get_bool("GreenLightReminder")
+    self.AutoOffScreen = self.params.get_bool("AutoOffScreen")
+    self.AutoOffScreenpre = self.params.get_bool("AutoOffScreenpre")
 ###############################################################
 
 def main():

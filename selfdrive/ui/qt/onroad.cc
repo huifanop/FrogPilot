@@ -2005,6 +2005,18 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
       p.drawRoundedRect(bannerRect, 10, 10);
       p.drawText(bannerRect, Qt::AlignCenter | Qt::TextWordWrap, navBanner);
   }
+  bool Roadtype = params.getBool("Roadtype");
+  int roadProfile = params.getInt("RoadtypeProfile");
+  if (Roadtype){
+    if (roadName.contains("高速公路")) {
+      roadProfile = 3;
+    } else if (roadName.contains("快速道路")){
+      roadProfile = 2;
+    } else{
+      roadProfile = 1;
+    }
+  }
+
 /////////////////////////////////////////////////////////////////////////////////
   p.restore();
 }
