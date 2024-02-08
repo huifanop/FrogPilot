@@ -388,8 +388,8 @@ class CarInterfaceBase(ABC):
 
     if cs_out.doorOpen and not frogpilot_variables.mute_door:
       events.add(EventName.doorOpen)
-    if cs_out.engineRpm > 0 and cs_out.doorOpen:
-      events.add(EventName.doorOpen1)
+    # if cs_out.engineRpm > 0 and cs_out.doorOpen:
+    #   events.add(EventName.doorOpen1)
     if cs_out.seatbeltUnlatched and not frogpilot_variables.mute_seatbelt:
       events.add(EventName.seatbeltNotLatched)
     if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or
