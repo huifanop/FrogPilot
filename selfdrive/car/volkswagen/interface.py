@@ -115,7 +115,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 50 * CV.KPH_TO_MS
 
     elif candidate == CAR.GOLF_MK7:
-      ret.mass = 1397
+      ret.mass = 1305
       ret.wheelbase = 2.62
 
     elif candidate == CAR.JETTA_MK7:
@@ -123,7 +123,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.71
 
     elif candidate == CAR.PASSAT_MK8:
-      ret.mass = 1551
+      ret.mass = 1745
       ret.wheelbase = 2.79
 
     elif candidate == CAR.PASSAT_NMS:
@@ -153,7 +153,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.60
 
     elif candidate == CAR.TIGUAN_MK2:
-      ret.mass = 1715
+      ret.mass = 1673
       ret.wheelbase = 2.74
 
     elif candidate == CAR.TOURAN_MK2:
@@ -202,7 +202,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.66
 
     elif candidate == CAR.SKODA_KODIAQ_MK1:
-      ret.mass = 1569
+      ret.mass = 1700
       ret.wheelbase = 2.79
 
     elif candidate == CAR.SKODA_OCTAVIA_MK3:
@@ -214,7 +214,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.65
 
     elif candidate == CAR.SKODA_SUPERB_MK3:
-      ret.mass = 1505
+      ret.mass = 1710
       ret.wheelbase = 2.84
 
     else:
@@ -226,8 +226,9 @@ class CarInterface(CarInterfaceBase):
 
   # returns a car.CarState
   def _update(self, c, conditional_experimental_mode, frogpilot_variables):
-    ret = self.CS.update(self.cp, self.cp_cam, self.cp_ext, self.CP.transmissionType, conditional_experimental_mode, frogpilot_variables)
-
+####################################
+    ret = self.CS.update(self.cp, self.cp_body, self.cp_cam, self.cp_ext, self.CP.transmissionType, conditional_experimental_mode, frogpilot_variables)
+####################################
     events = self.create_common_events(ret, frogpilot_variables, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
                                        pcm_enable=not self.CS.CP.openpilotLongitudinalControl,
                                        enable_buttons=(ButtonType.setCruise, ButtonType.resumeCruise))

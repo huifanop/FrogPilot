@@ -98,6 +98,10 @@ private:
   QLabel *onroadLbl;
   LabelControl *versionLbl;
   ButtonControl *errorLogBtn;
+///////////////////////////////////
+  ButtonControl *delLogBtn;
+  ButtonControl *fastinstallBtn;
+///////////////////////////////////
   ButtonControl *installBtn;
   ButtonControl *downloadBtn;
   ButtonControl *targetBranchBtn;

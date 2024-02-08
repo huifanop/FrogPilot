@@ -14,7 +14,7 @@ bool FrogPilotConfirmationDialog::toggleAlert(const QString &prompt_text, const 
 }
 
 bool FrogPilotConfirmationDialog::yesorno(const QString &prompt_text, QWidget *parent) {
-  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("Yes"), tr("No"), false, parent);
+  ConfirmationDialog d = ConfirmationDialog(prompt_text, tr("是"), tr("否"), false, parent);
   return d.exec();
 }
 

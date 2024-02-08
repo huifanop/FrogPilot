@@ -65,7 +65,7 @@ QStringList getCarNames(const QString &carMake) {
 }
 
 FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPilotListWidget(parent) {
-  selectMakeButton = new ButtonControl(tr("Select Make"), tr("SELECT"));
+  selectMakeButton = new ButtonControl(tr("選擇品牌"), tr("選擇"));
   QObject::connect(selectMakeButton, &ButtonControl::clicked, [this]() {
     std::string currentMake = params.get("CarMake");
     QStringList makes = {
@@ -74,7 +74,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
       "Mercedes", "Nissan", "Ram", "SEAT", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo", "Škoda",
     };
 
-    QString newMakeSelection = MultiOptionDialog::getSelection(tr("Select a Make"), makes, QString::fromStdString(currentMake), this);
+    QString newMakeSelection = MultiOptionDialog::getSelection(tr("  選擇品牌"), makes, QString::fromStdString(currentMake), this);
     if (!newMakeSelection.isEmpty()) {
       carMake = newMakeSelection;
       params.putNonBlocking("CarMake", carMake.toStdString());
@@ -84,11 +84,11 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
   });
   addItem(selectMakeButton);
 
-  selectModelButton = new ButtonControl(tr("Select Model"), tr("SELECT"));
+  selectModelButton = new ButtonControl(tr("選擇型號"), tr("選擇"));
   QString modelSelection = QString::fromStdString(params.get("CarModel"));
   QObject::connect(selectModelButton, &ButtonControl::clicked, [this]() {
     std::string currentModel = params.get("CarModel");
-    QString newModelSelection = MultiOptionDialog::getSelection(tr("Select a Model"), models, QString::fromStdString(currentModel), this);
+    QString newModelSelection = MultiOptionDialog::getSelection(tr("  選擇型號"), models, QString::fromStdString(currentModel), this);
     if (!newModelSelection.isEmpty()) {
       params.putNonBlocking("CarModel", newModelSelection.toStdString());
       selectModelButton->setValue(newModelSelection);
@@ -98,7 +98,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
   addItem(selectModelButton);
   selectModelButton->setVisible(false);
 
-  ParamControl *forceFingerprint = new ParamControl("ForceFingerprint", "Disable Automatic Fingerprint Detection", "Forces the selected fingerprint and prevents it from ever changing.", "", this);
+  ParamControl *forceFingerprint = new ParamControl("ForceFingerprint", "停用自動指紋偵測", "強制選擇車輛指紋並防止變動.", "", this);
   addItem(forceFingerprint);
 
   std::vector<std::tuple<QString, QString, QString, QString>> vehicleToggles {

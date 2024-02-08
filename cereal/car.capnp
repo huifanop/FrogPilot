@@ -125,6 +125,23 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     turningLeft @126;
     turningRight @127;
     firefoxSteerSaturated @128;
+    #######################
+    carawayed @129;
+    carapproaching @130;
+    detectSpeedLimitu @131;
+    detectSpeedLimitd @132;
+    speedover @133;
+    ######NAV語音######
+    navturn @134;
+    navuturn @135;
+    navturnleft @136;
+    navturnright @137;
+    navsharpright @138;
+    navsharpleft @139;
+    navofframp @140;
+    fantest @141;
+    doorOpen1 @142;
+    #######################
 
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
@@ -227,6 +244,10 @@ struct CarState {
 
   fuelGauge @41 :Float32; # battery or fuel tank level from 0.0 to 1.0
   charging @43 :Bool;
+#######################
+  tankvol @48 :Float32;
+  kpl @49 :Float32;
+#######################
 
   struct WheelSpeeds {
     # optional wheel speeds
@@ -419,6 +440,23 @@ struct CarControl {
 
       fart @9;
       firefox @10;
+      ###########################
+      lanechangesound @11;
+      lanechangeblockedsound @12;
+      greenLight @13;
+      carawayed @14;
+      carapproaching @15;
+      detectspeedu @16;
+      detectspeedd @17;
+      ######NAV語音######
+      navturn @18;
+      navuturn @19;
+      navturnright @20;
+      navturnleft @21;
+      navsharpright @22;
+      navsharpleft @23;
+      navofframp @24;
+      ############################
     }
   }
 

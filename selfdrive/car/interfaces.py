@@ -2,6 +2,9 @@ import os
 import time
 import numpy as np
 import tomllib
+#################################
+import operator
+#################################
 from abc import abstractmethod, ABC
 from difflib import SequenceMatcher
 from enum import StrEnum
@@ -19,7 +22,12 @@ from openpilot.selfdrive.car import apply_hysteresis, gen_empty_fingerprint, sca
 from openpilot.selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, get_friction
 from openpilot.selfdrive.controls.lib.events import Events
 from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
-
+########################################
+mem_params = Params("/dev/shm/params")
+params = Params()
+mem_params.put_bool("KeyResume", False)
+mem_params.put_bool("KeyCancel", False)
+########################################
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
 EventName = car.CarEvent.EventName
@@ -197,6 +205,9 @@ class CarInterfaceBase(ABC):
 
     # FrogPilot variables
     params = Params()
+    ##############################################
+    self.mem_params = Params("/dev/shm/params")
+    ##############################################
 
     self.has_lateral_torque_nn = self.initialize_lat_torque_nn(CP.carFingerprint, eps_firmware) and params.get_bool("LateralTune") and params.get_bool("NNFF")
 
@@ -377,6 +388,8 @@ class CarInterfaceBase(ABC):
 
     if cs_out.doorOpen and not frogpilot_variables.mute_door:
       events.add(EventName.doorOpen)
+    if cs_out.engineRpm > 0 and cs_out.doorOpen:
+      events.add(EventName.doorOpen1)
     if cs_out.seatbeltUnlatched and not frogpilot_variables.mute_seatbelt:
       events.add(EventName.seatbeltNotLatched)
     if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or
@@ -413,6 +426,14 @@ class CarInterfaceBase(ABC):
       # Disable on rising and falling edge of cancel for both stock and OP long
       if b.type == ButtonType.cancel:
         events.add(EventName.buttonCancel)
+###########################################################################
+    if not self.CP.pcmCruise and self.mem_params.get_bool("KeyResume"):
+      events.add(EventName.buttonEnable)
+    if self.mem_params.get_bool("KeyCancel"):
+        self.mem_params.put_bool("KeyResume",False)
+        events.add(EventName.buttonCancel)
+        self.mem_params.put_bool("KeyCancel",False)
+############################################################################
 
     # Handle permanent and temporary steering faults
     self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
