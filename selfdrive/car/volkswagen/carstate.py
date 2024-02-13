@@ -105,10 +105,23 @@ class CarState(CarStateBase):
         ret.gearShifter = GearShifter.drive
 
     # Update door and trunk/hatch lid open status.
-    ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_BT_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],
+####################################
+    if self.param.get_bool("Dooropen"):
+      if self.param.get_bool("DriverdoorOpen"):
+        ret.driverdoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"]])
+      if self.param.get_bool("CodriverdoorOpen"):
+        ret.codriverdOpen = any([pt_cp.vl["Gateway_72"]["ZV_BT_offen"]])
+      if self.param.get_bool("LpassengerdoorOpen"):
+        ret.lpassengerdoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_HFS_offen"]])
+      if self.param.get_bool("RpassengerdoorOpen"): 
+        ret.rpassengerdoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"]])
+      if self.param.get_bool("LuggagedoorOpen"):
+        ret.luggagedoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
+####################################    
+    ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],##駕駛
+                        pt_cp.vl["Gateway_72"]["ZV_BT_offen"],##副駕
+                        pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],##左後
+                        pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],##右後
                         pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
 
     # Update seatbelt fastened status.
