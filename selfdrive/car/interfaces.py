@@ -207,6 +207,8 @@ class CarInterfaceBase(ABC):
     params = Params()
     ##############################################
     self.mem_params = Params("/dev/shm/params")
+    self.Dooropen_off_counter = 0
+    self.Dooropen_on_counter = 0
     ##############################################
 
     self.has_lateral_torque_nn = self.initialize_lat_torque_nn(CP.carFingerprint, eps_firmware) and params.get_bool("LateralTune") and params.get_bool("NNFF")
@@ -388,8 +390,26 @@ class CarInterfaceBase(ABC):
 
     if cs_out.doorOpen and not frogpilot_variables.mute_door:
       events.add(EventName.doorOpen)
-    # if cs_out.engineRpm > 0 and cs_out.doorOpen:
-    #   events.add(EventName.doorOpen1)
+
+####################################
+    if params.get_bool("Dooropen"):
+      if cs_out.engineRpm > 0 and (cs_out.driverdoorOpen or cs_out.codriverdOpen or cs_out.lpassengerdoorOpen or cs_out.rpassengerdoorOpen or cs_out.luggagedoorOpen):
+        events.add(EventName.doorOpen1)
+        self.Dooropen_off_counter = self.Dooropen_off_counter + 1 if params.get_bool("Dooropen")  and not params.get_bool("Dooropenpre") else 0 
+        if params.get_bool("Dooropen")  and not params.get_bool("Dooropenpre") and self.Dooropen_off_counter > 500:
+          params.put_bool("Dooropenpre", True)
+          params.put_bool("Dooropen",False)
+          params.put_bool("FrogPilotTogglesUpdated", True)
+          self.Dooropen_on_counter = 0
+    if params.get_bool("Dooropenpre"):
+      self.Dooropen_on_counter = self.Dooropen_on_counter + 1 if not params.get_bool("Dooropen")  and  params.get_bool("Dooropenpre") and not cs_out.driverdoorOpen  else 0 
+    if not params.get_bool("Dooropen") and self.Dooropen_on_counter >2000 and (not cs_out.driverdoorOpen):
+      params.put_bool("Dooropenpre", False)
+      params.put_bool("Dooropen", True)
+      params.put_bool("FrogPilotTogglesUpdated", True)
+      self.Dooropen_off_counter = 0
+####################################
+
     if cs_out.seatbeltUnlatched and not frogpilot_variables.mute_seatbelt:
       events.add(EventName.seatbeltNotLatched)
     if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or

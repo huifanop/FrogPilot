@@ -39,6 +39,14 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : FrogPilotListWidg
     {"Laneblindspotdetection", "  換道盲點", "開啟後在變換車道時若盲點偵測到車輛會發出語音提醒.", ""},
     {"CarApproachingReminder", "  前車急煞", "開啟後在前車急煞時會發出語音提醒.", ""},
     {"CarAwayReminder", "  前車遠離", "開啟後在前車遠離時會發出語音提醒.", ""},
+
+    {"Dooropen", "  車門開啟", "開啟後在引擎啟動狀態下駕駛車門開啟或後車箱未關閉時會發出提醒.", "../assets/offroad/icon_warning.png"},
+    {"DriverdoorOpen", "  駕駛車門", "開啟後在引擎啟動狀態下駕駛車門開啟時會發出提醒.", ""},
+    {"CodriverdoorOpen", "  副駕駛車門", "開啟後在引擎啟動狀態下副駕駛車門開啟時會發出提醒.", ""},
+    {"LpassengerdoorOpen", "  左乘客車門", "開啟後在引擎啟動狀態下左乘客車門開啟時會發出提醒.", ""},
+    {"RpassengerdoorOpen", "  右乘客車門", "開啟後在引擎啟動狀態下右乘客車門開啟時會發出提醒.", ""},
+    {"LuggagedoorOpen", "  後車門開啟", "開啟後在引擎啟動狀態下候車門開啟時會發出提醒.", ""},
+
     // {"Autowifi", "  自動啟動網路分享", "開機後自動啟動網路分享.", ""},
   };
 
@@ -132,6 +140,22 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : FrogPilotListWidg
         }
       });
       toggle = VoiceToggle;
+    } else if(param == "Dooropen") {
+      FrogPilotParamManageControl *DooropenToggle = new FrogPilotParamManageControl(param, title, desc, icon, this);
+      QObject::connect(DooropenToggle, &FrogPilotParamManageControl::manageButtonClicked, this, [this]() {
+        parentToggleClicked();
+        for (auto &[key, toggle] : toggles) {
+          toggle->setVisible(DooropenKeys.find(key.c_str()) != DooropenKeys.end());
+        }
+      });
+      toggle = DooropenToggle;   
+    
+    } else if(param == "Dooropentype") {
+      std::vector<QString> adjustablePersonalitiesToggles{"DriverdoorOpen", "CodriverdoorOpen", "LpassengerdoorOpen", "RpassengerdoorOpen", "LuggagedoorOpen"};
+      std::vector<QString> adjustablePersonalitiesNames{tr("駕駛"), tr("副駕"), tr("左乘客"), tr("右乘客"), tr("行李")};
+      toggle = new FrogPilotParamToggleControl(param, title, desc, icon, adjustablePersonalitiesToggles, adjustablePersonalitiesNames);
+
+
     } else {
       toggle = new ParamControl(param, title, desc, icon, this);
     }
@@ -163,6 +187,7 @@ HFOPControlsPanel::HFOPControlsPanel(SettingsWindow *parent) : FrogPilotListWidg
   RoadKeys = {"RoadtypeProfile"};
   NavspeedKeys = {"NavReminder", "speedoverreminder", "SpeedlimituReminder", "speedreminderreset"};
   VoiceKeys = {"GreenLightReminder", "ChangeLaneReminder","Laneblindspotdetection","CarApproachingReminder","CarAwayReminder"};
+  DooropenKeys= {"DriverdoorOpen", "CodriverdoorOpen","LpassengerdoorOpen","RpassengerdoorOpen","LuggagedoorOpen"};
 
 
   // QObject::connect(uiState(), &UIState::offroadTransition, this, [this](bool offroad) {
@@ -198,7 +223,8 @@ void HFOPControlsPanel::hideSubToggles() {
                       CarAwayKeys.find(key.c_str()) != CarAwayKeys.end() ||
                       RoadKeys.find(key.c_str()) != RoadKeys.end() ||
                       NavspeedKeys.find(key.c_str()) != NavspeedKeys.end() ||
-                      VoiceKeys.find(key.c_str()) != VoiceKeys.end() ;
+                      VoiceKeys.find(key.c_str()) != VoiceKeys.end() ||
+                      DooropenKeys.find(key.c_str()) != DooropenKeys.end() ;
     toggle->setVisible(!subToggles);
   }
 

@@ -29,6 +29,7 @@ private:
   std::set<QString> RoadKeys;
   std::set<QString> NavspeedKeys;
   std::set<QString> VoiceKeys;
+  std::set<QString> DooropenKeys;
 
   std::map<std::string, ParamControl*> toggles;
 

@@ -868,7 +868,7 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
   p.setPen(QPen(blackColor(), 6));
   p.drawRoundedRect(ci_rect.adjusted(9, 9, -9, -9), 16, 16);
 
-  int roadProfile = params.getInt("RoadtypeProfile");
+  int roadProfile = paramsMemory.getInt("RoadtypeProfile");
   p.setFont(InterFont(45, QFont::Normal));
   int index = qBound(0, roadProfile, 3);
   QString roadprofile_text = roadprofile_data[index].second;
@@ -1118,7 +1118,7 @@ void AnnotatedCameraWidget::drawLaneLines(QPainter &painter, const UIState *s) {
   if (scene.adjacent_path && (laneWidthLeft != 0 || laneWidthRight != 0)) {
     // Set up the units
     double distanceValue = is_metric ? 1.0 : METER_TO_FOOT;
-    QString unit_d = is_metric ? " meters" : " feet";
+    QString unit_d = is_metric ? " 公尺" : " feet";
 
     // Declare the lane width thresholds
     constexpr float minLaneWidth = 2.0f;
@@ -1149,7 +1149,7 @@ void AnnotatedCameraWidget::drawLaneLines(QPainter &painter, const UIState *s) {
       QRectF boundingRect = lane.boundingRect();
       if (scene.adjacent_path_metrics) {
         painter.drawText(boundingRect.center(),
-                         blindspot ? "Vehicle in blind spot" :
+                         blindspot ? "盲點偵測到車輛" :
                          QString("%1%2").arg(laneWidth * distanceValue, 0, 'f', 2).arg(unit_d));
       }
       painter.setPen(Qt::NoPen);
@@ -1714,7 +1714,7 @@ void AnnotatedCameraWidget::drawLeadInfo(QPainter &p) {
 
   // Constants for units and conversions
   QString accelerationUnit = " m/s²";
-  leadDistanceUnit = mapOpen ? "m" : "meters";
+  leadDistanceUnit = mapOpen ? "米" : "公尺";
   leadSpeedUnit = "m/2";
 
   distanceConversion = 1.0f;
@@ -1724,7 +1724,7 @@ void AnnotatedCameraWidget::drawLeadInfo(QPainter &p) {
     if (is_metric) {
       // Metric conversion
       accelerationUnit = " km/s²";
-      leadSpeedUnit = "kph";
+      leadSpeedUnit = "公里";
       speedConversion = MS_TO_KPH;
     } else {
       // US imperial conversion
@@ -1928,7 +1928,7 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
 
   // Update status text
   if (alwaysOnLateralActive) {
-    newStatus = QString("Always On Lateral active") + (mapOpen ? "" : ". Press the \"Cruise Control\" button to disable");
+    newStatus = QString("全時置中啟動中") + (mapOpen ? "" : ". ACC OFF才可關閉");
   } else if (conditionalExperimental) {
     newStatus = conditionalStatusMap[status != STATUS_DISENGAGED ? conditionalStatus : 0];
   }
@@ -2008,15 +2008,23 @@ void AnnotatedCameraWidget::drawStatusBar(QPainter &p) {
       p.drawText(bannerRect, Qt::AlignCenter | Qt::TextWordWrap, navBanner);
   }
   bool Roadtype = params.getBool("Roadtype");
-  int roadProfile = params.getInt("RoadtypeProfile");
+  int roadProfile = paramsMemory.getInt("RoadtypeProfile");
   if (Roadtype){
-    if (roadName.contains("高速公路")) {
-      roadProfile = 3;
-    } else if (roadName.contains("快速道路")){
-      roadProfile = 2;
+    if (roadName.contains("高速")) {
+      if (roadProfile!=3){
+        roadProfile = 3;
+      }
+    } else if (roadName.contains("快速")){
+      if (roadProfile!=2){
+        roadProfile = 2;
+      }
     } else{
-      roadProfile = 1;
+      if (roadProfile!=1){
+        roadProfile = 1;
+      }
     }
+    paramsMemory.putInt("RoadtypeProfile", roadProfile);
+    paramsMemory.putBoolNonBlocking("FrogPilotTogglesUpdated", true);
   }
 
 /////////////////////////////////////////////////////////////////////////////////

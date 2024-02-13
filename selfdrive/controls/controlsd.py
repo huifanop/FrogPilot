@@ -365,13 +365,10 @@ class Controls:
          (CS.rightBlindspot and direction == LaneChangeDirection.right):
         if self.Laneblindspot_detection :
           self.events.add(EventName.laneChangeBlocked)
-          print("[FANTEST][controlsd.py][update_events()] AutoOffScreen1=", self.AutoOffScreen)
           if self.AutoOffScreen  and not self.AutoOffScreenpre :
             self.params.put_bool("AutoOffScreen",False)
             self.params.put_bool("FrogPilotTogglesUpdated", True)
             self.params.put_bool("AutoOffScreenpre", True)
-            print("[FANTEST][controlsd.py][update_events()] AutoOffScreen0=", self.AutoOffScreen)
-            print("[FANTEST][controlsd.py][update_events()] AutoOffScreenpre1=", self.AutoOffScreenpre)
 ##########################################################
       else:
         if direction == LaneChangeDirection.left:
@@ -386,17 +383,10 @@ class Controls:
       ##########################################################
 ##########################################################
     self.AutoOffScreen_counter = self.AutoOffScreen_counter + 1 if self.AutoOffScreenpre and not self.AutoOffScreen else 0
-    # if self.AutoOffScreenpre and not self.AutoOffScreen:
-    #   self.AutoOffScreen_counter += 1
-    # else:
-    #   self.AutoOffScreen_counter = 0
-    print("[FANTEST][controlsd.py][update_events()] AutoOffScreen_counter=", self.AutoOffScreen_counter)
     if self.AutoOffScreen_counter > 1000:
       self.params.put_bool("AutoOffScreen", True)
       self.params.put_bool("FrogPilotTogglesUpdated", True)
       self.params.put_bool("AutoOffScreenpre", False)
-      print("[FANTEST][controlsd.py][update_events()] AutoOffScreen1=", self.AutoOffScreen)
-      print("[FANTEST][controlsd.py][update_events()] AutoOffScreenpre0=", self.AutoOffScreenpre)
 ##########################################################
 
     # Handle turning

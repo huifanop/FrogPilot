@@ -234,6 +234,13 @@ struct CarState {
   # lock info
   doorOpen @24 :Bool;
   seatbeltUnlatched @25 :Bool;
+#######################
+  driverdoorOpen @50 :Bool;
+  codriverdOpen @51 :Bool;
+  lpassengerdoorOpen @52 :Bool;
+  rpassengerdoorOpen @53 :Bool;
+  luggagedoorOpen @54 :Bool;
+#######################
 
   # clutch (manual transmission only)
   clutchPressed @28 :Bool;
