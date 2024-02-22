@@ -2,61 +2,61 @@
 
 FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilotListWidget(parent) {
   const std::vector<std::tuple<QString, QString, QString, QString>> visualToggles {
-    {"CustomTheme", "Custom Themes", "Enable the ability to use custom themes.", "../frogpilot/assets/wheel_images/frog.png"},
-    {"CustomColors", "Color Theme", "Switch out the standard openpilot color scheme with a custom color scheme.\n\nWant to submit your own color scheme? Post it in the 'feature-request' channel in the FrogPilot Discord!", ""},
-    {"CustomIcons", "Icon Pack", "Switch out the standard openpilot icons with a set of custom icons.\n\nWant to submit your own icon pack? Post it in the 'feature-request' channel in the FrogPilot Discord!", ""},
-    {"CustomSignals", "Turn Signals", "Add custom animations for your turn signals for a personal touch!\n\nWant to submit your own turn signal animation? Post it in the 'feature-request' channel in the FrogPilot Discord!", ""},
-    {"CustomSounds", "Sound Pack", "Switch out the standard openpilot sounds with a set of custom sounds.\n\nWant to submit your own sound pack? Post it in the 'feature-request' channel in the FrogPilot Discord!", ""},
+    {"CustomTheme", "自訂外觀主題", "啟動後使用自訂外觀.", "../frogpilot/assets/wheel_images/frog.png"},
+    {"CustomColors", "  顏色", "使用自訂配色方案替換庫存 openpilot 顏色", ""},
+    {"CustomIcons", "  圖示", "用自訂圖標包替換庫存 openpilot 圖標", ""},
+    {"CustomSignals", "  訊號", "啟用自訂方向燈動畫", ""},
+    {"CustomSounds", "  聲音", "用自訂聲音包替換庫存 openpilot 聲音", ""},
 
-    {"AlertVolumeControl", "Alert Volume Control", "Control the volume level for each individual sound in openpilot.", "../frogpilot/assets/toggle_icons/icon_mute.png"},
-    {"DisengageVolume", "Disengage Volume", "Related alerts:\n\nAdaptive Cruise Disabled\nParking Brake Engaged\nPedal Pressed\nSpeed too Low", ""},
+    {"AlertVolumeControl", "警報音量控制", "Control the volume level for each individual sound in openpilot.", "../frogpilot/assets/toggle_icons/icon_mute.png"},
+    {"DisengageVolume", "失效音量", "Related alerts:\n\nAdaptive Cruise Disabled\nParking Brake Engaged\nPedal Pressed\nSpeed too Low", ""},
     {"EngageVolume", "Engage Volume", "Related alerts:\n\nNNFF Torque Controller loaded", ""},
     {"PromptVolume", "Prompt Volume", "Related alerts:\n\nCar Detected in Blindspot\nLight turned green\nSpeed too Low\nSteer Unavailable Below 'X'\nTake Control, Turn Exceeds Steering Limit", ""},
     {"PromptDistractedVolume", "Prompt Distracted Volume", "Related alerts:\n\nPay Attention, Driver Distracted\nTouch Steering Wheel, Driver Unresponsive", ""},
     {"RefuseVolume", "Refuse Volume", "Related alerts:\n\nopenpilot Unavailable", ""},
-    {"WarningSoftVolume", "Warning Soft Volume", "Related alerts:\n\nBRAKE!, Risk of Collision\nTAKE CONTROL IMMEDIATELY", ""},
-    {"WarningImmediateVolume", "Warning Immediate Volume", "Related alerts:\n\nDISENGAGE IMMEDIATELY, Driver Distracted\nDISENGAGE IMMEDIATELY, Driver Unresponsive", ""},
+    {"WarningSoftVolume", "警告音量", "Related alerts:\n\nBRAKE!, Risk of Collision\nTAKE CONTROL IMMEDIATELY", ""},
+    {"WarningImmediateVolume", "警告即時音量", "Related alerts:\n\nDISENGAGE IMMEDIATELY, Driver Distracted\nDISENGAGE IMMEDIATELY, Driver Unresponsive", ""},
 
-    {"CameraView", "Camera View", "Choose your preferred camera view for the onroad UI. This is a visual change only and doesn't impact openpilot.", "../frogpilot/assets/toggle_icons/icon_camera.png"},
-    {"Compass", "Compass", "Add a compass to your onroad UI.", "../frogpilot/assets/toggle_icons/icon_compass.png"},
+    {"CameraView", "相機視圖", "為 UI 設定您首選的相機視圖。此切換純粹是裝飾性的，不會影響openpilot 對其他相機的使用.", "../frogpilot/assets/toggle_icons/icon_camera.png"},
+    {"Compass", "指南針", "畫面中添加指南針，顯示您的行駛方位.", "../frogpilot/assets/toggle_icons/icon_compass.png"},
 
-    {"CustomAlerts", "Custom Alerts", "Enable custom alerts for various logic or situational changes.", "../frogpilot/assets/toggle_icons/icon_green_light.png"},
-    {"GreenLightAlert", "Green Light Alert", "Get an alert when a traffic light changes from red to green.", ""},
-    {"LeadDepartingAlert", "Lead Departing Alert", "Get an alert when your lead vehicle starts departing when you're at a standstill.", ""},
-    {"LoudBlindspotAlert", "Loud Blindspot Alert", "Enable a louder alert for when a vehicle is detected in your blindspot when attempting to change lanes.", ""},
-    {"SpeedLimitChangedAlert", "Speed Limit Changed Alert", "Trigger an alert whenever the current speed limit changes.", ""},
+    {"CustomAlerts", "自訂警報", "針對各種邏輯或情況變化啟用自訂警報.", "../frogpilot/assets/toggle_icons/icon_green_light.png"},
+    {"GreenLightAlert", "綠燈提醒", "當交通燈由紅變綠時收到警報.", "../frogpilot/assets/toggle_icons/icon_green_light.png"},
+    {"LeadDepartingAlert", "前車遠離警告", "當您處於靜止狀態時您的領頭車輛開始出發時收到警報.", ""},
+    {"LoudBlindspotAlert", "大聲盲點警報", "當嘗試變換車道時在盲點偵測到車輛時，啟用更響亮的警報.", ""},
+    {"SpeedLimitChangedAlert", "速度限制更改警報", "每當當前速度限制發生變化時觸發警報.", ""},
 
-    {"CustomUI", "Custom Onroad UI", "Customize the Onroad UI with some additional visual functions.", "../assets/offroad/icon_road.png"},
-    {"AccelerationPath", "Acceleration Path", "Visualize the car's intended acceleration or deceleration with a color-coded path.", ""},
-    {"AdjacentPath", "Adjacent Paths", "Display paths to the left and right of your car, visualizing where the model detects lanes.", ""},
-    {"BlindSpotPath", "Blind Spot Path", "Visualize your blind spots with a red path when another vehicle is detected nearby.", ""},
-    {"FPSCounter", "FPS Counter", "Display the Frames Per Second (FPS) of your onroad UI for monitoring system performance.", ""},
-    {"LeadInfo", "Lead Info and Logics", "Get detailed information about the vehicle ahead, including speed and distance, and the logic behind your following distance.", ""},
-    {"RoadNameUI", "Road Name", "See the name of the road you're on at the bottom of your screen. Sourced from OpenStreetMap.", ""},
-    {"UseVienna", "Use Vienna Speed Limit Signs", "Use the Vienna (EU) speed limit style signs as opposed to MUTCD (US).", ""},
+    {"CustomUI", "自定義道路畫面", "定義自己喜歡的道路介面.", "../assets/offroad/icon_road.png"},
+    {"AccelerationPath", "  加速路徑", "使用顏色編碼的路徑可視化汽車的預期加速或減速.", ""},
+    {"AdjacentPath", "  相鄰路徑", "顯示汽車左側和右側的路徑，可視化模型偵測車道的位置.", ""},
+    {"BlindSpotPath", "  盲點路徑", "當附近偵測到另一輛車時，將用紅色路徑視覺化您的盲點.", ""},
+    {"FPSCounter", "  顯示 FPS", "顯示道路 UI 的每秒幀數 (FPS)，以監控系統效能.", ""},
+    {"LeadInfo", "  前車資訊", "獲取有關前方車輛的詳細信息，包括速度和距離，以及跟隨距離背後的邏輯.", ""},
+    {"RoadNameUI", "  道路名稱", "在螢幕底部查看您所在道路的名稱。來源自 OpenStreetMap.", ""},
+    {"UseVienna", "使用維也納限速標誌", "使用維也納（歐盟）限速樣式標誌，而不是 MUTCD（美國）).", ""},
 
-    {"DriverCamera", "Driver Camera On Reverse", "Show the driver's camera feed when you shift to reverse.", "../assets/img_driver_face_static.png"},
+    {"DriverCamera", "倒車顯示駕駛鏡頭", "當您換至倒車檔時顯示駕駛者的攝影機畫面.", "../assets/img_driver_face_static.png"},
 
-    {"ModelUI", "Model UI", "Personalize how the model's visualizations appear on your screen.", "../assets/offroad/icon_calibration.png"},
-    {"LaneLinesWidth", "Lane Lines", "Adjust the visual thickness of lane lines on your display.\n\nDefault matches the MUTCD average of 4 inches.", ""},
-    {"PathEdgeWidth", "Path Edges", "Adjust the width of the path edges shown on your UI to represent different driving modes and statuses.\n\nDefault is 20% of the total path.\n\nBlue = Navigation\nLight Blue = Always On Lateral\nGreen = Default with 'FrogPilot Colors'\nLight Green = Default with stock colors\nOrange = Experimental Mode Active\nYellow = Conditional Overriden", ""},
-    {"PathWidth", "Path Width", "Customize the width of the driving path shown on your UI.\n\nDefault matches the width of a 2019 Lexus ES 350.", ""},
-    {"RoadEdgesWidth", "Road Edges", "Adjust the visual thickness of road edges on your display.\n\nDefault is 1/2 of the MUTCD average lane line width of 4 inches.", ""},
-    {"UnlimitedLength", "'Unlimited' Road UI Length", "Extend the display of the path, lane lines, and road edges as far as the system can detect, providing a more expansive view of the road ahead.", ""},
+    {"ModelUI", "路徑外觀", "個性化模型的可視化在螢幕上的顯示方式.", "../assets/offroad/icon_calibration.png"},
+    {"LaneLinesWidth", "  車道寬", "調整顯示器上車道線的視覺粗細.\n\nDefault matches the MUTCD average of 4 inches.", ""},
+    {"PathEdgeWidth", "  路徑邊寬", "自定義顯示當前駕駛狀態的路徑邊緣寬度。預設為總路徑的 20%。\n\n藍色 =導航\n\n淺藍色 =全時置中\n綠色 = 默認使用“FrogPilot 顏色”\n淺綠色 = 預設使用原始顏色\n橙色 = 實驗模式啟動 \n黃色 = 條件模式", ""},
+    {"PathWidth", "  路徑寬", "自定義路徑寬度。\n\n預設為 skoda kodiaq 的寬度.", ""},
+    {"RoadEdgesWidth", "  道路邊寬", "自定義道路邊緣寬度。\n\n預設值為 MUTCD 平均車道線寬度 4 英寸.", ""},
+    {"UnlimitedLength", "  “無限”道路畫面長度", "將路徑、車道線和道路邊緣的顯示器擴展到系統可以偵測的範圍內，提供更廣闊的前方道路視野.", ""},
 
-    {"NumericalTemp", "Numerical Temperature Gauge", "Replace the 'GOOD', 'OK', and 'HIGH' temperature statuses with a numerical temperature gauge based on the highest temperature between the memory, CPU, and GPU.", "../frogpilot/assets/toggle_icons/icon_temperature.png"},
+    {"NumericalTemp", "數位溫度顯示", "將「良好」、「正常」和「高」溫度狀態替換為基於記憶體、CPU 和 GPU 之間最高溫度的數位溫度計.", "../frogpilot/assets/toggle_icons/icon_temperature.png"},
 
-    {"QOLVisuals", "Quality of Life", "Miscellaneous quality of life changes to improve your overall openpilot experience.", "../frogpilot/assets/toggle_icons/quality_of_life.png"},
-    {"DriveStats", "Drive Stats In Home Screen", "Display your device's drive stats in the home screen.", ""},
-    {"FullMap", "Full Sized Map", "Maximize the size of the map in the onroad UI.", ""},
-    {"HideSpeed", "Hide Speed", "Hide the speed indicator in the onroad UI. Additional toggle allows it to be hidden/shown via tapping the speed itself.", ""},
-    {"ShowSLCOffset", "Show Speed Limit Offset", "Show the speed limit offset seperated from the speed limit in the onroad UI when using 'Speed Limit Controller'.", ""},
-    {"WheelSpeed", "Use Wheel Speed", "Use the wheel speed metric as opposed to the artificial speed.", ""},
+    {"QOLVisuals", "優化體驗", "各種控制細項的調整可改善您的openpilot體驗.", "../frogpilot/assets/toggle_icons/quality_of_life.png"},
+    {"DriveStats", "主畫面中的統計訊息", "在主畫面中顯示裝置的統計資訊.", ""},
+    {"FullMap", "全尺寸地圖", "全螢幕顯示地圖導航畫面.", ""},
+    {"HideSpeed", "隱藏速度", "隱藏介面中的速度指示器.", ""},
+    {"ShowSLCOffset", "顯示速度限制偏移", "使用「速度限制控制器」時，顯示與道路 UI 中的速度限制分開的速度限制偏移.", ""},
+    {"WheelSpeed", "使用輪速", "使用輪速度量而不是人工速度.", ""},
 
-    {"RandomEvents", "Random Events", "Enjoy a bit of unpredictability with random events that can occur during certain driving conditions.", "../frogpilot/assets/toggle_icons/icon_random.png"},
-    {"ScreenBrightness", "Screen Brightness", "Customize your screen brightness.", "../frogpilot/assets/toggle_icons/icon_light.png"},
+    {"RandomEvents", "隨機事件", "在某些駕駛條件下使用隨機事件帶來的一點樂趣.", "../frogpilot/assets/toggle_icons/icon_random.png"},
+    {"ScreenBrightness", "螢幕亮度", "自行設定螢幕亮度或使用預設自動亮度設置.", "../frogpilot/assets/toggle_icons/icon_light.png"},
 
-    {"WheelIcon", "Steering Wheel Icon", "Replace the default steering wheel icon with a custom design, adding a unique touch to your interface.", "../assets/offroad/icon_openpilot.png"},
+    {"WheelIcon", "方向盤圖示", "用自定義圖示替換 openpilot 方向盤圖標.", "../assets/offroad/icon_openpilot.png"},
   };
 
   for (const auto &[param, title, desc, icon] : visualToggles) {
@@ -77,7 +77,7 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilot
       toggle = new FrogPilotParamValueControl(param, title, desc, icon, 25, 100, std::map<int, QString>(), this, false, "%");
 
     } else if (param == "CameraView") {
-      std::vector<QString> cameraOptions{tr("Auto"), tr("Standard"), tr("Wide"), tr("Driver")};
+      std::vector<QString> cameraOptions{tr("自動"), tr("標準"), tr("廣角"), tr("駕駛")};
       FrogPilotButtonParamControl *preferredCamera = new FrogPilotButtonParamControl(param, title, desc, icon, cameraOptions);
       toggle = preferredCamera;
 
@@ -101,7 +101,7 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilot
       });
       toggle = customThemeToggle;
     } else if (customThemeKeys.find(param) != customThemeKeys.end()) {
-      std::vector<QString> themeOptions{tr("Stock"), tr("Frog"), tr("Tesla"), tr("Stalin")};
+      std::vector<QString> themeOptions{tr("原始"), tr("Frog"), tr("Tesla"), tr("Stalin")};
       FrogPilotButtonParamControl *themeSelection = new FrogPilotButtonParamControl(param, title, desc, icon, themeOptions);
       toggle = themeSelection;
 
@@ -127,8 +127,8 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilot
       });
       toggle = customUIToggle;
     } else if (param == "LeadInfo") {
-      std::vector<QString> leadInfoToggles{"UseSI"};
-      std::vector<QString> leadInfoToggleNames{tr("Use SI Values")};
+      std::vector<QString> leadInfoToggles{"使用 SI"};
+      std::vector<QString> leadInfoToggleNames{tr("使用 SI 值")};
       toggle = new FrogPilotParamToggleControl(param, title, desc, icon, leadInfoToggles, leadInfoToggleNames);
     } else if (param == "AdjacentPath") {
       std::vector<QString> adjacentPathToggles{"AdjacentPathMetrics"};
@@ -177,14 +177,14 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilot
     } else if (param == "ScreenBrightness") {
       std::map<int, QString> brightnessLabels;
       for (int i = 0; i <= 101; ++i) {
-        brightnessLabels[i] = i == 0 ? "Screen Off" : i == 101 ? "Auto" : QString::number(i) + "%";
+        brightnessLabels[i] = i == 0 ? "關閉" : i == 101 ? "自動" : QString::number(i) + "%";
       }
       toggle = new FrogPilotParamValueControl(param, title, desc, icon, 0, 101, brightnessLabels, this, false);
 
     } else if (param == "WheelIcon") {
-      std::vector<QString> wheelToggles{"RotatingWheel"};
-      std::vector<QString> wheelToggleNames{tr("Rotating")};
-      std::map<int, QString> steeringWheelLabels = {{0, "Stock"}, {1, "Lexus"}, {2, "Toyota"}, {3, "Frog"}, {4, "Rocket"}, {5, "Hyundai"}, {6, "Stalin"}};
+      std::vector<QString> wheelToggles{"方向盤"};
+      std::vector<QString> wheelToggleNames{tr("旋轉")};
+      std::map<int, QString> steeringWheelLabels = {{0, "原始"}, {1, "Lexus"}, {2, "Toyota"}, {3, "Frog"}, {4, "Rocket"}, {5, "Hyundai"}, {6, "Stalin"}};
       toggle = new FrogPilotParamValueToggleControl(param, title, desc, icon, 0, 6, steeringWheelLabels, this, true, "", 1, wheelToggles, wheelToggleNames);
 
     } else {
@@ -215,7 +215,7 @@ FrogPilotVisualsPanel::FrogPilotVisualsPanel(SettingsWindow *parent) : FrogPilot
   for (const std::string &key : rebootKeys) {
     QObject::connect(toggles[key], &ToggleControl::toggleFlipped, [this, key]() {
       if (started || key == "DriveStats") {
-        if (FrogPilotConfirmationDialog::toggle("Reboot required to take effect.", "Reboot Now", this)) {
+        if (FrogPilotConfirmationDialog::toggle("需要重新啟動才能生效.", "馬上重啟", this)) {
           Hardware::reboot();
         }
       }
@@ -261,12 +261,12 @@ void FrogPilotVisualsPanel::updateMetric() {
   FrogPilotParamValueControl *pathWidthToggle = static_cast<FrogPilotParamValueControl*>(toggles["PathWidth"]);
 
   if (isMetric) {
-    laneLinesWidthToggle->setDescription("Customize the lane line width.\n\nDefault matches the Vienna average of 10 centimeters.");
-    roadEdgesWidthToggle->setDescription("Customize the road edges width.\n\nDefault is 1/2 of the Vienna average lane line width of 10 centimeters.");
+    laneLinesWidthToggle->setDescription("自訂車道線寬度。\n\n預設匹配平均值 10 厘米.");
+    roadEdgesWidthToggle->setDescription("自訂道路邊緣寬度。\n\n預設為平均車道線寬度 10 公分的 1/2.");
 
-    laneLinesWidthToggle->updateControl(0, 60, " centimeters");
-    roadEdgesWidthToggle->updateControl(0, 60, " centimeters");
-    pathWidthToggle->updateControl(0, 30, " meters", 10);
+    laneLinesWidthToggle->updateControl(0, 60, " 公分");
+    roadEdgesWidthToggle->updateControl(0, 60, " 公分");
+    pathWidthToggle->updateControl(0, 30, " 公尺");
   } else {
     laneLinesWidthToggle->setDescription("Customize the lane line width.\n\nDefault matches the MUTCD average of 4 inches.");
     roadEdgesWidthToggle->setDescription("Customize the road edges width.\n\nDefault is 1/2 of the MUTCD average lane line width of 4 inches.");

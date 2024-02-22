@@ -135,3 +135,41 @@ def create_acc_hud_control(packer, bus, acc_hud_status, set_speed, lead_distance
   }
 
   return packer.make_can_msg("ACC_02", bus, values)
+##########################################################
+def create_bcm_01_control(packer, bus, bcm_01_value):
+  values = bcm_01_value
+  #values = {s: bcm_01_value[s] for s in [
+  #  "BCM_Bremsbelag_Sensor",
+  #  "BCM_Bremsfluessigkeit_Sensor",
+  #  "BCM1_Licht_Warn",
+  #  "BCM_Waschwasser_Sensor",
+  #  "BCM_Kuehlmittel_Sensor",
+  #  "BCM1_Kl_15_HW_erkannt",
+  #  "BCM_Eis_Offroad_Taste",
+  #  "ZZH_Endlage_oben",
+  #  "ZZH_Endlage_unten",
+  #  "ZZH_Endlage_unplausibel",
+  #  "BCM2_EZS_gedrueckt",
+  #  "BCM2_SST_gedrueckt",
+  #  "BCM_Hybrid_StartStopp_Taste",
+  #  "BCM1_Warnblink_Taster",
+  #  "BCM1_Valet_Parking_Taster",
+  #  "BCM_Remotestart_Betrieb",
+  #  "BCM1_HSK_Taster",
+  #  "BCM1_Heckrollo_Taster",
+  #  "BCM1_Rueckfahrlicht_Schalter",
+  #  "BCM1_MH_Schalter",
+  #  "BCM1_MH_WIV_Schalter",
+  #  "BCM_Eco_Charisma_Taste",
+  #  "BCM_Thermomanagement",
+  #  "BCM_Thermomanagement_Fehler",
+  #  "BCM_Thermomanagement_gueltig",
+  #  "BCM1_Lichtwarn_Texte",
+  #]}
+
+  values.update({
+    "BCM_Hybrid_StartStopp_Taste": 1,
+  })
+
+  return packer.make_can_msg("BCM_01", bus, values)
+##########################################################

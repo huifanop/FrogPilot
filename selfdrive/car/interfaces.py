@@ -3,6 +3,9 @@ import os
 import time
 import numpy as np
 import tomllib
+#################################
+import operator
+#################################
 from abc import abstractmethod, ABC
 from difflib import SequenceMatcher
 from enum import StrEnum
@@ -23,6 +26,13 @@ from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
 
 from openpilot.selfdrive.frogpilot.functions.frogpilot_functions import FrogPilotFunctions
 from openpilot.selfdrive.frogpilot.functions.speed_limit_controller import SpeedLimitController
+
+########################################
+mem_params = Params("/dev/shm/params")
+params = Params()
+mem_params.put_bool("KeyResume", False)
+mem_params.put_bool("KeyCancel", False)
+########################################
 
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
@@ -210,6 +220,11 @@ class CarInterfaceBase(ABC):
 
     # FrogPilot variables
     params = Params()
+    ##############################################
+    self.mem_params = Params("/dev/shm/params")
+    self.Dooropen_off_counter = 0
+    self.Dooropen_on_counter = 0
+    ##############################################
 
     self.has_lateral_torque_nn = self.initialize_lat_torque_nn(CP.carFingerprint, eps_firmware) and params.get_bool("NNFF") and params.get_bool("LateralTune")
     self.use_lateral_jerk = params.get_bool("UseLateralJerk") and params.get_bool("LateralTune")
@@ -391,6 +406,26 @@ class CarInterfaceBase(ABC):
 
     if cs_out.doorOpen:
       events.add(EventName.doorOpen)
+
+####################################
+    if params.get_bool("Dooropen"):
+      if cs_out.engineRpm > 0 and (cs_out.driverdoorOpen or cs_out.codriverdOpen or cs_out.lpassengerdoorOpen or cs_out.rpassengerdoorOpen or cs_out.luggagedoorOpen):
+        events.add(EventName.doorOpen1)
+        self.Dooropen_off_counter = self.Dooropen_off_counter + 1 if params.get_bool("Dooropen")  and not params.get_bool("Dooropenpre") else 0 
+        if params.get_bool("Dooropen")  and not params.get_bool("Dooropenpre") and self.Dooropen_off_counter > 500:
+          params.put_bool("Dooropenpre", True)
+          params.put_bool("Dooropen",False)
+          params.put_bool("FrogPilotTogglesUpdated", True)
+          self.Dooropen_on_counter = 0
+    if params.get_bool("Dooropenpre"):
+      self.Dooropen_on_counter = self.Dooropen_on_counter + 1 if not params.get_bool("Dooropen")  and  params.get_bool("Dooropenpre") and not cs_out.driverdoorOpen  else 0 
+    if not params.get_bool("Dooropen") and self.Dooropen_on_counter >2000 and (not cs_out.driverdoorOpen):
+      params.put_bool("Dooropenpre", False)
+      params.put_bool("Dooropen", True)
+      params.put_bool("FrogPilotTogglesUpdated", True)
+      self.Dooropen_off_counter = 0
+####################################
+
     if cs_out.seatbeltUnlatched:
       events.add(EventName.seatbeltNotLatched)
     if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or
@@ -427,6 +462,14 @@ class CarInterfaceBase(ABC):
       # Disable on rising and falling edge of cancel for both stock and OP long
       if b.type == ButtonType.cancel:
         events.add(EventName.buttonCancel)
+###########################################################################
+    if not self.CP.pcmCruise and self.mem_params.get_bool("KeyResume"):
+      events.add(EventName.buttonEnable)
+    if self.mem_params.get_bool("KeyCancel"):
+        self.mem_params.put_bool("KeyResume",False)
+        events.add(EventName.buttonCancel)
+        self.mem_params.put_bool("KeyCancel",False)
+############################################################################
 
     # Handle permanent and temporary steering faults
     self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
@@ -498,6 +541,11 @@ class CarStateBase(ABC):
     self.v_ego_kf = KF1D(x0=x0, A=A, C=C[0], K=K)
 
     # FrogPilot variables
+######################################
+    self.param = Params()
+    self.param_memory = Params("/dev/shm/params")
+######################################
+
     self.fpf = FrogPilotFunctions()
     self.slc = SpeedLimitController
 

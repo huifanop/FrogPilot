@@ -466,8 +466,35 @@ void Device::setAwake(bool on) {
 }
 
 void Device::resetInteractiveTimeout(int timeout) {
-  if (timeout == -1) {
-    timeout = 30;
+//////////////////////////////////////////////////////////////////
+  Params params;
+  int screen_brightness = params.getInt("ScreenBrightness");
+  bool AutoOffScreen = params.getBool("AutoOffScreen");
+  int AutoOffScreentime = params.getInt("AutoOffScreentime")-2;
+  if (AutoOffScreentime <0){
+    AutoOffScreentime =1;
+  }
+  if (AutoOffScreen){
+    if (screen_brightness == 0){
+      if (timeout == -1) {
+        timeout = AutoOffScreentime;
+      }
+    } else {
+      if (timeout == -1) {
+        timeout = 30;
+      }
+    }  
+  } else {
+    if (screen_brightness == 0){
+      if (timeout == -1) {
+        timeout = 3;
+      }
+    } else {
+      if (timeout == -1) {
+        timeout = 30;
+      }
+    }  
+//////////////////////////////////////////////////////////////////
   }
   interactive_timeout = timeout * UI_FREQ;
 }
@@ -493,7 +520,9 @@ void Device::updateBrightness(const UIState &s) {
     brightness = 0;
   } else if (s.scene.screen_brightness <= 100) {
     // Bring the screen brightness up to 5% upon screen tap
-    brightness = fmax(5, s.scene.screen_brightness);
+//////////////////////////////////////////////////////////////////
+    brightness = fmax(10, s.scene.screen_brightness);
+//////////////////////////////////////////////////////////////////
   }
 
   if (brightness != last_brightness) {
@@ -505,19 +534,32 @@ void Device::updateBrightness(const UIState &s) {
 }
 
 void Device::updateWakefulness(const UIState &s) {
+//////////////////////////////////////////////////////////////////
+  Params params;
+  bool carstart_OffScreen = params.getBool("OffScreen");
+//////////////////////////////////////////////////////////////////
   bool ignition_just_turned_off = !s.scene.ignition && ignition_on;
   ignition_on = s.scene.ignition;
-
-  if (ignition_just_turned_off) {
-    resetInteractiveTimeout();
-  } else if (interactive_timeout > 0 && --interactive_timeout == 0) {
-    emit interactiveTimeout();
-  }
+//////////////////////////////////////////////////////////////////  
+  if(carstart_OffScreen){
+    if(ignition_on){
+      setAwake(false);
+    }else if(ignition_just_turned_off){
+      setAwake(true);
+    }
+  }else{
+    if (ignition_just_turned_off) {
+      resetInteractiveTimeout();
+    } else if (interactive_timeout > 0 && --interactive_timeout == 0) {
+      emit interactiveTimeout();
+    }
+//////////////////////////////////////////////////////////////////
 
   if (s.scene.screen_brightness != 0) {
     setAwake(s.scene.ignition || interactive_timeout > 0);
   } else {
     setAwake(interactive_timeout > 0);
+  }
   }
 }
 

@@ -28,76 +28,77 @@
 #include "selfdrive/frogpilot/ui/control_settings.h"
 #include "selfdrive/frogpilot/ui/vehicle_settings.h"
 #include "selfdrive/frogpilot/ui/visual_settings.h"
+/////////////////////////////////////////////////////
+#include "selfdrive/frogpilot/ui/hfop_settings.h"
+/////////////////////////////////////////////////////
 
 TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
   // param, title, desc, icon
   std::vector<std::tuple<QString, QString, QString, QString>> toggle_defs{
     {
       "OpenpilotEnabledToggle",
-      tr("Enable openpilot"),
-      tr("Use the openpilot system for adaptive cruise control and lane keep driver assistance. Your attention is required at all times to use this feature. Changing this setting takes effect when the car is powered off."),
+      tr("啟用 openpilot"),
+      tr("使用 openpilot 的主動式巡航和車道保持功能，開啟後您需要持續集中注意力，設定變更在重新啟動車輛後生效。"),
       "../assets/offroad/icon_openpilot.png",
     },
     {
       "ExperimentalLongitudinalEnabled",
-      tr("openpilot Longitudinal Control (Alpha)"),
+      tr("openpilot 縱向控制 (Alpha 版)"),
       QString("<b>%1</b><br><br>%2")
-      .arg(tr("WARNING: openpilot longitudinal control is in alpha for this car and will disable Automatic Emergency Braking (AEB)."))
-      .arg(tr("On this car, openpilot defaults to the car's built-in ACC instead of openpilot's longitudinal control. "
-              "Enable this to switch to openpilot longitudinal control. Enabling Experimental mode is recommended when enabling openpilot longitudinal control alpha.")),
+      .arg(tr("警告：此車輛的 Openpilot 縱向控制功能目前處於 Alpha 版本，使用此功能將會停用自動緊急制動（AEB）功能。"))
+      .arg(tr("在這輛車上，Openpilot 預設使用車輛內建的主動巡航控制（ACC），而非 Openpilot 的縱向控制。啟用此項功能可切換至 Openpilot 的縱向控制。當啟用 Openpilot 縱向控制 Alpha 版本時，建議同時啟用實驗性模式（Experimental mode）。")),
       "../assets/offroad/icon_speed_limit.png",
     },
     {
       "ExperimentalMode",
-      tr("Experimental Mode"),
+      tr("實驗模式"),
       "",
       "../assets/img_experimental_white.svg",
     },
     {
       "DisengageOnAccelerator",
-      tr("Disengage on Accelerator Pedal"),
-      tr("When enabled, pressing the accelerator pedal will disengage openpilot."),
+      tr("油門取消控車"),
+      tr("啟用後，踩踏油門將會取消 openpilot 控制。"),
       "../assets/offroad/icon_disengage_on_accelerator.svg",
     },
     {
       "IsLdwEnabled",
-      tr("Enable Lane Departure Warnings"),
-      tr("Receive alerts to steer back into the lane when your vehicle drifts over a detected lane line without a turn signal activated while driving over 31 mph (50 km/h)."),
+      tr("啟用車道偏離警告"),
+      tr("車速在時速 50 公里 (31 英里) 以上且未打方向燈的情況下，如果偵測到車輛駛出目前車道線時，發出車道偏離警告。"),
       "../assets/offroad/icon_warning.png",
     },
     {
       "RecordFront",
-      tr("Record and Upload Driver Camera"),
-      tr("Upload data from the driver facing camera and help improve the driver monitoring algorithm."),
+      tr("記錄並上傳駕駛監控影像"),
+      tr("上傳駕駛監控的錄像來協助我們提升駕駛監控的準確率。"),
       "../assets/offroad/icon_monitoring.png",
     },
     {
       "IsMetric",
-      tr("Use Metric System"),
-      tr("Display speed in km/h instead of mph."),
+      tr("使用公制單位"),
+      tr("啟用後，速度單位顯示將從 mp/h 改為 km/h。"),
       "../assets/offroad/icon_metric.png",
     },
 #ifdef ENABLE_MAPS
     {
       "NavSettingTime24h",
-      tr("Show ETA in 24h Format"),
-      tr("Use 24h format instead of am/pm"),
+      tr("預計到達時間單位改用 24 小時制"),
+      tr("使用 24 小時制。(預設值為 12 小時制)"),
       "../assets/offroad/icon_metric.png",
     },
     {
       "NavSettingLeftSide",
-      tr("Show Map on Left Side of UI"),
-      tr("Show map on left side when in split screen view."),
+      tr("將地圖顯示在畫面的左側"),
+      tr("進入分割畫面後，地圖將會顯示在畫面的左側。"),
       "../assets/offroad/icon_road.png",
     },
 #endif
   };
 
 
-  std::vector<QString> longi_button_texts{tr("Aggressive"), tr("Standard"), tr("Relaxed")};
-  long_personality_setting = new ButtonParamControl("LongitudinalPersonality", tr("Driving Personality"),
-                                          tr("Standard is recommended. In aggressive mode, openpilot will follow lead cars closer and be more aggressive with the gas and brake. "
-                                             "In relaxed mode openpilot will stay further away from lead cars."),
+  std::vector<QString> longi_button_texts{tr("積極"), tr("標準"), tr("舒適")};
+  long_personality_setting = new ButtonParamControl("LongitudinalPersonality", tr("駕駛模式"),
+                                          tr("推薦使用標準模式。在積極模式中，openpilot 會更靠近前車並在加速和剎車方面更積極。在舒適模式中，openpilot 會與前車保持較遠的距離。"),
                                           "../assets/offroad/icon_speed_limit.png",
                                           longi_button_texts);
   for (auto &[param, title, desc, icon] : toggle_defs) {
@@ -147,18 +148,16 @@ void TogglesPanel::updateToggles() {
                                           "%5<br>"
                                           "<h4>%6</h4><br>"
                                           "%7")
-                                  .arg(tr("openpilot defaults to driving in <b>chill mode</b>. Experimental mode enables <b>alpha-level features</b> that aren't ready for chill mode. Experimental features are listed below:"))
-                                  .arg(tr("End-to-End Longitudinal Control"))
-                                  .arg(tr("Let the driving model control the gas and brakes. openpilot will drive as it thinks a human would, including stopping for red lights and stop signs. "
-                                          "Since the driving model decides the speed to drive, the set speed will only act as an upper bound. This is an alpha quality feature; "
-                                          "mistakes should be expected."))
-                                  .arg(tr("Navigate on openpilot"))
-                                  .arg(tr("When navigation has a destination, openpilot will input the map information into the model. This provides useful context for the model and allows openpilot to keep left or right "
-                                          "appropriately at forks/exits. Lane change behavior is unchanged and still activated by the driver. This is an alpha quality feature; mistakes should be expected, particularly around "
-                                          "exits and forks. These mistakes can include unintended laneline crossings, late exit taking, driving towards dividing barriers in the gore areas, etc."))
-                                  .arg(tr("New Driving Visualization"))
-                                  .arg(tr("The driving visualization will transition to the road-facing wide-angle camera at low speeds to better show some turns. The Experimental mode logo will also be shown in the top right corner. "
-                                          "When a navigation destination is set and the driving model is using it as input, the driving path on the map will turn green."));
+                                  .arg(tr("openpilot 預設以 <b>輕鬆模式</b>駕駛. 實驗模式啟用了尚未準備好進入輕鬆模式的 <b>alpha 級功能</b> 。實驗功能如下：:"))
+                                  .arg(tr("點對點的縱向控制"))
+                                  .arg(tr("讓駕駛模型來控制油門及煞車。openpilot將會模擬人類的駕駛行為，包含在看見紅燈及停止標示時停車。"
+                                          "由於車速將由駕駛模型決定，因此您設定的時速將成為速度上限。本功能仍在早期實驗階段，請預期模型有犯錯的可能性。"))
+                                  .arg(tr("在openpilot上使用導航"))
+                                  .arg(tr("當導航有目的地時openpilot會將地圖資訊輸入到模型中。這為模型提供了有用訊息 並允許 openpilot 在分叉/出口處適當地保持左或右。"
+                                          "變道行為仍需由駕駛啟動。這是一個alpha品質功能;在出口和分叉處容易有誤判。"
+                                          "設置導航目的地並且駕駛模型將其用作輸入時，地圖上的行駛路徑將變為綠色。"))
+                                  .arg(tr("新的駕駛視覺介面"))
+                                  .arg(tr("行駛畫面將在低速時切換至道路朝向的廣角鏡頭，以更好地顯示一些轉彎。實驗模式圖標也將顯示在右上角。當設定了導航目的地並且行駛模型正在將其作為輸入時，地圖上的行駛路徑將變為綠色。"));
 
   const bool is_release = params.getBool("IsReleaseBranch");
   auto cp_bytes = params.get("CarParamsPersistent");
@@ -182,15 +181,15 @@ void TogglesPanel::updateToggles() {
       long_personality_setting->setEnabled(false);
       params.remove("ExperimentalMode");
 
-      const QString unavailable = tr("Experimental mode is currently unavailable on this car since the car's stock ACC is used for longitudinal control.");
+      const QString unavailable = tr("因車輛使用內建ACC系統，無法在本車輛上啟動實驗模式。");
 
       QString long_desc = unavailable + " " + \
-                          tr("openpilot longitudinal control may come in a future update.");
+                          tr("openpilot 縱向控制可能會在未來的更新中提供。");
       if (CP.getExperimentalLongitudinalAvailable()) {
         if (is_release) {
-          long_desc = unavailable + " " + tr("An alpha version of openpilot longitudinal control can be tested, along with Experimental mode, on non-release branches.");
+          long_desc = unavailable + " " + tr("在正式 (release) 版以外的分支上可以測試 openpilot 縱向控制的 Alpha 版本，以及實驗模式。");
         } else {
-          long_desc = tr("Enable the openpilot longitudinal control (alpha) toggle to allow Experimental mode.");
+          long_desc = tr("啟用 openpilot 縱向控制 (alpha) 切換以允許實驗模式。");
         }
       }
       experimental_mode_toggle->setDescription("<b>" + long_desc + "</b><br><br>" + e2e_description);
@@ -205,36 +204,36 @@ void TogglesPanel::updateToggles() {
 
 DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   setSpacing(50);
-  addItem(new LabelControl(tr("Dongle ID"), getDongleId().value_or(tr("N/A"))));
-  addItem(new LabelControl(tr("Serial"), params.get("HardwareSerial").c_str()));
+  addItem(new LabelControl(tr("Dongle ID"), getDongleId().value_or(tr("無法使用"))));
+  addItem(new LabelControl(tr("序號"), params.get("HardwareSerial").c_str()));
 
   // offroad-only buttons
 
-  auto dcamBtn = new ButtonControl(tr("Driver Camera"), tr("PREVIEW"),
-                                   tr("Preview the driver facing camera to ensure that driver monitoring has good visibility. (vehicle must be off)"));
+  auto dcamBtn = new ButtonControl(tr("駕駛監控鏡頭"), tr("預覽"),
+                                   tr("預覽駕駛員監控鏡頭畫面，以確保其具有良好視野。（僅在熄火時可用）"));
   connect(dcamBtn, &ButtonControl::clicked, [=]() { emit showDriverView(); });
   addItem(dcamBtn);
 
-  auto resetCalibBtn = new ButtonControl(tr("Reset Calibration"), tr("RESET"), "");
+  auto resetCalibBtn = new ButtonControl(tr("重設校正"), tr("重設"), "");
   connect(resetCalibBtn, &ButtonControl::showDescriptionEvent, this, &DevicePanel::updateCalibDescription);
   connect(resetCalibBtn, &ButtonControl::clicked, [&]() {
-    if (ConfirmationDialog::confirm(tr("Are you sure you want to reset calibration?"), tr("Reset"), this)) {
+    if (ConfirmationDialog::confirm(tr("是否確定要重設校正?"), tr("重設"), this)) {
       params.remove("CalibrationParams");
       params.remove("LiveTorqueParameters");
     }
   });
   addItem(resetCalibBtn);
 
-  auto retrainingBtn = new ButtonControl(tr("Review Training Guide"), tr("REVIEW"), tr("Review the rules, features, and limitations of openpilot"));
-  connect(retrainingBtn, &ButtonControl::clicked, [=]() {
-    if (ConfirmationDialog::confirm(tr("Are you sure you want to review the training guide?"), tr("Review"), this)) {
-      emit reviewTrainingGuide();
+    auto retrainingBtn = new ButtonControl(tr("觀看使用教學"), tr("觀看"), tr("觀看 openpilot 的使用規則、功能和限制"));
+    connect(retrainingBtn, &ButtonControl::clicked, [=]() {
+      if (ConfirmationDialog::confirm(tr("是否確定要觀看使用教學?"), tr("觀看"), this)) {
+        emit reviewTrainingGuide();
     }
   });
   addItem(retrainingBtn);
 
   if (Hardware::TICI()) {
-    auto regulatoryBtn = new ButtonControl(tr("Regulatory"), tr("VIEW"), "");
+    auto regulatoryBtn = new ButtonControl(tr("法規/監管"), tr("觀看"), "");
     connect(regulatoryBtn, &ButtonControl::clicked, [=]() {
       const std::string txt = util::read_file("../assets/offroad/fcc.html");
       ConfirmationDialog::rich(QString::fromStdString(txt), this);
@@ -242,10 +241,10 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
     addItem(regulatoryBtn);
   }
 
-  auto translateBtn = new ButtonControl(tr("Change Language"), tr("CHANGE"), "");
+  auto translateBtn = new ButtonControl(tr("更改語言"), tr("更改"), "");
   connect(translateBtn, &ButtonControl::clicked, [=]() {
     QMap<QString, QString> langs = getSupportedLanguages();
-    QString selection = MultiOptionDialog::getSelection(tr("Select a language"), langs.keys(), langs.key(uiState()->language), this);
+    QString selection = MultiOptionDialog::getSelection(tr("選擇語系"), langs.keys(), langs.key(uiState()->language), this);
     if (!selection.isEmpty()) {
       // put language setting, exit Qt UI, and trigger fast restart
       params.put("LanguageSetting", langs[selection].toStdString());
@@ -256,11 +255,11 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   addItem(translateBtn);
 
   // Delete driving footage button
-  auto deleteFootageBtn = new ButtonControl(tr("Delete Driving Data"), tr("DELETE"), tr("This button provides a swift and secure way to permanently delete all "
-    "stored driving footage and data from your device. Ideal for maintaining privacy or freeing up space.")
+  auto deleteFootageBtn = new ButtonControl(tr("刪除駕駛數據"), tr("刪除"), tr("此按鈕提供了一種快速且安全的方式來永久刪除所有"
+    "裝置中儲存的駕駛錄影和資料。非常適合維護隱私或釋放空間..")
   );
   connect(deleteFootageBtn, &ButtonControl::clicked, [this]() {
-    if (!ConfirmationDialog::confirm(tr("Are you sure you want to permanently delete all of your driving footage and data?"), tr("Delete"), this)) return;
+    if (!ConfirmationDialog::confirm(tr("您確定要永久刪除所有駕駛錄影和資料嗎?"), tr("刪除"), this)) return;
     std::thread([&] {
       std::system("rm -rf /data/media/0/realdata");
     }).detach();
@@ -268,9 +267,9 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   addItem(deleteFootageBtn);
 
   // Panda flashing button
-  auto flashPandaBtn = new ButtonControl(tr("Flash Panda"), tr("FLASH"), "Use this button to troubleshoot and update the Panda device's firmware.");
+  auto flashPandaBtn = new ButtonControl(tr("刷新 Panda"), tr("刷新"), "Use this button to troubleshoot and update the Panda device's firmware.");
   connect(flashPandaBtn, &ButtonControl::clicked, [this]() {
-    if (!ConfirmationDialog::confirm(tr("Are you sure you want to flash the Panda?"), tr("Flash"), this)) return;
+    if (!ConfirmationDialog::confirm(tr("是否確定要刷新 Panda?"), tr("刷新"), this)) return;
     QProcess process;
     // Get Panda type
     SubMaster &sm = *(uiState()->sm);
@@ -304,12 +303,12 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
   QHBoxLayout *power_layout = new QHBoxLayout();
   power_layout->setSpacing(30);
 
-  QPushButton *reboot_btn = new QPushButton(tr("Reboot"));
+  QPushButton *reboot_btn = new QPushButton(tr("重啟"));
   reboot_btn->setObjectName("reboot_btn");
   power_layout->addWidget(reboot_btn);
   QObject::connect(reboot_btn, &QPushButton::clicked, this, &DevicePanel::reboot);
 
-  QPushButton *poweroff_btn = new QPushButton(tr("Power Off"));
+  QPushButton *poweroff_btn = new QPushButton(tr("關機"));
   poweroff_btn->setObjectName("poweroff_btn");
   power_layout->addWidget(poweroff_btn);
   QObject::connect(poweroff_btn, &QPushButton::clicked, this, &DevicePanel::poweroff);
@@ -329,8 +328,8 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
 
 void DevicePanel::updateCalibDescription() {
   QString desc =
-      tr("openpilot requires the device to be mounted within 4° left or right and "
-         "within 5° up or 9° down. openpilot is continuously calibrating, resetting is rarely required.");
+      tr("openpilot 需要將設備固定在左右偏差 4° 以內，朝上偏差 5° 以内或朝下偏差 8° 以内。 "
+         "鏡頭在後台會持續自動校準，很少有需要重置的情况。");
   std::string calib_bytes = params.get("CalibrationParams");
   if (!calib_bytes.empty()) {
     try {
@@ -340,9 +339,9 @@ void DevicePanel::updateCalibDescription() {
       if (calib.getCalStatus() != cereal::LiveCalibrationData::Status::UNCALIBRATED) {
         double pitch = calib.getRpyCalib()[1] * (180 / M_PI);
         double yaw = calib.getRpyCalib()[2] * (180 / M_PI);
-        desc += tr(" Your device is pointed %1° %2 and %3° %4.")
-                    .arg(QString::number(std::abs(pitch), 'g', 1), pitch > 0 ? tr("down") : tr("up"),
-                         QString::number(std::abs(yaw), 'g', 1), yaw > 0 ? tr("left") : tr("right"));
+        desc += tr("你的設備目前朝 %1° %2 以及朝 %3° %4.")
+                    .arg(QString::number(std::abs(pitch), 'g', 1), pitch > 0 ? tr("下") : tr("上"),
+                         QString::number(std::abs(yaw), 'g', 1), yaw > 0 ? tr("左") : tr("右"));
       }
     } catch (kj::Exception) {
       qInfo() << "invalid CalibrationParams";
@@ -353,27 +352,27 @@ void DevicePanel::updateCalibDescription() {
 
 void DevicePanel::reboot() {
   if (!uiState()->engaged()) {
-    if (ConfirmationDialog::confirm(tr("Are you sure you want to reboot?"), tr("Reboot"), this)) {
+    if (ConfirmationDialog::confirm(tr("是否確定要重新啟動?"), tr("重新啟動"), this)) {
       // Check engaged again in case it changed while the dialog was open
       if (!uiState()->engaged()) {
         params.putBool("DoReboot", true);
       }
     }
   } else {
-    ConfirmationDialog::alert(tr("Disengage to Reboot"), this);
+    ConfirmationDialog::alert(tr("請先取消控車才能重新啟動"), this);
   }
 }
 
 void DevicePanel::poweroff() {
   if (!uiState()->engaged()) {
-    if (ConfirmationDialog::confirm(tr("Are you sure you want to power off?"), tr("Power Off"), this)) {
+    if (ConfirmationDialog::confirm(tr("是否確定要關機?"), tr("關機"), this)) {
       // Check engaged again in case it changed while the dialog was open
       if (!uiState()->engaged()) {
         params.putBool("DoShutdown", true);
       }
     }
   } else {
-    ConfirmationDialog::alert(tr("Disengage to Power Off"), this);
+    ConfirmationDialog::alert(tr("請先取消控車才能關機"), this);
   }
 }
 
@@ -397,7 +396,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
   panel_widget = new QStackedWidget();
 
   // close button
-  QPushButton *close_btn = new QPushButton(tr("← Back"));
+  QPushButton *close_btn = new QPushButton(tr("← 返回"));
   close_btn->setStyleSheet(R"(
     QPushButton {
       font-size: 50px;
@@ -440,14 +439,17 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
   QObject::connect(frogpilotVisuals, &FrogPilotVisualsPanel::openParentToggle, this, [this]() {frogPilotTogglesOpen = true;});
 
   QList<QPair<QString, QWidget *>> panels = {
-    {tr("Device"), device},
-    {tr("Network"), new Networking(this)},
-    {tr("Toggles"), toggles},
-    {tr("Software"), new SoftwarePanel(this)},
-    {tr("Controls"), frogpilotControls},
-    {tr("Navigation"), new FrogPilotNavigationPanel(this)},
-    {tr("Vehicles"), new FrogPilotVehiclesPanel(this)},
-    {tr("Visuals"), frogpilotVisuals},
+    {tr("設備資訊"), device},
+    {tr("網路設定"), new Networking(this)},
+    {tr("官方設定"), toggles},
+    {tr("軟體資訊"), new SoftwarePanel(this)},
+    {tr("控制設定"), frogpilotControls},
+    {tr("導航設定"), new FrogPilotNavigationPanel(this)},
+    {tr("車輛設定"), new FrogPilotVehiclesPanel(this)},
+    {tr("介面設定"), frogpilotVisuals},
+/////////////////////////////////////////////////////
+    {tr("H F O P"), new HFOPControlsPanel(this)},
+/////////////////////////////////////////////////////
   };
 
   nav_btns = new QButtonGroup(this);
@@ -460,7 +462,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
         color: grey;
         border: none;
         background: none;
-        font-size: 65px;
+        font-size: 55px;
         font-weight: 500;
       }
       QPushButton:checked {
@@ -472,9 +474,9 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
     )");
     btn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     nav_btns->addButton(btn);
-    sidebar_layout->addWidget(btn, 0, Qt::AlignRight);
+    sidebar_layout->addWidget(btn, 0, Qt::AlignHCenter);
 
-    const int lr_margin = name != tr("Network") ? 50 : 0;  // Network panel handles its own margins
+    const int lr_margin = name != tr("網路") ? 50 : 0;  // Network panel handles its own margins
     panel->setContentsMargins(lr_margin, 25, lr_margin, 25);
 
     ScrollView *panel_frame = new ScrollView(panel, this);

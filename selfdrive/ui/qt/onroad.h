@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <QMovie>
+#include <QElapsedTimer>
 #include <QPushButton>
 #include <QStackedLayout>
 #include <QWidget>
@@ -11,7 +13,9 @@
 #include "selfdrive/ui/qt/widgets/cameraview.h"
 
 #include "selfdrive/frogpilot/screenrecorder/screenrecorder.h"
-
+////////////////////////
+#include "selfdrive/ui/qt/maps/map_instructions.h"
+////////////////////////
 const int btn_size = 192;
 const int img_size = (btn_size / 4) * 3;
 
@@ -137,7 +141,9 @@ public:
 
 private:
   void drawText(QPainter &p, int x, int y, const QString &text, int alpha = 255);
-
+//////////////////////////////////
+  void drawPersonalities(QPainter &p);
+//////////////////////////////////
   QVBoxLayout *main_layout;
   ExperimentalButton *experimental_btn;
   QPixmap dm_img;
@@ -169,6 +175,9 @@ private:
   void drawTurnSignals(QPainter &p);
 
   // FrogPilot variables
+/////////////////////////
+  Params params;
+/////////////////////////
   Params paramsMemory{"/dev/shm/params"};
 
   UIScene &scene;
@@ -217,7 +226,18 @@ private:
   int obstacleDistance;
   int obstacleDistanceStock;
   int totalFrames = 8;
-
+////////////////////////////
+  float batteryVol;
+  float tankvolumeProfile;
+  float kplProfile;
+  bool currentIsEngaged;
+  MapInstructions *map_instructions;
+  QVector<std::pair<QPixmap, QString>> profile_data;
+  QVector<std::pair<QPixmap, QString>> accprofile_data;
+  QVector<std::pair<QPixmap, QString>> roadprofile_data;
+  QVector<std::pair<QPixmap, QString>> autoaccprofile_data;
+  QString navBanner;
+////////////////////////////
   QString leadDistanceUnit;
   QString leadSpeedUnit;
 

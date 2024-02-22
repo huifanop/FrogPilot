@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import os
+
 import time
 import wave
 
@@ -41,11 +42,29 @@ sound_list: Dict[int, Tuple[str, Optional[int], float]] = {
 
   AudibleAlert.warningSoft: ("warning_soft.wav", None, MAX_VOLUME),
   AudibleAlert.warningImmediate: ("warning_immediate.wav", None, MAX_VOLUME),
-
+############################################################
+  AudibleAlert.carawayed: ("carawayed.wav", 1, MAX_VOLUME),
+  AudibleAlert.greenLight: ("greenlight.wav", 1, MAX_VOLUME),
+  AudibleAlert.lanechangeblockedsound: ("lanechangeblockedsound.wav", 1, MAX_VOLUME),
+  AudibleAlert.lanechangesound: ("lanechangesound.wav", 1, MAX_VOLUME),
+  AudibleAlert.carapproaching: ("carapproaching.wav", 1, MAX_VOLUME),
+  AudibleAlert.detectspeedu: ("detectspeedu.wav", 1, MAX_VOLUME),
+  AudibleAlert.detectspeedd: ("detectspeedd.wav", 1, MAX_VOLUME),
+#############################################################
+  AudibleAlert.navturn: ("navturn.wav", 1, MAX_VOLUME),
+  AudibleAlert.navturnleft: ("navturnleft.wav", 1, MAX_VOLUME),
+  AudibleAlert.navturnright: ("navturnright.wav", 1, MAX_VOLUME),
+  AudibleAlert.navuturn: ("navuturn.wav", 1, MAX_VOLUME),
+  AudibleAlert.navofframp: ("navofframp.wav", 1, MAX_VOLUME),
+  AudibleAlert.navsharpright: ("navsharpright.wav", 1, MAX_VOLUME),
+  AudibleAlert.navsharpleft: ("navsharpleft.wav", 1, MAX_VOLUME),
+############################################################
+  
   # Random Events
   AudibleAlert.fart: ("fart.wav", 1, MAX_VOLUME),
   AudibleAlert.firefox: ("firefox.wav", 1, MAX_VOLUME),
   AudibleAlert.noice: ("noice.wav", 1, MAX_VOLUME),
+
 }
 
 def check_controls_timeout_alert(sm):
@@ -164,12 +183,9 @@ class Soundd:
       while True:
         sm.update(0)
 
-        if sm.updated['microphone'] and self.current_alert == AudibleAlert.none and not self.alert_volume_control: # only update volume filter when not playing alert
+        if sm.updated['microphone'] and self.current_alert == AudibleAlert.none: # only update volume filter when not playing alert
           self.spl_filter_weighted.update(sm["microphone"].soundPressureWeightedDb)
-          self.current_volume = self.calculate_volume(float(self.spl_filter_weighted.x))
-
-        elif self.alert_volume_control and self.current_alert in self.volume_map:
-          self.current_volume = self.volume_map[self.current_alert] / 100.0
+          self.current_volume = max(self.calculate_volume(float(self.spl_filter_weighted.x)) - self.silent_mode, 0)
 
         self.get_audible_alert(sm)
 
@@ -177,22 +193,12 @@ class Soundd:
 
         assert stream.active
 
-        # Update FrogPilot parameters
-        if self.params_memory.get_bool("FrogPilotTogglesUpdated"):
-          self.update_frogpilot_params()
+    # Update FrogPilot parameters
+    if self.params_memory.get_bool("FrogPilotTogglesUpdated"):
+      self.update_frogpilot_params()
 
   def update_frogpilot_params(self):
-    self.alert_volume_control = self.params.get_bool("AlertVolumeControl")
-
-    self.volume_map = {
-      AudibleAlert.disengage: self.params.get_int("DisengageVolume"),
-      AudibleAlert.engage: self.params.get_int("EngageVolume"),
-      AudibleAlert.prompt: self.params.get_int("PromptVolume"),
-      AudibleAlert.promptRepeat: self.params.get_int("PromptDistractedVolume"),
-      AudibleAlert.promptDistracted: self.params.get_int("RefuseVolume"),
-      AudibleAlert.warningSoft: self.params.get_int("WarningSoftVolume"),
-      AudibleAlert.warningImmediate: self.params.get_int("WarningImmediateVolume")
-    }
+    self.silent_mode = self.params.get_bool("SilentMode")
 
     custom_theme = self.params.get_bool("CustomTheme")
     custom_sounds = self.params.get_int("CustomSounds") if custom_theme else 0

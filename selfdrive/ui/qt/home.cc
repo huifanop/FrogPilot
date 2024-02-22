@@ -76,6 +76,20 @@ void HomeWindow::offroadTransition(bool offroad) {
   } else {
     slayout->setCurrentWidget(onroad);
   }
+////////////////////////////////////////////////
+  // if (true) {
+  //   sidebar->setVisible(true);
+  //   slayout->setCurrentWidget(onroad);
+  // } else {
+  //   body->setEnabled(false);
+  //   sidebar->setVisible(offroad);
+  //   if (offroad) {
+  //     slayout->setCurrentWidget(home);
+  //   } else {
+  //     slayout->setCurrentWidget(onroad);
+  //   }
+  // }  
+////////////////////////////////////////////////
 }
 
 void HomeWindow::showDriverView(bool show) {
@@ -120,7 +134,7 @@ OffroadHome::OffroadHome(QWidget* parent) : QFrame(parent) {
   header_layout->setContentsMargins(0, 0, 0, 0);
   header_layout->setSpacing(16);
 
-  update_notif = new QPushButton(tr("UPDATE"));
+  update_notif = new QPushButton(tr("更新"));
   update_notif->setVisible(false);
   update_notif->setStyleSheet("background-color: #364DEF;");
   QObject::connect(update_notif, &QPushButton::clicked, [=]() { center_layout->setCurrentIndex(1); });
@@ -238,7 +252,8 @@ void OffroadHome::hideEvent(QHideEvent *event) {
 void OffroadHome::refresh() {
   QString model = QString::fromStdString(params.get("Model"));
 
-  date->setText(QLocale(uiState()->language.mid(5)).toString(QDateTime::currentDateTime(), "dddd, MMMM d"));
+  date->setText(QLocale(uiState()->language.mid(5)).toString(QDateTime::currentDateTime(), "yyyy, MMMM dd, dddd, hh:mm:ss"));
+
   version->setText(getBrand() + " v" + getVersion().left(14).trimmed() + " - " + MODEL_NAME[model]);
 
   bool updateAvailable = update_widget->refresh();
@@ -258,6 +273,6 @@ void OffroadHome::refresh() {
   update_notif->setVisible(updateAvailable);
   alert_notif->setVisible(alerts);
   if (alerts) {
-    alert_notif->setText(QString::number(alerts) + (alerts > 1 ? tr(" ALERTS") : tr(" ALERT")));
+    alert_notif->setText(QString::number(alerts) + (alerts > 1 ? tr(" 提醒") : tr(" 提醒")));
   }
 }

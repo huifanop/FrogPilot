@@ -1,6 +1,9 @@
 from cereal import car
 from opendbc.can.packer import CANPacker
-from openpilot.common.numpy_fast import clip
+#############################
+from openpilot.common.numpy_fast import clip, interp
+from openpilot.common.params import Params
+#############################
 from openpilot.common.conversions import Conversions as CV
 from openpilot.common.realtime import DT_CTRL
 from openpilot.selfdrive.car import apply_driver_steer_torque_limits
@@ -29,6 +32,18 @@ class CarController:
     actuators = CC.actuators
     hud_control = CC.hudControl
     can_sends = []
+#######################################################################################
+    self.params = Params()
+    self.params_memory = Params("/dev/shm/params")
+
+    if self.params.get_bool("Disablestartstop"):
+    ###### BCM_01 #####
+      if self.frame % self.CCP.BCM_01_STEP == 0:
+        if CS.motor_18["MO_Hybrid_StartStopp_LED"] == 0:
+          #if CS.out.engineRpm > 0:
+            #can_sends.append(self.CCS.create_bcm_01_control(self.packer_pt, CANBUS.cam, CS.bcm_01))
+          can_sends.append(self.CCS.create_bcm_01_control(self.packer_pt, CANBUS.body, CS.bcm_01))
+#######################################################################################
 
     # **** Steering Controls ************************************************ #
 

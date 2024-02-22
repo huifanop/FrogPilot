@@ -14,7 +14,16 @@ class CarState(CarStateBase):
     self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.esp_hold_confirmation = False
     self.upscale_lead_car_signal = False
+#############################
     self.eps_stock_values = False
+    vsf = self.param.get_int("VagSpeedFactor")/2
+    self.vagspeedfactor = (110 +vsf) /110
+    self.dt = 0.0
+    self.dt_prev = 0.0
+    self.usefuel_prev = 0
+    self.frame = 0
+    self.kpln = 0
+#############################
 
   def create_button_events(self, pt_cp, buttons):
     button_events = []
@@ -29,8 +38,9 @@ class CarState(CarStateBase):
       self.button_states[button.event_type] = state
 
     return button_events
-
-  def update(self, pt_cp, cam_cp, ext_cp, trans_type, conditional_experimental_mode, frogpilot_variables):
+####################################
+  def update(self, pt_cp, body_cp, cam_cp, ext_cp, trans_type, conditional_experimental_mode, frogpilot_variables):
+####################################
     if self.CP.carFingerprint in PQ_CARS:
       return self.update_pq(pt_cp, cam_cp, ext_cp, trans_type, conditional_experimental_mode, frogpilot_variables)
 
@@ -42,8 +52,9 @@ class CarState(CarStateBase):
       pt_cp.vl["ESP_19"]["ESP_HL_Radgeschw_02"],
       pt_cp.vl["ESP_19"]["ESP_HR_Radgeschw_02"],
     )
-
-    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
+##########儀表時速與C3同步############
+    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])* self.vagspeedfactor)
+####################################
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw == 0
 
@@ -58,7 +69,9 @@ class CarState(CarStateBase):
     # Verify EPS readiness to accept steering commands
     hca_status = self.CCP.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
     ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
-    ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
+###########全時修正LKAS FAULT###############
+    ret.steerFaultTemporary = hca_status in ("INITIALIZING")
+####################################
 
     # VW Emergency Assist status tracking and mitigation
     self.eps_stock_values = pt_cp.vl["LH_EPS_03"]
@@ -73,6 +86,10 @@ class CarState(CarStateBase):
     brake_pressure_detected = bool(pt_cp.vl["ESP_05"]["ESP_Fahrer_bremst"])
     ret.brakePressed = brake_pedal_pressed or brake_pressure_detected
     ret.parkingBrake = bool(pt_cp.vl["Kombi_01"]["KBI_Handbremse"])  # FIXME: need to include an EPB check as well
+####################################
+    ret.tankvol = pt_cp.vl["Kombi_03"]["KBI_Tankinhalt_hochaufl"]
+    ret.engineRpm = body_cp.vl["Motor_12"]["MO_Drehzahl_01"]
+####################################
 
     # Update gear and/or clutch position data.
     if trans_type == TransmissionType.automatic:
@@ -87,10 +104,23 @@ class CarState(CarStateBase):
         ret.gearShifter = GearShifter.drive
 
     # Update door and trunk/hatch lid open status.
-    ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_BT_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],
+####################################
+    if self.param.get_bool("Dooropen"):
+      if self.param.get_bool("DriverdoorOpen"):
+        ret.driverdoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"]])
+      if self.param.get_bool("CodriverdoorOpen"):
+        ret.codriverdOpen = any([pt_cp.vl["Gateway_72"]["ZV_BT_offen"]])
+      if self.param.get_bool("LpassengerdoorOpen"):
+        ret.lpassengerdoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_HFS_offen"]])
+      if self.param.get_bool("RpassengerdoorOpen"): 
+        ret.rpassengerdoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"]])
+      if self.param.get_bool("LuggagedoorOpen"):
+        ret.luggagedoorOpen = any([pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
+####################################    
+    ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],##駕駛
+                        pt_cp.vl["Gateway_72"]["ZV_BT_offen"],##副駕
+                        pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],##左後
+                        pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],##右後
                         pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
 
     # Update seatbelt fastened status.
@@ -101,6 +131,10 @@ class CarState(CarStateBase):
     if self.CP.enableBsm:
       ret.leftBlindspot = bool(ext_cp.vl["SWA_01"]["SWA_Infostufe_SWA_li"]) or bool(ext_cp.vl["SWA_01"]["SWA_Warnung_SWA_li"])
       ret.rightBlindspot = bool(ext_cp.vl["SWA_01"]["SWA_Infostufe_SWA_re"]) or bool(ext_cp.vl["SWA_01"]["SWA_Warnung_SWA_re"])
+##########################################################
+    self.bcm_01 = pt_cp.vl["BCM_01"]
+    self.motor_18 = pt_cp.vl["Motor_18"]
+##########################################################
 
     # Consume factory LDW data relevant for factory SWA (Lane Change Assist)
     # and capture it for forwarding to the blind spot radar controller
@@ -169,6 +203,28 @@ class CarState(CarStateBase):
       if self.personality_profile != self.previous_personality_profile:
         self.fpf.distance_button_function(self.personality_profile)
         self.previous_personality_profile = self.personality_profile
+
+####################################    
+    kvsn = body_cp.vl["Motor_04"]["MO_KVS"]
+    
+    self.dt += ret.vEgo * 0.01
+    if self.frame % 50 == 0:
+      self.frame = 0
+      fueld = 0
+      if kvsn != self.usefuel_prev:        
+        if kvsn > self.usefuel_prev:
+          fueld = (kvsn - self.usefuel_prev)
+        else:
+          fueld =  (kvsn + (32767 - self.usefuel_prev))
+        if fueld > 0 and (self.dt-self.dt_prev) > 0:
+          self.kpln = ((self.dt-self.dt_prev)/1000)/(fueld/1000000)
+      self.usefuel_prev = kvsn
+      self.dt_prev = self.dt
+    if self.kpln < 1 or self.kpln > 300:
+      self.kpln = 0
+    ret.kpl = self.kpln
+    self.frame += 1
+####################################
 
     return ret
 
@@ -274,6 +330,21 @@ class CarState(CarStateBase):
 
     return ret
 
+##########################################################
+  @staticmethod
+  def get_body_can_parser(CP):
+    messages = [
+      # sig_address, frequency
+      ("Getriebe_14", 10),
+      ("Motor_12", 100),
+      ("Motor_09", 1),
+      ("OBD_01", 1),
+      ("Motor_04", 0),
+    ]
+
+    return CANParser(DBC[CP.carFingerprint]["pt"], messages, CANBUS.body)
+##########################################################
+
   @staticmethod
   def get_can_parser(CP):
     if CP.carFingerprint in PQ_CARS:
@@ -296,6 +367,10 @@ class CarState(CarStateBase):
       ("Kombi_01", 2),      # From J285 Instrument cluster
       ("Blinkmodi_02", 1),  # From J519 BCM (sent at 1Hz when no lights active, 50Hz when active)
       ("Kombi_03", 0),      # From J285 instrument cluster (not present on older cars, 1Hz when present)
+##########################################################
+      ("BCM_01", 1),
+      ("Motor_18", 1),
+##########################################################
     ]
 
     if CP.transmissionType == TransmissionType.automatic:
