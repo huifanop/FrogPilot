@@ -255,9 +255,14 @@ def get_last_lon_lat():
   last_pos = params.get("LastGPSPosition")
   if last_pos:
     l = json.loads(last_pos)
+    return l["longitude"], l["latitude"]
   else:
-    return 0.0, 0.0
-  return l["longitude"], l["latitude"]
+    locale = params.get("LanguageSetting", encoding='utf8')
+    if locale == "main_zh-CHT":
+      return "121.3149803", "24.996256935"
+    else:
+      #Comma's headquarters:1441 STATE STREET SAN DIEGO CA 92101
+      return "174.1966074", "13.8404475" 
 
 def get_locations():
   data = params.get("ApiCache_NavDestinations", encoding='utf-8')

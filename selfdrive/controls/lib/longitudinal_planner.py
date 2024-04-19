@@ -67,6 +67,9 @@ class LongitudinalPlanner:
     self.j_desired_trajectory = np.zeros(CONTROL_N)
     self.solverExecutionTime = 0.0
     self.params = Params()
+####################################
+    self.params_memory = Params("/dev/shm/params")
+####################################
     self.param_read_counter = 0
     self.read_param()
     self.personality = log.LongitudinalPersonality.standard
@@ -105,6 +108,10 @@ class LongitudinalPlanner:
 
     long_control_off = sm['controlsState'].longControlState == LongCtrlState.off
     force_slow_decel = sm['controlsState'].forceDecel
+####################################
+    if sm['controlsState'].enabled:
+      self.params_memory.put_bool('KeyResume',False)
+####################################
 
     # Reset current state when not engaged, or user is controlling the speed
     reset_state = long_control_off if self.CP.openpilotLongitudinalControl else not sm['controlsState'].enabled
@@ -159,9 +166,9 @@ class LongitudinalPlanner:
     a_prev = self.a_desired
     self.a_desired = float(interp(self.dt, ModelConstants.T_IDXS[:CONTROL_N], self.a_desired_trajectory))
     self.v_desired_filter.x = self.v_desired_filter.x + self.dt * (self.a_desired + a_prev) / 2.0
-
-    frogpilot_planner.update(sm['carState'], sm['controlsState'], sm['modelV2'], self.mpc, sm, v_cruise, v_ego)
-
+####################################
+    frogpilot_planner.update(sm['carState'], sm['controlsState'], sm['modelV2'], self.mpc, sm, v_cruise, v_ego, sm['radarState'])
+####################################
   def publish(self, sm, pm, frogpilot_planner):
     plan_send = messaging.new_message('longitudinalPlan')
 

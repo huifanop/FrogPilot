@@ -81,13 +81,60 @@ def manager_init() -> None:
   default_params: List[Tuple[str, Union[str, bytes]]] = [
     ("CompletedTrainingVersion", "0"),
     ("DisengageOnAccelerator", "0"),
-    ("GsmMetered", "1"),
+    ("GsmMetered", "0"),
     ("HasAcceptedTerms", "0"),
-    ("LanguageSetting", "main_en"),
+    ("IsLdwEnabled", "1"),
+    ("IsMetric", "1"),
+    ("LanguageSetting", "main_zh-CHT"),
     ("OpenpilotEnabledToggle", "1"),
     ("UpdaterAvailableBranches", ""),
     ("LongitudinalPersonality", str(log.LongitudinalPersonality.standard)),
+    ("ExperimentalLongitudinalEnabled", "1"),
+    ("ExperimentalMode", "1"),
+    ("ExperimentalModeConfirmed", "1"),
+##############################################
+    ("SshEnabled","1"),
+    ("NavEnable", "1"),
+##############################################
 
+##############################################
+    ("TrafficModespeed", "50"),
+    ("Faststart", "1"),
+    ("Fuelprice", "1"),
+    ("Fuelcosts", "330"),
+    ("Fuelcostsweek", "0"),
+    ("Fuelconsumptionweek", "0"),
+    ("AutoACC", "1"),
+    ("AutoACCspeed", "10"),
+    ("AutoACCCarAway", "1"),
+    ("AutoACCCarAwaystatus", "0"),
+    ("AutoACCGreenLight", "1"),
+    ("AutoACCGreenLightstatus", "0"),
+    ("CarApproachingReminder", "1"),
+    ("Dooropen", "1"),
+    ("DriverdoorOpen", "1"),
+    ("CodriverdoorOpen", "0"),
+    ("LpassengerdoorOpen", "0"),
+    ("RpassengerdoorOpen", "0"),
+    ("LuggagedoorOpen", "1"),
+    ("ChangeLaneReminder", "1"),
+    ("Disablestartstop", "1"),
+    ("Laneblindspotdetection", "1"),
+    ("Navspeed", "1"),
+    ("NavReminder", "1"),
+    ("Emergencycontrol", "1"),
+    ("Roadtype", "1"),
+    ("RoadtypeProfile", "1"),
+    ("speedoverreminder", "1"),    
+    ("speedreminderreset", "1"),
+    ("Speeddistance", "1"),
+    ("VagSpeed", "1"),
+    ("VagSpeedFactor", "13"),
+    ("Voicereminder", "1"),
+    ("speedoverreminderstatus", "0"),
+    ("NavReminderstatus", "0"),
+    ("GreenLightReminderstatus", "0"),
+##############################################
     # Default FrogPilot parameters
     ("AccelerationPath", "1"),
     ("AccelerationProfile", "2"),
@@ -356,6 +403,18 @@ def update_frogpilot_params(params, params_memory):
   for key in keys:
     params_memory.put_bool(key, params.get_bool(key))
 
+###############
+def touch_prebuilt():
+  prebuilt_path = os.path.join(BASEDIR, "prebuilt")
+  if not os.path.exists(prebuilt_path):
+     subprocess.run(["touch", prebuilt_path], check=True)
+
+def remove_prebuilt():
+  prebuilt_path = os.path.join(BASEDIR, "prebuilt")
+  if os.path.exists(prebuilt_path):
+    os.remove(prebuilt_path)
+###############
+
 def manager_thread() -> None:
   cloudlog.bind(daemon="manager")
   cloudlog.info("manager start")
@@ -417,6 +476,12 @@ def manager_thread() -> None:
 
     # Exit main loop when uninstall/shutdown/reboot is needed
     shutdown = False
+    ###############
+    if params.get_bool("Faststart"):
+      touch_prebuilt()
+    else:
+      remove_prebuilt()
+    ###############
     for param in ("DoUninstall", "DoShutdown", "DoReboot", "DoSoftReboot"):
       if params.get_bool(param):
         shutdown = True

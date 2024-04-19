@@ -64,7 +64,7 @@ QStringList getCarNames(const QString &carMake) {
 }
 
 FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPilotListWidget(parent) {
-  selectMakeButton = new ButtonControl(tr("Select Make"), tr("SELECT"));
+  selectMakeButton = new ButtonControl(tr("選擇品牌"), tr("選擇"));
   QObject::connect(selectMakeButton, &ButtonControl::clicked, [this]() {
     QStringList makes = {
       "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Ford", "GM", "GMC",
@@ -72,7 +72,7 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
       "Mercedes", "Nissan", "Ram", "SEAT", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo", "Škoda",
     };
 
-    QString newMakeSelection = MultiOptionDialog::getSelection(tr("Select a Make"), makes, "", this);
+    QString newMakeSelection = MultiOptionDialog::getSelection(tr("  選擇品牌"), makes, "", this);
     if (!newMakeSelection.isEmpty()) {
       carMake = newMakeSelection;
       params.putNonBlocking("CarMake", carMake.toStdString());
@@ -82,10 +82,10 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
   });
   addItem(selectMakeButton);
 
-  selectModelButton = new ButtonControl(tr("Select Model"), tr("SELECT"));
+  selectModelButton = new ButtonControl(tr("選擇型號"), tr("選擇"));
   QString modelSelection = QString::fromStdString(params.get("CarModel"));
   QObject::connect(selectModelButton, &ButtonControl::clicked, [this]() {
-    QString newModelSelection = MultiOptionDialog::getSelection(tr("Select a Model"), models, "", this);
+    QString newModelSelection = MultiOptionDialog::getSelection(tr("  選擇型號"), models, "", this);
     if (!newModelSelection.isEmpty()) {
       params.putNonBlocking("CarModel", newModelSelection.toStdString());
       selectModelButton->setValue(newModelSelection);
@@ -95,15 +95,15 @@ FrogPilotVehiclesPanel::FrogPilotVehiclesPanel(SettingsWindow *parent) : FrogPil
   addItem(selectModelButton);
   selectModelButton->setVisible(false);
 
-  ParamControl *forceFingerprint = new ParamControl("ForceFingerprint", "Disable Automatic Fingerprint Detection", "Forces the selected fingerprint and prevents it from ever changing.", "", this);
+  ParamControl *forceFingerprint = new ParamControl("ForceFingerprint", "停用自動指紋偵測", "強制選擇車輛指紋並防止變動.", "", this);
   addItem(forceFingerprint);
 
-  ParamControl *disableOpenpilotLong = new ParamControl("DisableOpenpilotLongitudinal", "Disable Openpilot Longitudinal Control", "Disables openpilot longitudinal control to use stock ACC.", "", this);
+  ParamControl *disableOpenpilotLong = new ParamControl("DisableOpenpilotLongitudinal", "停用 Openpilot 縱向控制", "停用開放駕駛儀縱向控制以使用庫存 ACC.", "", this);
   addItem(disableOpenpilotLong);
 
   QObject::connect(disableOpenpilotLong, &ToggleControl::toggleFlipped, [=]() {
     if (started) {
-      if (FrogPilotConfirmationDialog::toggle("Reboot required to take effect.", "Reboot Now", this)) {
+      if (FrogPilotConfirmationDialog::toggle("需要重新啟動才能生效.", "馬上重啟", this)) {
         Hardware::reboot();
       }
     }

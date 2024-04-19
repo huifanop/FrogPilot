@@ -76,7 +76,7 @@ ButtonControl::ButtonControl(const QString &title, const QString &text, const QS
       background-color: #393939;
     }
     QPushButton:pressed {
-      background-color: #4a4a4a;
+      background-color: #5ac8d3;
     }
     QPushButton:disabled {
       color: #33E4E4E4;

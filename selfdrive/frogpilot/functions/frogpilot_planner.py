@@ -15,7 +15,9 @@ from openpilot.selfdrive.frogpilot.functions.map_turn_speed_controller import Ma
 from openpilot.selfdrive.frogpilot.functions.speed_limit_controller import SpeedLimitController
 
 TRAFFIC_MODE_BP = [0., CITY_SPEED_LIMIT]
-TRAFFIC_MODE_T_FOLLOW = [.50, 1.]
+###################################
+TRAFFIC_MODE_T_FOLLOW = [.45, .8]
+###################################
 
 TARGET_LAT_A = 1.9  # m/s^2
 
@@ -26,7 +28,9 @@ class FrogPilotPlanner:
 
     self.fpf = FrogPilotFunctions()
 
-    self.cem = ConditionalExperimentalMode(self.params_memory)
+##############################
+    self.cem = ConditionalExperimentalMode(self.params_memory, params)
+##############################
     self.mtsc = MapTurnSpeedController()
 
     self.override_slc = False
@@ -42,9 +46,20 @@ class FrogPilotPlanner:
 
     self.accel_limits = [A_CRUISE_MIN, get_max_accel(0)]
 
+    ##############################
+    self.carawayck = False
+    self.detect_speed_prev = 0
+    self.slchangedu = False
+    self.slchangedd = False
+    self.speedover = False
+    self.params = params
+    #########################################
+    
     self.update_frogpilot_params(params)
 
-  def update(self, carState, controlsState, modelData, mpc, sm, v_cruise, v_ego):
+#########################################
+  def update(self, carState, controlsState, modelData, mpc, sm, v_cruise, v_ego, radarState):
+#########################################
     enabled = controlsState.enabled
 
     # Use the stock deceleration profile to handle MTSC/VTSC more precisely
@@ -86,6 +101,120 @@ class FrogPilotPlanner:
     else:
       self.lane_width_left = 0
       self.lane_width_right = 0
+
+################################################################################
+    #定義
+    v_ego_kph = v_ego * 3.6
+    detect_sl = SpeedLimitController.desired_speed_limit * 3.6
+    speedlimit = int(self.params_memory.get_int('DetectSpeedLimit')*1.1)
+
+    Auto_ACC = self.params.get_bool("AutoACC")
+    AutoACCspeed = self.params.get_int("AutoACCspeed")
+    Auto_ACC_pass = v_ego_kph > AutoACCspeed
+    AutoACCCarAwaystatus = self.params_memory.get_int("AutoACCCarAwaystatus")
+    AutoACCGreenLightstatus = self.params_memory.get_int("AutoACCGreenLightstatus")
+    currentIsEngaged = self.params.get_bool("IsEngaged")
+    Roadtype = self.params.get_bool("Roadtype")
+    Roadtype_Profile = self.params.get_int("RoadtypeProfile")
+    Navspeed = self.params.get_bool("Navspeed")
+    current_setspeed = self.params_memory.get_int("KeySetSpeed")
+
+    #自動啟動ACC並帶入最高速限
+    if Auto_ACC :
+      #print(" 前車PRE =", AutoACCCarAwaystatus)
+      #print(" 綠燈PRE =", AutoACCGreenLightstatus)
+      if not currentIsEngaged and (Auto_ACC_pass or AutoACCCarAwaystatus ==1 or AutoACCGreenLightstatus ==1) :
+        self.params_memory.put_bool("KeyResume", True)
+        self.params_memory.put_bool("KeyChanged", True)
+        self.params_memory.put_int("AutoACCCarAwaystatus", 0)
+        self.params_memory.put_int("AutoACCGreenLightstatus", 0)
+        #print(" 前車Post =", AutoACCCarAwaystatus)
+        #print(" 綠燈Post =", AutoACCGreenLightstatus)
+        if self.params_memory.get_int("DetectSpeedLimit") != 0 and Roadtype_Profile != 0:
+          if Navspeed  :
+              self.params_memory.put_bool("SpeedLimitChanged", True)
+        else:
+          if Roadtype  :  
+            if Roadtype_Profile == 1 and current_setspeed <60:
+              self.params_memory.put_int("KeySetSpeed", 60)
+              self.params_memory.put_bool("KeyChanged", True)
+              self.params_memory.put_int("SpeedPrev",0)
+            elif Roadtype_Profile == 2 and current_setspeed <90:
+              self.params_memory.put_int("KeySetSpeed", 90)
+              self.params_memory.put_bool("KeyChanged", True)
+              self.params_memory.put_int("SpeedPrev",0)
+            elif Roadtype_Profile == 3 and current_setspeed <120:
+              self.params_memory.put_int("KeySetSpeed", 120)
+              self.params_memory.put_bool("KeyChanged", True)
+              self.params_memory.put_int("SpeedPrev",0)
+
+    #前車遠離後自動帶入速度控制
+    if AutoACCCarAwaystatus ==1 :
+      if self.params_memory.get_int("DetectSpeedLimit") !=0 :
+        if Navspeed :
+          self.params_memory.put_bool("SpeedLimitChanged", True)
+      else:
+        if Roadtype :
+          if Roadtype_Profile == 1 and current_setspeed <60:
+            self.params_memory.put_int("KeySetSpeed", 60)
+            self.params_memory.put_bool("KeyChanged", True)
+            self.params_memory.put_int("SpeedPrev",0)
+          elif Roadtype_Profile == 2 and current_setspeed <90:
+            self.params_memory.put_int("KeySetSpeed", 90)
+            self.params_memory.put_bool("KeyChanged", True)
+            self.params_memory.put_int("SpeedPrev",0)
+          elif Roadtype_Profile == 3 and current_setspeed <120:
+            self.params_memory.put_int("KeySetSpeed", 120)
+            self.params_memory.put_bool("KeyChanged", True)
+            self.params_memory.put_int("SpeedPrev",0)
+
+    #綠燈帶入提醒與時速控制
+    if self.params_memory.get_int("AutoACCGreenLightstatus") ==1:
+      if self.params_memory.get_int("DetectSpeedLimit") != 0:
+        if Navspeed  :
+          self.params_memory.put_bool("SpeedLimitChanged", True)
+      else:
+        if Roadtype  :
+          if Roadtype_Profile == 1 and current_setspeed < 60:
+            self.params_memory.put_int("KeySetSpeed", 60)
+            self.params_memory.put_bool("KeyChanged", True)
+            self.params_memory.put_int("SpeedPrev", 0)
+
+    #################################################################
+    # 速限變更偵測
+    if Navspeed :
+      if detect_sl != self.detect_speed_prev and v_ego_kph > 5:    
+        if detect_sl > 0:
+          self.params_memory.put_int("DetectSpeedLimit", detect_sl)
+          self.params_memory.put_bool("SpeedLimitChanged", True)
+          self.slchangedu = True
+          self.slchangedd = False        
+          self.detect_speed_prev = detect_sl
+        else:
+          self.detect_speed_prev = 0
+          self.params_memory.put_int("DetectSpeedLimit", 0 )
+          self.slchangedd = True
+          self.slchangedu = False
+      else:
+        self.params_memory.put_bool("SpeedLimitChanged", False)
+        self.slchangedu = False
+        self.slchangedd = False 
+    #超速偵測
+    if v_ego_kph >=40 and speedlimit >= 40 :
+      if (v_ego_kph - speedlimit) >= 1:
+        self.speedover = True
+        if self.params_memory.get_int("DetectSpeedLimit") !=0 :
+          if self.params.get_bool("speedreminderreset") :
+            if self.params_memory.get_int("DetectSpeedLimit") <40:
+              self.params_memory.put_int("DetectSpeedLimit",40)
+            else:
+              self.params_memory.put_bool("SpeedLimitChanged", True)
+      else:
+        self.speedover = False
+    elif v_ego_kph <40 :
+      self.speedover = False
+      
+####################################################################################
 
     # Update the current road curvature
     self.road_curvature = self.fpf.road_curvature(modelData, v_ego)
@@ -206,6 +335,12 @@ class FrogPilotPlanner:
     frogpilotPlan.unconfirmedSlcSpeedLimit = SpeedLimitController.desired_speed_limit
 
     frogpilotPlan.vtscControllingCurve = bool(self.mtsc_target > self.vtsc_target)
+    #######################################################
+    frogpilotPlan.dspeedlimitu = self.slchangedu
+    frogpilotPlan.dspeedlimitd = self.slchangedd
+    frogpilotPlan.speedover = self.speedover 
+    frogpilotPlan.carawayck = self.carawayck
+    ########################################################
 
     pm.send('frogpilotPlan', frogpilot_plan_send)
 

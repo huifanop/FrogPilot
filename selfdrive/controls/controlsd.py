@@ -178,6 +178,10 @@ class Controls:
     self.params = Params()
     self.params_memory = Params("/dev/shm/params")
     self.params_storage = Params("/persist/comma/params")
+###################################################################################################
+    self.params_memory.put_bool("KeyResume", False)
+    self.params_memory.put_bool("KeyCancel", False)
+###################################################################################################
 
     self.frogpilot_variables = SimpleNamespace()
 
@@ -334,7 +338,10 @@ class Controls:
     """Compute onroadEvents from carState"""
 
     self.events.clear()
-
+    ##############################
+    speedover_reminder_status = self.params_memory.get_int("speedoverreminderstatus")
+    NavReminder_status = self.params_memory.get_int("NavReminderstatus")
+    ##############################
     frogpilot_plan = self.sm['frogpilotPlan']
 
     # Show crash log event if openpilot crashed
@@ -382,6 +389,11 @@ class Controls:
       (CS.brakePressed and (not self.CS_prev.brakePressed or not CS.standstill)) or \
       (CS.regenBraking and (not self.CS_prev.regenBraking or not CS.standstill)):
       self.events.add(EventName.pedalPressed)
+      ################################################
+      self.params_memory.put_bool("KeyResume", False)
+      self.params_memory.put_int('SpeedPrev',0)
+      self.params_memory.put_bool('KeyChanged', True)
+      ################################################
 
     if CS.brakePressed and CS.standstill:
       self.events.add(EventName.preEnableStandstill)
@@ -440,8 +452,10 @@ class Controls:
 
       if (CS.leftBlindspot and direction == LaneChangeDirection.left) or \
          (CS.rightBlindspot and direction == LaneChangeDirection.right):
-        if self.loud_blindspot_alert:
+##########################################################
+        if self.Laneblindspot_detection or self.loud_blindspot_alert:
           self.events.add(EventName.laneChangeBlockedLoud)
+##########################################################
         else:
           self.events.add(EventName.laneChangeBlocked)
       elif not lane_available:
@@ -453,7 +467,10 @@ class Controls:
           self.events.add(EventName.preLaneChangeRight)
     elif self.sm['modelV2'].meta.laneChangeState in (LaneChangeState.laneChangeStarting,
                                                     LaneChangeState.laneChangeFinishing):
-      self.events.add(EventName.laneChange)
+      ##########################################################
+      if self.ChangeLane_Reminder :
+        self.events.add(EventName.laneChange)
+      ##########################################################
 
     # Handle turning
     if not CS.standstill:
@@ -505,6 +522,75 @@ class Controls:
       self.events.add(EventName.canBusMissing)
     elif not CS.canValid:
       self.events.add(EventName.canError)
+
+    ################################################################
+    #前車急煞動作
+    if self.sm['frogpilotPlan'].carapproch:
+      if self.CarApproaching_Reminder  :
+        self.events.add(EventName.carapproaching)
+
+    #超速提醒
+    if self.speedover_reminder :
+      if self.sm['frogpilotPlan'].speedover and speedover_reminder_status == 0 :
+       self.events.add(EventName.speedover)
+       speedover_reminder_status = 1
+      #  print("[PONTEST][controlsd.py][update_events()] speedover_reminder_status1=", speedover_reminder_status)
+      else:
+        speedover_reminder_status = 0
+        # print("[PONTEST][controlsd.py][update_events()] speedover_reminder_status0=", speedover_reminder_status)
+      self.params_memory.put_int('speedoverreminderstatus',speedover_reminder_status)
+
+    # 依車速調整跟車距離
+    if self.params.get_bool("Speeddistance") :
+      v_ego_kph = CS.vEgo*3.6
+      if  v_ego_kph < 60:
+        if self.params.get_int("LongitudinalPersonality") != 0 :
+          self.params.put_int("LongitudinalPersonality", 0)
+      elif v_ego_kph > 60 and v_ego_kph < 90:
+        if self.params.get_int("LongitudinalPersonality") != 1 :
+          self.params.put_int("LongitudinalPersonality",1)
+      elif v_ego_kph > 90 and v_ego_kph < 120:
+        if self.params.get_int("LongitudinalPersonality") != 1 :
+          self.params.put_int("LongitudinalPersonality",1)
+      self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
+
+    #速限變更提醒  
+    if self.Speedlimitu_Reminder:
+      if self.sm['frogpilotPlan'].dspeedlimitu:
+        self.events.add(EventName.detectSpeedLimitu)
+        self.slchanged = False
+
+      #速限消失提醒
+      if self.sm['frogpilotPlan'].dspeedlimitd and not self.slchanged:
+        self.events.add(EventName.detectSpeedLimitd)
+        self.slchanged = True
+
+    ##################NAV語音#####################################################
+    if self.NavReminder :
+      if self.params_memory.get_bool("navTurn") and NavReminder_status == 0 :
+        NavReminder_status = 1
+        self.events.add(EventName.navturn)
+        # print("[PONTEST][controlsd.py][update_events()] NavReminder_status1=", NavReminder_status)
+      if self.params_memory.get_bool("navUturn") :
+        self.events.add(EventName.navuturn)
+        NavReminder_status = 0
+      elif self.params_memory.get_bool("navturnRight") :
+        self.events.add(EventName.navturnright)
+        NavReminder_status = 0
+      elif self.params_memory.get_bool("navturnLeft") :
+        self.events.add(EventName.navturnleft)
+        NavReminder_status = 0
+      elif self.params_memory.get_bool("navSharpright") :
+        self.events.add(EventName.navsharpright)
+        NavReminder_status = 0
+      elif self.params_memory.get_bool("navSharpleft") :
+        self.events.add(EventName.navsharpleft)
+        NavReminder_status = 0
+      elif self.params_memory.get_bool("navOfframp") :
+        self.events.add(EventName.navofframp)
+        NavReminder_status = 0 
+      self.params_memory.put_int('NavReminderstatus',NavReminder_status)
+    #############################################################################
 
     # generic catch-all. ideally, a more specific event should be added above instead
     has_disable_events = self.events.contains(ET.NO_ENTRY) and (self.events.contains(ET.SOFT_DISABLE) or self.events.contains(ET.IMMEDIATE_DISABLE))
@@ -652,7 +738,10 @@ class Controls:
       green_light &= not self.sm['longitudinalPlan'].hasLead
 
       if green_light:
+###################################################################
         self.events.add(EventName.greenLight)
+        self.params_memory.put_int('AutoACCGreenLightstatus', 1)
+###################################################################
 
     # Lead departing alert
     if self.lead_departing_alert and self.sm.frame % 50 == 0:
@@ -664,9 +753,13 @@ class Controls:
       lead_departing &= not CS.gasPressed
       lead_departing &= lead.vLead > 1
       lead_departing &= self.driving_gear
-
-      if lead_departing:
-        self.events.add(EventName.leadDeparting)
+###################################################################
+      if lead_distance < 10:
+        if lead_departing:
+        # self.events.add(EventName.leadDeparting)
+          self.events.add(EventName.carawayed)
+          self.params_memory.put_int('AutoACCCarAwaystatus',1)
+###################################################################
 
     # Speed limit changed alert
     if self.speed_limit_alert or self.speed_limit_confirmation:
@@ -1273,6 +1366,14 @@ class Controls:
     self.speed_limit_confirmation = self.speed_limit_controller and self.params.get_bool("SLCConfirmation")
     self.speed_limit_confirmation_lower = self.speed_limit_confirmation and self.params.get_bool("SLCConfirmationLower")
     self.speed_limit_confirmation_higher = self.speed_limit_confirmation and self.params.get_bool("SLCConfirmationHigher")
+###############################################################
+    self.Laneblindspot_detection = self.params.get_bool("Laneblindspotdetection")
+    self.ChangeLane_Reminder = self.params.get_bool("ChangeLaneReminder")
+    self.CarApproaching_Reminder = self.params.get_bool("CarApproachingReminder") 
+    self.speedover_reminder = self.params.get_bool('speedoverreminder')
+    self.Speedlimitu_Reminder = self.params.get_bool('SpeedlimituReminder')
+    self.NavReminder = self.params.get_bool("NavReminder")
+###############################################################
 
 def main():
   controls = Controls()

@@ -65,7 +65,9 @@ private slots:
 
 private:
   Params params;
-
+///////////////////////////////////
+  ButtonControl *fastinstallBtn;
+///////////////////////////////////
   // FrogPilot variables
   Params paramsMemory{"/dev/shm/params"};
 };
@@ -106,6 +108,10 @@ private:
   QLabel *onroadLbl;
   LabelControl *versionLbl;
   ButtonControl *errorLogBtn;
+///////////////////////////////////
+  ButtonControl *delLogBtn;
+  ButtonControl *fastinstallBtn;
+///////////////////////////////////
   ButtonControl *installBtn;
   ButtonControl *downloadBtn;
   ButtonControl *targetBranchBtn;

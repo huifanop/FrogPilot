@@ -549,9 +549,9 @@ void Device::updateBrightness(const UIState &s) {
     brightness = 0;
   } else if (s.scene.started && s.scene.screen_brightness_onroad != 101) {
     // Bring the screen brightness up to 5% upon screen tap
-    brightness = interactive_timeout > 0 ? fmax(5, s.scene.screen_brightness_onroad) : s.scene.screen_brightness_onroad;
+    brightness = interactive_timeout > 0 ? fmax(10, s.scene.screen_brightness_onroad) : s.scene.screen_brightness_onroad;
   } else if (s.scene.screen_brightness != 101) {
-    brightness = fmax(5, s.scene.screen_brightness);
+    brightness = fmax(10, s.scene.screen_brightness);
   }
 
   if (brightness != last_brightness) {
