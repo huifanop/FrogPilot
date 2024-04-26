@@ -104,7 +104,7 @@ class CarControllerParams:
       # ]
 
       carmodel = self.params.get("CarModel", encoding='utf-8')
-      if carmodel == "VOLKSWAGEN PASSAT 8TH GEN" or "VOLKSWAGEN GOLF 7TH GEN":
+      if carmodel == "VOLKSWAGEN PASSAT 8TH GEN" or carmodel == "VOLKSWAGEN GOLF 7TH GEN":
         self.BUTTONS = [
           Button(car.CarState.ButtonEvent.Type.cancel, "GRA_ACC_01", "GRA_Hauptschalter", [1]),
           Button(car.CarState.ButtonEvent.Type.setCruise, "GRA_ACC_01", "GRA_Tip_Setzen", [1]),
