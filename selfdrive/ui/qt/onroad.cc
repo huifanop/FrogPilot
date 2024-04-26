@@ -910,7 +910,7 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
       }
       p.restore();
     }
-    p.restore();
+  // p.restore();
   }
 
   // current speed
@@ -921,7 +921,7 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
     drawText(p, rect().center().x(), 290, speedUnit, 200);
   }
 
-  p.restore();
+  // p.restore();
 
   // HFOP status bar
   drawStatusBar(p);
@@ -1042,14 +1042,45 @@ void AnnotatedCameraWidget::drawHud(QPainter &p) {
     params.putInt("Fuelconsumptionnow", Fuelconsumption_pre + (std::round(fueltProfile*100)/100)*100);
   }
 
-  p.setPen(QPen(Qt::black, 6));
-  QString tankused_text = "油資  " + QString::number(std::round(fueltProfile*10)/10*Fuelcosts);
-  p.drawText(ci_rect.adjusted(20, 200, 0, 0), Qt::AlignTop | Qt::AlignJustify, tankused_text);
+  // p.setPen(QPen(Qt::black, 6));
+  // QString tankused_text = "油資  " + QString::number(std::round(fueltProfile*10)/10*Fuelcosts);
+  // p.drawText(ci_rect.adjusted(20, 200, 0, 0), Qt::AlignTop | Qt::AlignJustify, tankused_text);
 
-  QString fueltStr = (fueltProfile > 0) ? QString::number(std::round(fueltProfile*100)/100) : "–";
-  p.drawText(ci_rect.adjusted(20, 245, 0, 0), Qt::AlignTop | Qt::AlignJustify, tr("已用  ")+fueltStr);
+  // QString fueltStr = (fueltProfile > 0) ? QString::number(std::round(fueltProfile*100)/100) : "–";
+  // p.drawText(ci_rect.adjusted(20, 245, 0, 0), Qt::AlignTop | Qt::AlignJustify, tr("已用  ")+fueltStr);
 
+  // QString vtscta_text = "彎速   " + QString::number(vtsctaProfile);
+  // p.drawText(ci_rect.adjusted(20, 165, 0, 0), Qt::AlignTop | Qt::AlignJustify, vtscta_text);
+  // QString vtsccs_text = "彎幅   " + QString::number(vtsccsProfile);
+  // p.drawText(ci_rect.adjusted(20, 210, 0, 0), Qt::AlignTop | Qt::AlignJustify, vtsccs_text);
+
+  // int leaddisProfile = paramsMemory.getInt("leaddisProfile");
+  // QString leaddis_text = "前車距 " + QString::number(leaddisProfile);
+  // p.drawText(ci_rect.adjusted(20, 155, 0, 0), Qt::AlignTop | Qt::AlignJustify, leaddis_text);
+  
+  // int leadspeedProfile = paramsMemory.getInt("leadspeedProfile");
+  // QString leadspeed_text = "前車速 " + QString::number(leadspeedProfile);
+  // p.drawText(ci_rect.adjusted(20, 200, 0, 0), Qt::AlignTop | Qt::AlignJustify, leadspeed_text);
+  
+  // QString kplStr = (kplProfile > 0) ? QString::number(std::round(kplProfile*10)/10) : "–";
+  // p.drawText(ci_rect.adjusted(20, 200, 0, 0), Qt::AlignTop | Qt::AlignJustify, tr("油耗  ")+kplStr);
+
+  
+
+  // int index;
+  // p.setFont(InterFont(40, QFont::Normal));
+  // autoaccProfile = params.getBool("AutoACC");
+  // if (autoaccProfile) {
+  //   index =1;
+  //   p.setPen(QPen(Qt::red, 6)); 
+  // } else {
+  //   index =0;
+  //   p.setPen(QPen(Qt::black, 6)); 
+  // }
+  // QString autoaccprofile_text = autoaccprofile_data[index].second+" ACC";
+  // p.drawText(ci_rect.adjusted(20, 430, 0, 0), Qt::AlignTop | Qt::AlignJustify, autoaccprofile_text);
 ///////////////////////////////////////////////////
+  p.restore();
 }
 
 void AnnotatedCameraWidget::drawText(QPainter &p, int x, int y, const QString &text, int alpha) {

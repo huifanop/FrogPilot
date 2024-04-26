@@ -13,6 +13,9 @@ from openpilot.system.version import get_branch, get_commit, get_origin, get_sho
 
 
 CRASHES_DIR = '/data/community/crashes/'
+##################
+FASTSTART_DIR = '/data/openpilot'
+##################
 
 class SentryProject(Enum):
   # python project

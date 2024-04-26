@@ -60,7 +60,7 @@ AbstractAlert::AbstractAlert(bool hasRebootBtn, QWidget *parent) : QFrame(parent
     footer_layout->addWidget(rebootBtn, 0, Qt::AlignBottom | Qt::AlignRight);
     QObject::connect(rebootBtn, &QPushButton::clicked, [=]() { 
       params.putBool("Faststart", false);
-      // paramsMemory.putBool("FrogPilotTogglesUpdated", true);
+      params.putBool("FrogPilotTogglesUpdated", true);
       Hardware::reboot(); });
   }
 

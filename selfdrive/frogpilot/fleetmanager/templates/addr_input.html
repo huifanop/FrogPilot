@@ -36,10 +36,10 @@
       var place = autocomplete.getPlace();
 
       // Check if the place has a formatted address
-      if (place.formatted_address) {
+      //if (place.formatted_address) {
         // Set the value of the input field to the formatted address
-        document.getElementById('pac-input').value = place.formatted_address;
-      }
+        document.getElementById('pac-input').value = place.name;
+      //}
     }
 
     // Define the autocomplete variable

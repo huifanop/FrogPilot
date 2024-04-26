@@ -48,7 +48,7 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     {"Model", "模型選擇", "選擇您喜歡的模型.", "../assets/offroad/icon_calibration.png"},
 
     {"MTSCEnabled", "地圖彎道速度控制", "根據下載地圖偵測到的預期曲線放慢速度.", "../frogpilot/assets/toggle_icons/icon_speed_map.png"},
-    {"DisableMTSCSmoothing", "禁用 MTSC UI 平滑", "在道路使用者介面中禁用請求速度的平滑.", ""},
+    {"DisableMTSCSmoothing", "禁用 MTSC 調整", "在道路使用者介面中禁用速度的平滑調整.", ""},
     {"MTSCCurvatureCheck", "模型曲率檢測故障保護", "僅當模型偵測到道路上有彎道時才觸發 MTSC。純粹用作故障保護以防止誤報。如果您從未遇到過誤報，請關閉此選項.", ""},
     {"MTSCLimit", "速限調整上限", "為 MTSC 設定上限。如果 MTSC 請求的速度降低大於此值，它將忽略 MTSC 請求的速度。純粹用作故障保護以防止誤報。如果您從未遇到過誤報，請將其關閉。", ""},
     {"MTSCAggressiveness", "地圖彎速積極性", "設定轉彎速度積極性。 值越高，轉彎越快，數值越低，轉彎越平緩。.\n\n  +- 1% 的變化會導致速度升高或降低約 1 英里/小時。.", ""},

@@ -25,7 +25,6 @@ void SoftwarePanel::checkForUpdates() {
 }
 
 SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent), scene(uiState()->scene) {
-  // Params paramsMemory = Params("/dev/shm/params");
   onroadLbl = new QLabel(tr("系統更新只會在熄火時下載."));
   onroadLbl->setStyleSheet("font-size: 50px; font-weight: 400; text-align: left; padding-top: 30px; padding-bottom: 30px;");
   addItem(onroadLbl);
@@ -38,7 +37,7 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent), scene(uiStat
   fastinstallBtn = new ButtonControl(tr("快速更新"), tr("更新"), "立刻進行更新並重啟機器.");
   connect(fastinstallBtn, &ButtonControl::clicked, [=]() {
     params.putBool("Faststart", false);
-    // paramsMemory.putBool("FrogPilotTogglesUpdated", true);
+    params.putBool("FrogPilotTogglesUpdated", true);
     std::system("git pull");
     Hardware::reboot();
   });
@@ -50,8 +49,8 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent), scene(uiStat
   connect(downloadBtn, &ButtonControl::clicked, [=]() {
     downloadBtn->setEnabled(false);
     if (downloadBtn->text() == tr("檢查")) {
-      // params.putBool("Faststart", false);
-      // paramsMemory.putBool("FrogPilotTogglesUpdated", true);
+      params.putBool("Faststart", false);
+      params.putBool("FrogPilotTogglesUpdated", true);
       if (schedule == 0) {
         params.putBool("ManualUpdateInitiated", true);
       }
@@ -68,7 +67,7 @@ SoftwarePanel::SoftwarePanel(QWidget* parent) : ListWidget(parent), scene(uiStat
     installBtn->setEnabled(false);
     ////////////////////////////
     params.putBool("Faststart", false);
-    // paramsMemory.putBool("FrogPilotTogglesUpdated", true);
+    params.putBool("FrogPilotTogglesUpdated", true);
     ////////////////////////////
     params.putBool("DoReboot", true);
   });

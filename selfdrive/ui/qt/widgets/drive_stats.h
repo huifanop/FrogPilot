@@ -17,10 +17,18 @@ private:
   inline QString getDistanceUnit() const { return metric_ ? tr("公里") : tr("英里"); }
 
   bool metric_;
+////////////////////////////////////////////////////////
+  int Fuelcostsnow;
+  int Fuelcostsweek;
+  int Fuelconsumptionnow;
+  int Fuelconsumptionweek;
+////////////////////////////////////////////////////////
   Params params;
   QJsonDocument stats_;
   struct StatsLabels {
-    QLabel *routes, *distance, *distance_unit, *hours;
+////////////////////////////////////////////////////////
+    QLabel *routes, *distance, *distance_unit, *hours, *Fuelconsumptionsweek, *Fuelcostsweek;
+////////////////////////////////////////////////////////
   } all_, week_, frogPilot_;
 
 private slots:

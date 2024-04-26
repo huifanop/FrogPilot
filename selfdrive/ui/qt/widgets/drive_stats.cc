@@ -18,9 +18,29 @@ DriveStats::DriveStats(QWidget* parent) : QFrame(parent) {
   metric_ = params.getBool("IsMetric");
 
   QVBoxLayout* main_layout = new QVBoxLayout(this);
-  main_layout->setContentsMargins(50, 25, 50, 20);
+////////////////////////////////////////////////////////
+  main_layout->setContentsMargins(20, 20, 20, 20);
+
+  Fuelconsumptionnow = params.getInt("Fuelconsumptionnow");
+  Fuelconsumptionweek = params.getInt("Fuelconsumptionweek");
+  if (Fuelconsumptionnow !=0 ){
+    Fuelconsumptionweek = Fuelconsumptionweek + Fuelconsumptionnow;
+    params.putInt("Fuelconsumptionweek", Fuelconsumptionweek );
+    params.putInt("Fuelconsumptionnow", 0);
+    params.putInt("Fuelconsumptionpre", 0);
+  }
+
+  Fuelcostsnow = params.getInt("Fuelcostsnow");
+  Fuelcostsweek = params.getInt("Fuelcostsweek");
+  if (Fuelcostsnow !=0 ){
+    Fuelcostsweek = Fuelcostsweek + Fuelcostsnow;
+    params.putInt("Fuelcostsweek", Fuelcostsweek);
+    params.putInt("Fuelcostsnow", 0);
+    params.putInt("Fuelcostspre", 0);
+  }
 
   auto add_stats_layouts = [=](const QString &title, StatsLabels& labels, bool FrogPilot=false) {
+////////////////////////////////////////////////////////
     QGridLayout* grid_layout = new QGridLayout;
     grid_layout->setVerticalSpacing(10);
     grid_layout->setContentsMargins(0, 10, 0, 10);
@@ -32,10 +52,18 @@ DriveStats::DriveStats(QWidget* parent) : QFrame(parent) {
     grid_layout->addWidget(labels.routes = newLabel("0", "number"), row, 0, Qt::AlignLeft);
     grid_layout->addWidget(labels.distance = newLabel("0", "number"), row, 1, Qt::AlignLeft);
     grid_layout->addWidget(labels.hours = newLabel("0", "number"), row, 2, Qt::AlignLeft);
+////////////////////////////////////////////////////////
+    grid_layout->addWidget(labels.Fuelconsumptionsweek = newLabel("0", "number"), row, 3, Qt::AlignLeft);
+    grid_layout->addWidget(labels.Fuelcostsweek = newLabel("0", "number"), row, 4, Qt::AlignLeft);
+////////////////////////////////////////////////////////
 
     grid_layout->addWidget(newLabel((tr("旅程")), "unit"), row + 1, 0, Qt::AlignLeft);
     grid_layout->addWidget(labels.distance_unit = newLabel(getDistanceUnit(), "unit"), row + 1, 1, Qt::AlignLeft);
     grid_layout->addWidget(newLabel(tr("小時"), "unit"), row + 1, 2, Qt::AlignLeft);
+////////////////////////////////////////////////////////
+    grid_layout->addWidget(newLabel(tr("油耗"), "unit"), row + 1, 3, Qt::AlignLeft);
+    grid_layout->addWidget(newLabel(tr("油資"), "unit"), row + 1, 4, Qt::AlignLeft);
+////////////////////////////////////////////////////////    
 
     main_layout->addLayout(grid_layout);
     main_layout->addStretch(1);
@@ -72,6 +100,10 @@ void DriveStats::updateStats() {
     labels.distance->setText(QString::number(int(params.getFloat("FrogPilotKilometers") * (metric_ ? 1 : KM_TO_MILE))));
     labels.distance_unit->setText(getDistanceUnit());
     labels.hours->setText(QString::number(int(params.getFloat("FrogPilotMinutes") / 60)));
+////////////////////////////////////////////////////////
+    labels.Fuelconsumptionsweek->setText(QString::number(params.getFloat("Fuelconsumptionweek") / 100, 'f', 1));
+    labels.Fuelcostsweek->setText(QString::number(params.getFloat("Fuelcostsweek") / 100, 'f', 1));
+////////////////////////////////////////////////////////
   };
 
   updateFrogPilot(json["frogpilot"].toObject(), frogPilot_);
@@ -81,6 +113,11 @@ void DriveStats::updateStats() {
     labels.distance->setText(QString::number(int(obj["distance"].toDouble() * (metric_ ? MILE_TO_KM : 1))));
     labels.distance_unit->setText(getDistanceUnit());
     labels.hours->setText(QString::number((int)(obj["minutes"].toDouble() / 60)));
+////////////////////////////////////////////////////////
+    // labels.Fuelconsumptionsweek->setText(QString::number(params.getFloat("Fuelconsumptionweek") / 100, 'f', 1));
+    // labels.Fuelconsumptionsweek->setText(QString::number((double)obj["Fuelconsumptionweek"].toDouble()/100, 'f', 1));
+    // labels.Fuelcostsweek->setText(QString::number(params.getFloat("Fuelcostsweek") / 100, 'f', 1));
+////////////////////////////////////////////////////////
   };
 
   update(json["all"].toObject(), all_);

@@ -16,7 +16,7 @@ from openpilot.selfdrive.frogpilot.functions.speed_limit_controller import Speed
 
 TRAFFIC_MODE_BP = [0., CITY_SPEED_LIMIT]
 ###################################
-TRAFFIC_MODE_T_FOLLOW = [.45, .8]
+TRAFFIC_MODE_T_FOLLOW = [.45, .7]
 ###################################
 
 TARGET_LAT_A = 1.9  # m/s^2
@@ -276,6 +276,9 @@ class FrogPilotPlanner:
           if carState.gasPressed:
             self.overridden_speed = v_ego + v_ego_diff
           self.overridden_speed = np.clip(self.overridden_speed, self.slc_target, v_cruise + v_cruise_diff)
+#########################################
+#            self.overridden_speed = v_cruise
+#########################################
         elif self.speed_limit_controller_override == 2:
           # Set the speed limit to the max set speed
           self.overridden_speed = v_cruise + v_cruise_diff

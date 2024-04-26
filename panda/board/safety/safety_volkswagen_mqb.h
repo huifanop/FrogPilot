@@ -187,7 +187,7 @@ static void volkswagen_mqb_rx_hook(const CANPacket_t *to_push) {
       // Signal: GRA_ACC_01.GRA_Abbrechen
       if (GET_BIT(to_push, 13U)) {
         //////////鍵盤控制////////////
-        controls_allowed = controls_allowed;
+        controls_allowed = acc_main_on;
         //////////////////////////////
       }
     }

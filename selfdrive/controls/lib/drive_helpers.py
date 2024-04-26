@@ -135,7 +135,8 @@ class VCruiseHelper:
 
     # Don't adjust speed when pressing resume to exit standstill
     cruise_standstill = self.button_change_states[button_type]["standstill"] or CS.cruiseState.standstill
-    if button_type == ButtonType.accelCruise and cruise_standstill:
+    if (button_type == ButtonType.accelCruise or self.params_memory.get_bool('KeyResume')) and cruise_standstill:
+      self.params_memory.put_bool('KeyChanged', False)    
       return
 
     # Don't adjust speed if we've enabled since the button was depressed (some ports enable on rising edge)

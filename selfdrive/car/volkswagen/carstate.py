@@ -228,7 +228,7 @@ class CarState(CarStateBase):
       self.fuelt += (fueld/1000000)
       self.usefuel_prev = kvsn
       self.dt_prev = self.dt
-    if self.kpln < 1 or self.kpln > 300:
+    if self.kpln < 1 or self.kpln > 999:
       self.kpln = 0
     ret.kpl = self.kpln
     ret.fueltotal = self.fuelt

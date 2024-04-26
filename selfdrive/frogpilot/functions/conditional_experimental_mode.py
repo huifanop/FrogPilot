@@ -72,7 +72,7 @@ class ConditionalExperimentalMode:
     dvratio = lead_distance/np.where(v_ego_kph == 0, 1, v_ego_kph)
     traffic_mode_speed = self.params.get_int("TrafficModespeed")
     if self.params.get_bool("TrafficMode"):
-      print(" traffic_mode_speed=", traffic_mode_speed)
+      # print(" traffic_mode_speed=", traffic_mode_speed)
       if self.lead_detected and v_ego_kph < traffic_mode_speed:
         self.params_memory.put_bool("TrafficModeActive", True)
       else:
