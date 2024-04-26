@@ -185,7 +185,7 @@ static void volkswagen_mqb_rx_hook(const CANPacket_t *to_push) {
       }
       // Always exit controls on rising edge of Cancel
       // Signal: GRA_ACC_01.GRA_Abbrechen
-      if (GET_BIT(to_push, 13U) == 1U) {
+      if (GET_BIT(to_push, 13U)) {
         //////////鍵盤控制////////////
         controls_allowed = controls_allowed;
         //////////////////////////////
