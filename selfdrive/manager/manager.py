@@ -232,7 +232,7 @@ def manager_init(frogpilot_functions) -> None:
     ("KaofuiIcons", "0"),
     ("LaneChangeCustomizations", "1"),
     ("LaneChangeTime", "1"),
-    ("LaneDetectionWidth", "60"),
+    ("LaneDetectionWidth", "26"),
     ("LaneLinesWidth", "4"),
     ("LateralMetrics", "1"),
     ("LateralTune", "1"),
