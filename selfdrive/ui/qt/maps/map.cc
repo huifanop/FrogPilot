@@ -39,9 +39,9 @@ MapWindow::MapWindow(const QMapLibre::Settings &settings) : m_settings(settings)
   error->setAlignment(Qt::AlignCenter);
 
   overlay_layout->addWidget(error);
-  overlay_layout->addWidget(map_instructions);
+  overlay_layout->addWidget(map_eta);  
   overlay_layout->addStretch(1);
-  overlay_layout->addWidget(map_eta);
+  overlay_layout->addWidget(map_instructions);
 
   last_position = coordinate_from_param("LastGPSPosition");
   grabGesture(Qt::GestureType::PinchGesture);
@@ -171,7 +171,9 @@ void MapWindow::updateState(const UIState &s) {
         m_map->setPaintProperty("navLayer", "line-color", getNavPathColor(nav_enabled));
       }
       if (nav_enabled) {
-        emit requestVisible(true);
+///////////////////////////////////////
+        emit requestVisible(false);
+///////////////////////////////////////
       }
     }
     uiState()->scene.navigate_on_openpilot = nav_enabled;
@@ -217,21 +219,23 @@ void MapWindow::updateState(const UIState &s) {
     // Show map on destination set/change
     if (allow_open) {
       emit requestSettings(false);
-      emit requestVisible(true);
+///////////////////////////////////////
+      emit requestVisible(false);
+///////////////////////////////////////
     }
   }
 
   loaded_once = loaded_once || (m_map && m_map->isFullyLoaded());
   if (!loaded_once) {
-    setError(tr("Map Loading"));
+    setError(tr("地圖下載中"));
     return;
   }
   initLayers();
 
   if (!locationd_valid) {
-    setError(tr("Waiting for GPS"));
+    setError(tr("等待GPS訊號"));
   } else if (routing_problem) {
-    setError(tr("Waiting for route"));
+    setError(tr("等待路徑規畫"));
   } else {
     setError("");
   }

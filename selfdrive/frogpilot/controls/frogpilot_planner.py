@@ -32,8 +32,9 @@ A_CRUISE_MIN_VALS_ECO = [-0.001, -0.010, -0.28, -0.56, -0.56]
 A_CRUISE_MAX_VALS_ECO = [3.5, 3.2, 2.3, 2.0, 1.15, .80, .58, .36, .30]
 
 A_CRUISE_MIN_VALS_SPORT = [-0.50, -0.52, -0.55, -0.57, -0.60]
-A_CRUISE_MAX_VALS_SPORT = [3.5, 3.5, 3.3, 2.8, 1.5, 1.0, 0.75, 0.65, 0.6]
-
+###############################
+A_CRUISE_MAX_VALS_SPORT = [4.0, 4.0, 4.0, 2.8, 1.5, 1.0, 0.75, 0.65, 0.6]
+###############################
 TRAFFIC_MODE_BP = [0., CITY_SPEED_LIMIT]
 
 TARGET_LAT_A = 1.9  # m/s^2
@@ -52,6 +53,7 @@ def get_max_accel_sport(v_ego):
 
 class FrogPilotPlanner:
   def __init__(self):
+    self.params = Params()
     self.params_memory = Params("/dev/shm/params")
 
     self.cem = ConditionalExperimentalMode()
@@ -71,6 +73,11 @@ class FrogPilotPlanner:
     self.slc_target = 0
     self.speed_jerk = 0
     self.vtsc_target = 0
+#########################################
+    self.last_traffic_mode_active = False
+    self.detect_speed_prev = 0
+    self.spee_dover = False
+#########################################
 
   def update(self, carState, controlsState, frogpilotCarControl, frogpilotCarState, frogpilotNavigation, liveLocationKalman, modelData, radarState, frogpilot_toggles):
     if frogpilot_toggles.radarless_model:
@@ -88,10 +95,16 @@ class FrogPilotPlanner:
     v_cruise_changed = (self.mtsc_target or self.vtsc_target) < v_cruise
 
     v_ego = max(carState.vEgo, 0)
+############
+    v_ego_kph = v_ego *3.6
+############
     v_lead = self.lead_one.vLead
 
     distance_offset = max(frogpilot_toggles.increased_stopping_distance + min(CITY_SPEED_LIMIT - v_ego, 0), 0) if not frogpilotCarControl.trafficModeActive else 0
     lead_distance = self.lead_one.dRel - distance_offset
+############
+    dvratio = lead_distance/np.where(v_ego_kph < 1, 1, v_ego_kph)
+############
     stopping_distance = STOP_DISTANCE + distance_offset
 
     eco_gear = carState.gearShifter == GearShifter.eco or frogpilotCarState.ecoGear
@@ -137,6 +150,83 @@ class FrogPilotPlanner:
       self.lane_width_left = 0
       self.lane_width_right = 0
 
+####################################################################################
+    v_ego_kph = v_ego * 3.6
+    detect_sl = SpeedLimitController.desired_speed_limit * 3.6
+    speedlimit = int(self.params_memory.get_int('DetectSpeedLimit')*1.1)
+
+    auto_acc = self.params.get_bool("AutoACC")
+    autoacc_speed = self.params.get_int("AutoACCspeed")
+    auto_acc_pass = v_ego_kph > autoacc_speed
+    autoacc_caraway_status = self.params_memory.get_int("AutoACCCarAwaystatus")
+    autoacc_greenlight_status = self.params_memory.get_int("AutoACCGreenLightstatus")
+    current_isengaged = self.params.get_bool("IsEngaged")
+    roadtype = self.params.get_bool("Roadtype")
+    roadtype_profile = self.params.get_int("RoadtypeProfile")
+    navspeed = self.params.get_bool("Navspeed")
+    current_setspeed = self.params_memory.get_int("KeySetSpeed")
+    detect_speedlimit = self.params_memory.get_int("DetectSpeedLimit")
+    traffic_mode_speed = self.params.get_int("TrafficModespeed")
+    traffic_mode= self.params.get_bool("TrafficMode")
+    speedover_reminder = self.params.get_bool("speedoverreminder")
+    speedreminder_reset = self.params.get_bool("speedreminderreset")
+
+    if auto_acc and not current_isengaged:
+      if (auto_acc_pass) or (autoacc_caraway_status == 1 ) or (autoacc_greenlight_status == 1 ):
+        self.params_memory.put_bool("KeyResume", True)
+        self.params_memory.put_bool("KeyChanged", True)
+        self.params_memory.put_int("AutoACCCarAwaystatus", 0)
+        self.params_memory.put_int("AutoACCGreenLightstatus", 0)
+
+        if detect_speedlimit != 0 and roadtype_profile != 0:
+          if navspeed  :
+              self.params_memory.put_bool("SpeedLimitChanged", True)
+        else:
+          if roadtype:
+            key_set_speed = 0
+            if roadtype_profile == 1 and current_setspeed < 60:
+              key_set_speed = 60
+            elif roadtype_profile == 2 and current_setspeed < 90:
+              key_set_speed = 90
+            elif roadtype_profile == 3 and current_setspeed < 120:
+              key_set_speed = 120
+            if key_set_speed > 0:
+              self.params_memory.put_int("KeySetSpeed", key_set_speed)
+              self.params_memory.put_bool("KeyChanged", True)
+              self.params_memory.put_int("SpeedPrev", 0)
+
+    if current_isengaged:
+      self.params_memory.put_bool("TrafficModeActive", traffic_mode and v_ego_kph < traffic_mode_speed)
+
+    #################################################################
+    # 速限變更偵測
+    if navspeed :
+      if detect_sl != self.detect_speed_prev and v_ego_kph > 5:
+        if detect_sl > 0:
+          self.params_memory.put_int("DetectSpeedLimit", detect_sl)
+          self.params_memory.put_bool("SpeedLimitChanged", True)
+          self.detect_speed_prev = detect_sl
+        else:
+          self.detect_speed_prev = 0
+          self.params_memory.put_int("DetectSpeedLimit", 0 )
+      else:
+        self.params_memory.put_bool("SpeedLimitChanged", False)
+    #超速偵測
+    if speedover_reminder :
+      if v_ego_kph >=40 and speedlimit >= 40 :
+        if (v_ego_kph - speedlimit) >= 1:
+          self.spee_dover = True
+          if detect_speedlimit !=0 and speedreminder_reset:
+            if detect_speedlimit <40:
+              self.params_memory.put_int("DetectSpeedLimit",40)
+            else:
+              self.params_memory.put_bool("SpeedLimitChanged", True)
+        else:
+          self.spee_dover = False
+      elif v_ego_kph <40 :
+        self.spee_dover = False
+####################################################################################
+
     if frogpilotCarControl.trafficModeActive:
       self.base_acceleration_jerk = interp(v_ego, TRAFFIC_MODE_BP, frogpilot_toggles.traffic_mode_jerk_acceleration)
       self.base_speed_jerk = interp(v_ego, TRAFFIC_MODE_BP, frogpilot_toggles.traffic_mode_jerk_speed)
@@ -174,7 +264,9 @@ class FrogPilotPlanner:
     self.v_cruise = self.update_v_cruise(carState, controlsState, frogpilotCarState, frogpilotNavigation, liveLocationKalman, modelData, v_cruise, v_ego, frogpilot_toggles)
 
     if frogpilot_toggles.conditional_experimental_mode or frogpilot_toggles.green_light_alert:
-      self.cem.update(carState, controlsState.enabled, frogpilotNavigation, lead_distance, self.lead_one, modelData, self.road_curvature, self.slower_lead, v_ego, v_lead, frogpilot_toggles)
+############
+      self.cem.update(carState, controlsState.enabled, frogpilotNavigation, lead_distance, self.lead_one, modelData, self.road_curvature, self.slower_lead, v_ego, v_lead, frogpilot_toggles, dvratio, v_ego_kph)
+############
 
     self.frame += 1
 
@@ -221,6 +313,8 @@ class FrogPilotPlanner:
 
       if frogpilot_toggles.mtsc_curvature_check and self.road_curvature < 1.0 and not mtsc_active:
         self.mtsc_target = v_cruise
+      if self.mtsc_target == CRUISING_SPEED:
+        self.mtsc_target = v_cruise
     else:
       self.mtsc_target = v_cruise if v_cruise != V_CRUISE_UNSET else 0
 
@@ -250,7 +344,7 @@ class FrogPilotPlanner:
       else:
         self.overridden_speed = 0
     else:
-      self.slc_target = v_cruise if v_cruise != V_CRUISE_UNSET else 0
+      self.slc_target = v_cruise + v_ego_diff if v_cruise != V_CRUISE_UNSET else 0
 
     # Pfeiferj's Vision Turn Controller
     if frogpilot_toggles.vision_turn_controller and v_ego > CRUISING_SPEED and controlsState.enabled:
@@ -305,5 +399,10 @@ class FrogPilotPlanner:
     frogpilotPlan.vCruise = float(self.v_cruise)
 
     frogpilotPlan.vtscControllingCurve = bool(self.mtsc_target > self.vtsc_target)
-
+    #######################################################
+    # frogpilotPlan.dspeedlimitu = self.slchangedu
+    # frogpilotPlan.dspeedlimitd = self.slchangedd
+    frogpilotPlan.speedover = self.spee_dover
+    # frogpilotPlan.carawayck = self.carawayck
+    ########################################################
     pm.send('frogpilotPlan', frogpilot_plan_send)

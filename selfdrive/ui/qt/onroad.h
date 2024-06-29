@@ -13,7 +13,9 @@
 #include "selfdrive/ui/qt/widgets/cameraview.h"
 
 #include "selfdrive/frogpilot/screenrecorder/screenrecorder.h"
-
+////////////////////////
+#include "selfdrive/ui/qt/maps/map_instructions.h"
+////////////////////////
 const int btn_size = 192;
 const int img_size = (btn_size / 4) * 3;
 
@@ -208,6 +210,9 @@ private:
   void drawTurnSignals(QPainter &p);
 
   // FrogPilot variables
+/////////////////////////
+  Params params;
+/////////////////////////
   Params paramsMemory{"/dev/shm/params"};
   UIScene &scene;
 
@@ -257,6 +262,22 @@ private:
   int obstacleDistance;
   int obstacleDistanceStock;
   int totalFrames = 8;
+////////////////////////////
+  int leadspeed_diffProfile;
+  bool autoaccProfile;
+  bool fuelpriceProfile;
+  bool HFOPinfProfile;
+  float batteryVol;
+  float tankvolumeProfile;
+  float tankusedProfile;
+  float kplProfile;
+  float fueltProfile;
+  float oiltempProfile;
+  float distance;
+  bool currentIsEngaged;
+  MapInstructions *map_instructions;
+  QString navBanner;
+////////////////////////////
 
   QString accelerationUnit;
   QString leadDistanceUnit;

@@ -96,6 +96,9 @@ class CarInterface(CarInterfaceBase):
     ret.pcmCruise = not ret.openpilotLongitudinalControl
     ret.stoppingControl = True
     ret.stopAccel = -0.55
+####################################
+    ret.startAccel = 4.0
+####################################
     ret.vEgoStarting = 0.1
     ret.vEgoStopping = 0.5
     ret.longitudinalTuning.kpV = [0.1]
@@ -106,7 +109,9 @@ class CarInterface(CarInterfaceBase):
 
   # returns a car.CarState
   def _update(self, c, frogpilot_variables):
-    ret, fp_ret = self.CS.update(self.cp, self.cp_cam, self.cp_ext, self.CP.transmissionType, frogpilot_variables)
+####################################
+    ret, fp_ret = self.CS.update(self.cp, self.cp_body, self.cp_cam, self.cp_ext, self.CP.transmissionType, frogpilot_variables)
+####################################
 
     events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
                                        pcm_enable=not self.CS.CP.openpilotLongitudinalControl,

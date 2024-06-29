@@ -22,6 +22,12 @@ from openpilot.selfdrive.controls.lib.drive_helpers import CRUISE_LONG_PRESS, V_
 from openpilot.selfdrive.controls.lib.events import Events
 from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
 
+########################################
+params = Params()
+params_memory = Params("/dev/shm/params")
+params_memory.put_bool("KeyResume", False)
+params_memory.put_bool("KeyCancel", False)
+########################################
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
 EventName = car.CarEvent.EventName
@@ -210,6 +216,10 @@ class CarInterfaceBase(ABC):
     # FrogPilot variables
     self.params = Params()
     self.params_memory = Params("/dev/shm/params")
+    ##############################################
+    self.Dooropen_off_counter = 0
+    self.Dooropen_on_counter = 0
+    ##############################################
 
     lateral_tune = self.params.get_bool("LateralTune")
     nnff_supported = self.initialize_lat_torque_nn(CP.carFingerprint, eps_firmware)
@@ -223,7 +233,9 @@ class CarInterfaceBase(ABC):
     self.prev_distance_button = False
     self.resumeRequired_shown = False
     self.traffic_mode_changed = False
-
+##############################################
+    self.last_traffic_mode_active = False
+##############################################
     self.gap_counter = 0
 
   def get_ff_nn(self, x):
@@ -406,6 +418,12 @@ class CarInterfaceBase(ABC):
     frogpilot_reader = fp_ret.as_reader()
     if self.CS is not None:
       self.CS.out = reader
+##############################################
+    traffic_mode_active = ret.vEgo * 3.6 < 50 and frogpilot_variables.traffic_mode
+    if traffic_mode_active != self.last_traffic_mode_active:
+      self.params_memory.put_bool("TrafficModeActive", traffic_mode_active)
+      self.last_traffic_mode_active = traffic_mode_active
+##############################################
 
     return reader, frogpilot_reader
 
@@ -419,6 +437,26 @@ class CarInterfaceBase(ABC):
 
     if cs_out.doorOpen:
       events.add(EventName.doorOpen)
+
+####################################
+    if self.params.get_bool("Dooropen"):
+      if cs_out.engineRpm > 0 and (cs_out.driverdoorOpen or cs_out.codriverdOpen or cs_out.lpassengerdoorOpen or cs_out.rpassengerdoorOpen or cs_out.luggagedoorOpen):
+        events.add(EventName.doorOpen1)
+        self.Dooropen_off_counter = self.Dooropen_off_counter + 1 if self.params.get_bool("Dooropen")  and not self.params.get_bool("Dooropenpre") else 0
+        if self.params.get_bool("Dooropen")  and not self.params.get_bool("Dooropenpre") and self.Dooropen_off_counter > 500:
+          self.params.put_bool("Dooropenpre", True)
+          self.params.put_bool("Dooropen",False)
+          self.params.put_bool("FrogPilotTogglesUpdated", True)
+          self.Dooropen_on_counter = 0
+    if self.params.get_bool("Dooropenpre"):
+      self.Dooropen_on_counter = self.Dooropen_on_counter + 1 if not self.params.get_bool("Dooropen")  and  self.params.get_bool("Dooropenpre") and not cs_out.driverdoorOpen  else 0
+    if not self.params.get_bool("Dooropen") and self.Dooropen_on_counter >2000 and (not cs_out.driverdoorOpen):
+      self.params.put_bool("Dooropenpre", False)
+      self.params.put_bool("Dooropen", True)
+      self.params.put_bool("FrogPilotTogglesUpdated", True)
+      self.Dooropen_off_counter = 0
+####################################
+
     if cs_out.seatbeltUnlatched:
       events.add(EventName.seatbeltNotLatched)
     if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or
@@ -455,6 +493,14 @@ class CarInterfaceBase(ABC):
       # Disable on rising and falling edge of cancel for both stock and OP long
       if b.type == ButtonType.cancel:
         events.add(EventName.buttonCancel)
+###########################################################################
+    if not self.CP.pcmCruise and self.params_memory.get_bool("KeyResume"):
+      events.add(EventName.buttonEnable)
+    if self.params_memory.get_bool("KeyCancel"):
+        self.params_memory.put_bool("KeyResume",False)
+        events.add(EventName.buttonCancel)
+        self.params_memory.put_bool("KeyCancel",False)
+############################################################################
 
     # Handle permanent and temporary steering faults
     self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
@@ -548,6 +594,11 @@ class CarStateBase(ABC):
     self.v_ego_kf = KF1D(x0=x0, A=A, C=C[0], K=K)
 
     # FrogPilot variables
+######################################
+    self.params_memory = Params("/dev/shm/params")
+    self.params = Params()
+######################################
+
     self.cruise_decreased = False
     self.cruise_decreased_previously = False
     self.cruise_increased = False

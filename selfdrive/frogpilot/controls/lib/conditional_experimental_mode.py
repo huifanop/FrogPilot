@@ -1,5 +1,3 @@
-from openpilot.common.conversions import Conversions as CV
-from openpilot.common.numpy_fast import interp
 from openpilot.common.params import Params
 from openpilot.selfdrive.modeld.constants import ModelConstants
 
@@ -7,8 +5,6 @@ from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import Movin
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_variables import CITY_SPEED_LIMIT, CRUISING_SPEED, PROBABILITY
 from openpilot.selfdrive.frogpilot.controls.lib.speed_limit_controller import SpeedLimitController
 
-SLOW_DOWN_BP = [0., 10., 20., 30., 40., 50., 55., 60.]
-SLOW_DOWN_DISTANCE = [20, 30., 50., 70., 80., 90., 105., 120.]
 
 class ConditionalExperimentalMode:
   def __init__(self):
@@ -18,6 +14,9 @@ class ConditionalExperimentalMode:
     self.experimental_mode = False
     self.lead_stopped = False
     self.red_light_detected = False
+############
+    self.detect_turtle = False
+############
 
     self.previous_v_ego = 0
     self.previous_v_lead = 0
@@ -28,14 +27,21 @@ class ConditionalExperimentalMode:
     self.slow_lead_mac = MovingAverageCalculator()
     self.slowing_down_mac = MovingAverageCalculator()
     self.stop_light_mac = MovingAverageCalculator()
+############
+    self.detect_turtle_mac = MovingAverageCalculator()
+############
 
-  def update(self, carState, enabled, frogpilotNavigation, lead_distance, lead, modelData, road_curvature, slower_lead, v_ego, v_lead, frogpilot_toggles):
+############
+  def update(self, carState, enabled, frogpilotNavigation, lead_distance, lead, modelData, road_curvature, slower_lead, v_ego, v_lead, frogpilot_toggles, dvratio, v_ego_kph):
+############
     if frogpilot_toggles.experimental_mode_via_press and enabled:
       overridden = self.params_memory.get_int("CEStatus")
     else:
       overridden = 0
 
-    self.update_conditions(lead_distance, lead.status, modelData, road_curvature, slower_lead, carState.standstill, v_ego, v_lead, frogpilot_toggles)
+############
+    self.update_conditions(lead_distance, lead.status, modelData, road_curvature, slower_lead, carState.standstill, v_ego, v_lead, frogpilot_toggles, dvratio, v_ego_kph)
+############
 
     condition_met = self.check_conditions(carState, frogpilotNavigation, lead, modelData, v_ego, frogpilot_toggles) and enabled
     self.experimental_mode = condition_met and overridden not in {1, 3, 5} or overridden in {2, 4, 6}
@@ -64,7 +70,9 @@ class ConditionalExperimentalMode:
       self.status_value = 11 if self.lead_detected else 12
       return True
 
-    if frogpilot_toggles.conditional_slower_lead and self.slower_lead_detected:
+############
+    if (frogpilot_toggles.conditional_slower_lead and self.slower_lead_detected) or self.detect_turtle:
+############
       self.status_value = 12 if self.lead_stopped else 13
       return True
 
@@ -82,11 +90,24 @@ class ConditionalExperimentalMode:
 
     return False
 
-  def update_conditions(self, lead_distance, lead_status, modelData, road_curvature, slower_lead, standstill, v_ego, v_lead, frogpilot_toggles):
+############
+  def update_conditions(self, lead_distance, lead_status, modelData, road_curvature, slower_lead, standstill, v_ego, v_lead, frogpilot_toggles, dvratio, v_ego_kph):
+############
     self.lead_detection(lead_status)
     self.road_curvature(road_curvature, v_ego, frogpilot_toggles)
     self.slow_lead(slower_lead, v_lead)
     self.stop_sign_and_light(lead_distance, modelData, standstill, v_ego, v_lead, frogpilot_toggles)
+############
+    self.detect_turtlef(dvratio, v_ego_kph)
+
+  def detect_turtlef(self, dvratio, v_ego_kph):
+    if self.lead_detected:
+      self.detect_turtle_mac.add_data(dvratio < 0.7 and dvratio > 0.05 and v_ego_kph > 5)
+      self.detect_turtle = self.detect_turtle_mac.get_moving_average() >= 0.5
+    else:
+      self.detect_turtle_mac.reset_data()
+      self.detect_turtle = False
+############
 
   def lead_detection(self, lead_status):
     self.lead_detection_mac.add_data(lead_status)
@@ -141,7 +162,7 @@ class ConditionalExperimentalMode:
   # Stop sign/stop light detection - Credit goes to the DragonPilot team!
   def stop_sign_and_light(self, lead_distance, modelData, standstill, v_ego, v_lead, frogpilot_toggles):
     lead_check = frogpilot_toggles.conditional_stop_lights_lead or not self.lead_slowing_down(lead_distance, v_ego, v_lead) or standstill
-    model_stopping = modelData.position.x[ModelConstants.IDX_N - 1] < interp(v_ego * CV.MS_TO_KPH, SLOW_DOWN_BP, SLOW_DOWN_DISTANCE)
+    model_stopping = modelData.position.x[ModelConstants.IDX_N - 1] < v_ego * ModelConstants.T_IDXS[ModelConstants.IDX_N - ModelConstants.CONFIDENCE_BUFFER_LEN]
     model_filtered = not (self.curve_detected or self.slower_lead_detected)
 
     self.stop_light_mac.add_data(lead_check and model_stopping and model_filtered)

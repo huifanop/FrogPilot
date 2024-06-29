@@ -1,5 +1,5 @@
-Following Distance - Represents openpilot's desired distance from the lead in seconds. Not an exact value in real world terms, but more of a representative value.
+跟隨距離 -表示 openpilot 與領先者的所需距離（以秒為單位）。不是現實世界中的精確值，而是具有代表性的值。
 
-Acceleration/Deceleration Response - Increases/decreases the "cost" to accelerate. Increasing the value makes it more "costly" to accelerate/decelerate, so openpilot is more conservative when accelerating/decelerating.
+加速/減速響應 -增加/減少加速的「成本」。增加該值會使加速/減速的「成本」更高，因此 openpilot 在加速/減速時會更加保守。
 
-Speed Control Response - Increases/decreases the "cost" to increase/decrease your speed. Increasing the value makes it more "costly" to change speed, so openpilot is more conservative when using the gas/brake pedal.
+速度控制響應 -增加/減少增加/減少速度的「成本」。增加該值會使改變速度變得更加“昂貴”，因此 openpilot 在使用油門/煞車踏板時會更加保守。

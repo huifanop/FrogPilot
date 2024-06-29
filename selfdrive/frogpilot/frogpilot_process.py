@@ -21,6 +21,9 @@ from openpilot.selfdrive.frogpilot.controls.lib.model_manager import DEFAULT_MOD
 from openpilot.selfdrive.frogpilot.controls.lib.theme_manager import ThemeManager
 
 WIFI = log.DeviceState.NetworkType.wifi
+############################
+CELL = log.DeviceState.NetworkType.cell4G
+############################
 
 def github_pinged(url="https://github.com", timeout=5):
   try:
@@ -44,10 +47,13 @@ def automatic_update_check(params):
 def time_checks(automatic_updates, deviceState, maps_downloaded, now, params, params_memory):
   populate_models()
 
-  screen_off = deviceState.screenBrightnessPercent == 0
-  wifi_connection = deviceState.networkType == WIFI
+############################
+  # screen_off = deviceState.screenBrightnessPercent == 0
+  wifi_connection = (deviceState.networkType == WIFI) or (deviceState.networkType == CELL)
 
-  if screen_off and wifi_connection or not maps_downloaded:
+  if wifi_connection or not maps_downloaded:
+#  if screen_off and wifi_connection or not maps_downloaded:
+############################
     if automatic_updates:
       automatic_update_check(params)
 
@@ -93,7 +99,9 @@ def frogpilot_thread(frogpilot_toggles):
   pm = messaging.PubMaster(['frogpilotPlan'])
   sm = messaging.SubMaster(['carState', 'controlsState', 'deviceState', 'frogpilotCarControl', 'frogpilotCarState', 'frogpilotNavigation',
                             'frogpilotPlan', 'liveLocationKalman', 'longitudinalPlan', 'modelV2', 'radarState'],
-                            poll='modelV2', ignore_avg_freq=['radarState'])
+############################
+                            poll='modelV2', ignore_avg_freq=['radarState', 'frogpilotPlan'])
+############################
 
   while True:
     sm.update()

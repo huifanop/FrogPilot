@@ -99,6 +99,10 @@ class Controls:
     self.params_memory = Params("/dev/shm/params")
     self.params_storage = Params("/persist/params")
     self.params_tracking = Params("/persist/tracking")
+###################################################
+    self.params_memory.put_bool("KeyResume", False)
+    self.params_memory.put_bool("KeyCancel", False)
+###################################################
 
     with car.CarParams.from_bytes(self.params.get("CarParams", block=True)) as msg:
       # TODO: this shouldn't need to be a builder
@@ -124,11 +128,13 @@ class Controls:
       ignore += ['driverCameraState', 'managerState']
     if self.frogpilot_toggles.radarless_model:
       ignore += ['radarState']
+    ignore += ['frogpilotPlan']
     self.sm = messaging.SubMaster(['deviceState', 'pandaStates', 'peripheralState', 'modelV2', 'liveCalibration',
                                    'carOutput', 'driverMonitoringState', 'longitudinalPlan', 'liveLocationKalman',
                                    'managerState', 'liveParameters', 'radarState', 'liveTorqueParameters',
                                    'testJoystick', 'frogpilotCarState', 'frogpilotPlan'] + self.camera_packets + self.sensor_packets,
-                                  ignore_alive=ignore, ignore_avg_freq=ignore+['radarState', 'testJoystick'], ignore_valid=['testJoystick', ],
+                                  ignore_alive=ignore, ignore_avg_freq=ignore+['radarState', 'testJoystick', 'frogpilotPlan'],
+                                  ignore_valid=['testJoystick', 'frogpilotPlan'],
                                   frequency=int(1/DT_CTRL))
 
     self.joystick_mode = self.params.get_bool("JoystickDebugMode")
@@ -251,10 +257,17 @@ class Controls:
       (CS.brakePressed and (not self.CS_prev.brakePressed or not CS.standstill)) or \
       (CS.regenBraking and (not self.CS_prev.regenBraking or not CS.standstill)):
       self.events.add(EventName.pedalPressed)
+      ################################################
+      self.params_memory.put_bool("KeyResume", False)
+      self.params_memory.put_int('SpeedPrev',0)
+      self.params_memory.put_bool('KeyChanged', True)
+      ################################################
 
     if CS.brakePressed and CS.standstill:
       self.events.add(EventName.preEnableStandstill)
-
+      ################################################
+      self.params_memory.put_int("leadspeeddiffProfile", 0)
+      ################################################
     if CS.gasPressed:
       self.events.add(EventName.gasPressedOverride)
 
@@ -371,6 +384,75 @@ class Controls:
     elif not CS.canValid:
       self.events.add(EventName.canError)
 
+    ###################################################
+    speedover_reminder = self.params.get_bool('speedoverreminder')
+    nav_reminder = self.params.get_bool("NavReminder")
+    speedover_reminder_status = self.params_memory.get_int("speedoverreminderstatus")
+    nav_reminder_status = self.params_memory.get_int("NavReminderstatus")
+    ###################################################
+    #超速提醒
+    if speedover_reminder :
+      if self.sm['frogpilotPlan'].speedover:
+       self.events.add(EventName.speedover)
+       speedover_reminder_status = 1
+      #  print("[PONTEST][controlsd.py][update_events()] speedover_reminder_status1=", speedover_reminder_status)
+      else:
+        speedover_reminder_status = 0
+        # print("[PONTEST][controlsd.py][update_events()] speedover_reminder_status0=", speedover_reminder_status)
+      self.params_memory.put_int('speedoverreminderstatus',speedover_reminder_status)
+
+    # 依車速調整跟車距離
+    if self.params.get_bool("Speeddistance") :
+      v_ego_kph = CS.vEgo*3.6
+      if  v_ego_kph < 60:
+        if self.params.get_int("LongitudinalPersonality") != 0 :
+          self.params.put_int("LongitudinalPersonality", 0)
+      elif v_ego_kph > 60 and v_ego_kph < 90:
+        if self.params.get_int("LongitudinalPersonality") != 1 :
+          self.params.put_int("LongitudinalPersonality",1)
+      elif v_ego_kph > 90 and v_ego_kph < 120:
+        if self.params.get_int("LongitudinalPersonality") != 1 :
+          self.params.put_int("LongitudinalPersonality",1)
+      self.params_memory.put_bool("FrogPilotTogglesUpdated", True)
+
+    #速限變更提醒
+    # if self.Speedlimitu_Reminder:
+    #   if self.sm['frogpilotPlan'].dspeedlimitu:
+    #     self.events.add(EventName.detectSpeedLimitu)
+    #     self.slchanged = False
+
+    #   #速限消失提醒
+    #   if self.sm['frogpilotPlan'].dspeedlimitd and not self.slchanged:
+    #     self.events.add(EventName.detectSpeedLimitd)
+    #     self.slchanged = True
+
+    ##################NAV語音#####################################################
+    if nav_reminder :
+      if self.params_memory.get_bool("navTurn") and nav_reminder_status == 0 :
+        nav_reminder_status = 1
+        self.events.add(EventName.navturn)
+        # print("[PONTEST][controlsd.py][update_events()] NavReminder_status1=", NavReminder_status)
+      if self.params_memory.get_bool("navUturn") :
+        self.events.add(EventName.navuturn)
+        nav_reminder_status = 0
+      elif self.params_memory.get_bool("navturnRight") :
+        self.events.add(EventName.navturnright)
+        nav_reminder_status = 0
+      elif self.params_memory.get_bool("navturnLeft") :
+        self.events.add(EventName.navturnleft)
+        nav_reminder_status = 0
+      elif self.params_memory.get_bool("navSharpright") :
+        self.events.add(EventName.navsharpright)
+        nav_reminder_status = 0
+      elif self.params_memory.get_bool("navSharpleft") :
+        self.events.add(EventName.navsharpleft)
+        nav_reminder_status = 0
+      elif self.params_memory.get_bool("navOfframp") :
+        self.events.add(EventName.navofframp)
+        nav_reminder_status = 0
+      self.params_memory.put_int('NavReminderstatus',nav_reminder_status)
+    #############################################################################
+
     # generic catch-all. ideally, a more specific event should be added above instead
     has_disable_events = self.events.contains(ET.NO_ENTRY) and (self.events.contains(ET.SOFT_DISABLE) or self.events.contains(ET.IMMEDIATE_DISABLE))
     no_system_errors = (not has_disable_events) or (len(self.events) == num_events)
@@ -448,6 +530,9 @@ class Controls:
 
       if self.sm['modelV2'].frameDropPerc > 20:
         self.events.add(EventName.modeldLagging)
+
+    # Update FrogPilot events
+    self.update_frogpilot_events(CS)
 
   def data_sample(self):
     """Receive data from sockets and update carState"""
@@ -913,9 +998,6 @@ class Controls:
 
     self.CS_prev = CS
 
-    # Update FrogPilot events
-    self.update_frogpilot_events(CS)
-
     # Update FrogPilot variables
     self.update_frogpilot_variables(CS)
 
@@ -952,6 +1034,10 @@ class Controls:
       t.join()
 
   def update_frogpilot_events(self, CS):
+##################################################################
+    autoacc_caraway = self.params.get_bool("AutoACCCarAway")
+    autoacc_greenlight = self.params.get_bool("AutoACCGreenLight")
+##################################################################
     if self.block_user:
       self.events.add(EventName.blockUser)
 
@@ -972,6 +1058,10 @@ class Controls:
       self.green_light_mac.add_data(green_light)
       if self.green_light_mac.get_moving_average() >= PROBABILITY:
         self.events.add(EventName.greenLight)
+##################################################################
+        if autoacc_greenlight:
+          self.params_memory.put_int("AutoACCGreenLightstatus", 1)
+##################################################################
 
     if self.sm.frame >= 1000 and self.frogpilot_toggles.current_holiday_theme != 0 and not self.holiday_theme_alerted:
       self.events.add(EventName.holidayActive)
@@ -979,6 +1069,10 @@ class Controls:
 
     if self.frogpilot_toggles.lead_departing_alert and self.sm['frogpilotPlan'].leadDeparting:
       self.events.add(EventName.leadDeparting)
+##################################################################
+      if autoacc_caraway:
+        self.params_memory.put_int("AutoACCCarAwaystatus", 1)
+##################################################################
 
     if self.frogpilot_toggles.random_events:
       acceleration = CS.aEgo
@@ -1127,8 +1221,9 @@ class Controls:
         self.random_event_timer = 0
         self.params_memory.remove("CurrentRandomEvent")
 
-    signal_check = CS.vEgo >= self.frogpilot_toggles.pause_lateral_below_speed or not (CS.leftBlinker or CS.rightBlinker) or CS.standstill
-    self.speed_check = CS.vEgo >= self.frogpilot_toggles.pause_lateral_below_speed or CS.standstill or signal_check and self.frogpilot_toggles.pause_lateral_below_signal
+    self.speed_check = CS.vEgo >= self.frogpilot_toggles.pause_lateral_below_speed
+    self.speed_check |= self.frogpilot_toggles.pause_lateral_below_signal and not (CS.leftBlinker or CS.rightBlinker)
+    self.speed_check |= CS.standstill
 
     self.FPCC.trafficModeActive = self.frogpilot_toggles.traffic_mode and self.params_memory.get_bool("TrafficModeActive")
 

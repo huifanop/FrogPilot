@@ -70,6 +70,11 @@ private slots:
 
 private:
   Params params;
+///////////////////////////////////
+  ButtonControl *fastinstallBtn;
+///////////////////////////////////
+  // FrogPilot variables
+  Params paramsMemory{"/dev/shm/params"};
 };
 
 class TogglesPanel : public ListWidget {
@@ -110,6 +115,10 @@ private:
 
   QLabel *onroadLbl;
   LabelControl *versionLbl;
+///////////////////////////////////
+  ButtonControl *delLogBtn;
+  ButtonControl *fastinstallBtn;
+///////////////////////////////////
   ButtonControl *installBtn;
   ButtonControl *downloadBtn;
   ButtonControl *targetBranchBtn;

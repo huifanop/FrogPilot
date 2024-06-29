@@ -82,11 +82,44 @@ function launch {
   tmux capture-pane -pq -S-1000 > /tmp/launch_log
 
   # start manager
+#  cd selfdrive/manager
+#  if [ ! -f $DIR/prebuilt ]; then
+#    ./build.py
+#  fi
+#  ./manager.py
+
+###################################################
   cd selfdrive/manager
   if [ ! -f $DIR/prebuilt ]; then
     ./build.py
+    if [ ! -d /data/community/crashes ]; then
+      mkdir -p /data/community/crashes/
+    fi
+    if [ ! -d /data/community/build ]; then
+      mkdir -p /data/community/build/
+    fi
+    if [ -d "/data/community/build" ]; then
+      if [ -d "/data/community/crashes" ]; then
+        ./build.py > /data/community/build/build_log_$(date +"%Y%m%d_%H%M%S").txt && ./manager.py > /data/community/crashes/fan$(date +"%m%d%H%M").txt
+        
+        # ./build.py > /data/community/build/build_log_$(date +"%Y%m%d_%H%M%S").txt && ./manager.py > /data/community/crashes/launch_log_$(date +"%Y%m%d_%H%M%S").txt
+      else
+        ./build.py && ./manager.py
+      fi
+    else
+      if [ ! -d /data/media/0/log ]; then
+        mkdir -p /data/media/0/log/
+      fi
+      if [ -d "/data/media/0/log" ]; then
+        ./manager.py > /data/media/0/log/launch_log_$(date +"%Y%m%d_%H%M%S").txt
+      else
+        ./manager.py
+      fi
+    fi
+  else
+    ./manager.py
   fi
-  ./manager.py
+###################################################
 
   # if broken, keep on screen error
   while true; do sleep 1; done

@@ -14,14 +14,17 @@ public:
 private:
   void showEvent(QShowEvent *event) override;
   void updateStats();
-  inline QString getDistanceUnit() const { return metric_ ? tr("KM") : tr("Miles"); }
+  inline QString getDistanceUnit() const { return metric_ ? tr("公里") : tr("英里"); }
 
   bool metric_;
   Params params;
   Params paramsTracking{"/persist/tracking"};
   QJsonDocument stats_;
+  bool fuelpriceProfile;
   struct StatsLabels {
-    QLabel *routes, *distance, *distance_unit, *hours;
+////////////////////////////////////////////////////////
+    QLabel *routes, *distance, *distance_unit, *hours, *Fuelconsumptionsweek, *Fuelcostsweek;
+////////////////////////////////////////////////////////
   } all_, week_, frogPilot_;
 
 private slots:
